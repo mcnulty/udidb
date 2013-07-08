@@ -1,4 +1,7 @@
+target/
+*.iml
 *.class
+dependency-reduced-pom.xml
 
 # Package Files #
 *.jar
