@@ -26,13 +26,38 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.cli;
+package net.udidb.engine.ops.info;
+
+import net.udidb.engine.ops.Operation;
+import net.udidb.engine.ops.annotations.HelpMessage;
+import net.udidb.engine.ops.results.Result;
+import net.udidb.engine.ops.results.ValueResult;
 
 /**
- * Interface for obtaining configuration for udidb
+ * An "echo" operation
  *
  * @author mcnulty
  */
-public interface Config {
+@HelpMessage(enMessage="Display a line of text")
+public class Echo implements Operation {
 
+    private Object value;
+
+    public Object getValue() {
+        return value;
+    }
+
+    public void setValue(Object value) {
+        this.value = value;
+    }
+
+    @Override
+    public String getName() {
+        return getClass().getSimpleName().toLowerCase();
+    }
+
+    @Override
+    public Result execute() {
+        return new ValueResult<String>(value.toString());
+    }
 }

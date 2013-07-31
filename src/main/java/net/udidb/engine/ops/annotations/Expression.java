@@ -26,15 +26,13 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.driver;
+package net.udidb.engine.ops.annotations;
 
 /**
- * Thrown to indicate that the user requested the help message. The message has already been printed to System.err
+ * An annotation that marks an expression parameter to an operation
  *
  * @author mcnulty
  */
-public class HelpMessageRequested extends Exception {
+public @interface Expression {
 
-    /** generated serialVersionUID */
-    private static final long serialVersionUID = 1389478450098600909L;
 }

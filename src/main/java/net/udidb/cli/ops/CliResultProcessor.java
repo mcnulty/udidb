@@ -26,63 +26,46 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.driver;
+package net.udidb.cli.ops;
 
-import org.apache.commons.cli.BasicParser;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
+import java.io.PrintStream;
 
-import net.udidb.cli.Config;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
+
+import net.udidb.engine.ops.Operation;
+import net.udidb.engine.ops.OperationResultProcessor;
+import net.udidb.engine.ops.results.Result;
 
 /**
- * Builder used to construct a configuration for udidb from command line arguments
+ * The result processor for the debugger when run from command line.
  *
  * @author mcnulty
  */
-public class ConfigBuilder {
+public class CliResultProcessor implements OperationResultProcessor {
 
-    private final Option helpOption;
+    private final PrintStream out;
 
-    private final Options options;
-
-    /**
-     * Constructor.
-     */
-    public ConfigBuilder() {
-        helpOption = new Option("h", "help", false, "Display this help message");
-
-        options = new Options();
-        options.addOption(helpOption);
+    @Inject
+    CliResultProcessor(@Named("OUTPUT DESTINATION") PrintStream out) {
+        this.out = out;
     }
 
-    /**
-     * Builds the configuration for udidb from the command line parameters
-     *
-     * @param args the command line arguments
-     *
-     * @return the configuration
-     *
-     * @throws ParseException if the configuration cannot be created due to invalid parameters
-     * @throws HelpMessageRequested when the user requests the help message
-     */
-    public Config build(String[] args) throws ParseException, HelpMessageRequested {
+    @Override
+    public boolean process(Operation op, Result result) {
+        out.println(result);
 
-        CommandLineParser parser = new BasicParser();
+        return true;
+    }
 
-        CommandLine commandLine = parser.parse(options, args);
-
-        if ( commandLine.hasOption(helpOption.getOpt()) ) {
-            HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp("udidb", options, true);
-            throw new HelpMessageRequested();
+    @Override
+    public boolean process(Operation op, Exception e) {
+        if (op == null) {
+            out.println("Failed to parse operation: " + e);
+        }else{
+            out.println("Failed to execute " + op.getName() + ": " + e);
         }
 
-        // TODO convert options to config
-
-        return new CommandLineConfigImpl();
+        return true;
     }
 }

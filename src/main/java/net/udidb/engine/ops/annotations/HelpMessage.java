@@ -26,15 +26,17 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.driver;
-
-import net.udidb.cli.Config;
+package net.udidb.engine.ops.annotations;
 
 /**
- * Implementation of config used by ConfigBuilder
+ * An annotation used to provide the help message for using a command
  *
  * @author mcnulty
  */
-public class CommandLineConfigImpl implements Config {
+public @interface HelpMessage {
 
+    /**
+     * @return the English help message
+     */
+    String enMessage();
 }

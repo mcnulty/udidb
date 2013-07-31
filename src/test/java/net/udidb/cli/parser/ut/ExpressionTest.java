@@ -26,26 +26,34 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.cli;
+package net.udidb.cli.parser.ut;
+
+import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.junit.Test;
+
+import net.udidb.cli.parser.OperationsLexer;
+import net.udidb.cli.parser.OperationsParser;
 
 /**
- * Executes udidb, driven by input from standard in
- *
  * @author mcnulty
  */
-public class UdidbCli {
+public class ExpressionTest {
 
-    private final Config config;
+    @Test
+    public void functionCall() throws Exception {
+        String testString = "function(10 + 1, variable)";
 
-    /**
-     * Constructor.
-     *
-     * @param config the configuration
-     */
-    public UdidbCli(Config config) {
-        this.config = config;
-    }
+        ANTLRInputStream in = new ANTLRInputStream(testString);
 
-    public void run() {
+        OperationsLexer lexer = new OperationsLexer(in);
+
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+
+        OperationsParser parser = new OperationsParser(tokens);
+
+        ParseTree parseTree = parser.expression();
+        System.out.println(parseTree.toStringTree(parser));
     }
 }

@@ -26,65 +26,15 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.driver;
-
-import org.apache.commons.cli.ParseException;
-
-import net.udidb.cli.Config;
-import net.udidb.cli.UdidbCli;
+package net.udidb.cli.driver;
 
 /**
- * Driver class for udidb launched with command line arguments
+ * Thrown to indicate that the user requested the help message. The message has already been printed to System.err
  *
  * @author mcnulty
  */
-public class UdidbDriver {
+public class HelpMessageRequested extends Exception {
 
-    private final String[] cmdLineArgs;
-
-    /**
-     * Constructor.
-     *
-     * @param cmdLineArgs command line arguments
-     */
-    public UdidbDriver(String[] cmdLineArgs) {
-        this.cmdLineArgs = cmdLineArgs;
-    }
-
-    /**
-     * @return the result from executing the debugger (true on success, false on failure)
-     */
-    public boolean execute() {
-
-        Config config;
-        try {
-            ConfigBuilder builder = new ConfigBuilder();
-            config = builder.build(cmdLineArgs);
-        }catch(HelpMessageRequested e) {
-            return true;
-        }catch(ParseException e) {
-            System.err.println("Invalid arguments: " + e);
-            return false;
-        }
-
-        UdidbCli cli = new UdidbCli(config);
-        cli.run();
-
-        return true;
-    }
-
-    private static final int EXIT_SUCCESS = 0;
-
-    private static final int EXIT_FAILURE = 1;
-
-    /**
-     * Entry point for udidb launched from the command line
-     *
-     * @param args command line arguments (see help message)
-     */
-    public static void main(String[] args) {
-        UdidbDriver driver = new UdidbDriver(args);
-
-        System.exit(driver.execute() ? EXIT_SUCCESS : EXIT_FAILURE );
-    }
+    /** generated serialVersionUID */
+    private static final long serialVersionUID = 1389478450098600909L;
 }
