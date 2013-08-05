@@ -26,46 +26,38 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.cli.ops;
-
-import java.io.PrintStream;
-
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
-
-import net.udidb.engine.ops.Operation;
-import net.udidb.engine.ops.OperationResultProcessor;
-import net.udidb.engine.ops.results.Result;
+package net.udidb.engine.ops;
 
 /**
- * The result processor for the debugger when run from command line.
- *
  * @author mcnulty
  */
-public class CliResultProcessor implements OperationResultProcessor {
+public class UnknownOperationException extends OperationException {
 
-    private final PrintStream out;
-
-    @Inject
-    CliResultProcessor(@Named("OUTPUT DESTINATION") PrintStream out) {
-        this.out = out;
+    /**
+     * Constructor.
+     *
+     * @param message the message
+     */
+    public UnknownOperationException(String message) {
+        super(message);
     }
 
-    @Override
-    public boolean process(Operation op, Result result) {
-        out.println(result);
-
-        return true;
+    /**
+     * Constructor.
+     *
+     * @param cause the cause
+     */
+    public UnknownOperationException(Throwable cause) {
+        super(cause);
     }
 
-    @Override
-    public boolean process(Operation op, Exception e) {
-        if (op == null) {
-            out.println("Failed to parse operation: " + e);
-        }else{
-            out.println("Failed to execute " + op.getName() + ": " + e.getMessage());
-        }
-
-        return true;
+    /**
+     * Constructor.
+     *
+     * @param message the message
+     * @param cause the cause
+     */
+    public UnknownOperationException(String message, Throwable cause) {
+        super(message, cause);
     }
 }

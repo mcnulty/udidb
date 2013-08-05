@@ -37,13 +37,15 @@ import net.udidb.cli.parser.OperationsLexer;
 import net.udidb.cli.parser.OperationsParser;
 
 /**
+ * Basic test for the expression grammar
+ *
  * @author mcnulty
  */
 public class ExpressionTest {
 
     @Test
-    public void functionCall() throws Exception {
-        String testString = "function(10 + 1, variable)";
+    public void basicExpression() throws Exception {
+        String testString = "(10 + 1) - 5";
 
         ANTLRInputStream in = new ANTLRInputStream(testString);
 

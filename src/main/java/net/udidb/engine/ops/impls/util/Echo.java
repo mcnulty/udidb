@@ -26,46 +26,44 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.cli.ops;
-
-import java.io.PrintStream;
+package net.udidb.engine.ops.impls.util;
 
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 
+import net.udidb.engine.ops.DisplayNameOperation;
 import net.udidb.engine.ops.Operation;
-import net.udidb.engine.ops.OperationResultProcessor;
+import net.udidb.engine.ops.annotations.DisplayName;
+import net.udidb.engine.ops.annotations.HelpMessage;
+import net.udidb.engine.ops.annotations.Operand;
 import net.udidb.engine.ops.results.Result;
+import net.udidb.engine.ops.results.ValueResult;
 
 /**
- * The result processor for the debugger when run from command line.
+ * An "echo" operation
  *
  * @author mcnulty
  */
-public class CliResultProcessor implements OperationResultProcessor {
+@HelpMessage(enMessage="Display a line of text")
+@DisplayName(name="echo")
+public class Echo extends DisplayNameOperation {
 
-    private final PrintStream out;
+    @Operand(order=0)
+    private String value;
 
     @Inject
-    CliResultProcessor(@Named("OUTPUT DESTINATION") PrintStream out) {
-        this.out = out;
+    Echo() {
+    }
+
+    public String getValue() {
+        return value;
+    }
+
+    public void setValue(String value) {
+        this.value = value;
     }
 
     @Override
-    public boolean process(Operation op, Result result) {
-        out.println(result);
-
-        return true;
-    }
-
-    @Override
-    public boolean process(Operation op, Exception e) {
-        if (op == null) {
-            out.println("Failed to parse operation: " + e);
-        }else{
-            out.println("Failed to execute " + op.getName() + ": " + e.getMessage());
-        }
-
-        return true;
+    public Result execute() {
+        return new ValueResult<String>(value.toString());
     }
 }

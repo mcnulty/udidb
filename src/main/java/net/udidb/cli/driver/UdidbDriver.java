@@ -47,7 +47,7 @@ public class UdidbDriver {
 
     private final String[] cmdLineArgs;
 
-    private final Injector injector;
+    private final Injector injector = Guice.createInjector(new CliModule());
 
     /**
      * Constructor.
@@ -56,7 +56,6 @@ public class UdidbDriver {
      */
     public UdidbDriver(String[] cmdLineArgs) {
         this.cmdLineArgs = cmdLineArgs;
-        this.injector = Guice.createInjector(new CliModule());
     }
 
     /**

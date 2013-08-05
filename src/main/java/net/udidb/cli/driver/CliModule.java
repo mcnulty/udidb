@@ -28,6 +28,7 @@
 
 package net.udidb.cli.driver;
 
+import java.io.InputStream;
 import java.io.PrintStream;
 
 import com.google.inject.AbstractModule;
@@ -52,5 +53,7 @@ public class CliModule extends AbstractModule {
         bind(OperationResultProcessor.class).to(CliResultProcessor.class);
 
         bind(PrintStream.class).annotatedWith(Names.named("OUTPUT DESTINATION")).toInstance(System.out);
+
+        bind(InputStream.class).annotatedWith(Names.named("INPUT DESTINATION")).toInstance(System.in);
     }
 }

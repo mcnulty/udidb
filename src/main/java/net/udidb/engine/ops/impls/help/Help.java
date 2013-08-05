@@ -26,46 +26,37 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.cli.ops;
-
-import java.io.PrintStream;
+package net.udidb.engine.ops.impls.help;
 
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 
-import net.udidb.engine.ops.Operation;
-import net.udidb.engine.ops.OperationResultProcessor;
+import net.udidb.engine.ops.DisplayNameOperation;
+import net.udidb.engine.ops.OperationException;
+import net.udidb.engine.ops.annotations.DisplayName;
+import net.udidb.engine.ops.annotations.HelpMessage;
+import net.udidb.engine.ops.annotations.LongHelpMessage;
 import net.udidb.engine.ops.results.Result;
 
 /**
- * The result processor for the debugger when run from command line.
+ * Display help messages for operations
  *
  * @author mcnulty
  */
-public class CliResultProcessor implements OperationResultProcessor {
-
-    private final PrintStream out;
+@HelpMessage(enMessage = "Display help for operations")
+@LongHelpMessage(enMessage =
+        "help [operation name]\n" +
+        "Display detailed help for a specific operation or short help for all operations"
+)
+@DisplayName(name = "help")
+public class Help extends DisplayNameOperation {
 
     @Inject
-    CliResultProcessor(@Named("OUTPUT DESTINATION") PrintStream out) {
-        this.out = out;
+    Help(HelpMessageProvider provider) {
+
     }
 
     @Override
-    public boolean process(Operation op, Result result) {
-        out.println(result);
-
-        return true;
-    }
-
-    @Override
-    public boolean process(Operation op, Exception e) {
-        if (op == null) {
-            out.println("Failed to parse operation: " + e);
-        }else{
-            out.println("Failed to execute " + op.getName() + ": " + e.getMessage());
-        }
-
-        return true;
+    public Result execute() throws OperationException {
+        return null;
     }
 }

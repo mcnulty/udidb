@@ -26,38 +26,18 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.engine.ops.info;
+package net.udidb.engine.ops.impls.help;
 
-import net.udidb.engine.ops.Operation;
-import net.udidb.engine.ops.annotations.HelpMessage;
-import net.udidb.engine.ops.results.Result;
-import net.udidb.engine.ops.results.ValueResult;
+import com.google.inject.Inject;
 
 /**
- * An "echo" operation
+ * A class that provides access to help messages for operations
  *
  * @author mcnulty
  */
-@HelpMessage(enMessage="Display a line of text")
-public class Echo implements Operation {
+public class HelpMessageProvider {
 
-    private Object value;
-
-    public Object getValue() {
-        return value;
-    }
-
-    public void setValue(Object value) {
-        this.value = value;
-    }
-
-    @Override
-    public String getName() {
-        return getClass().getSimpleName().toLowerCase();
-    }
-
-    @Override
-    public Result execute() {
-        return new ValueResult<String>(value.toString());
+    @Inject
+    HelpMessageProvider() {
     }
 }

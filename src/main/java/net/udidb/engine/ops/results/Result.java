@@ -31,6 +31,9 @@ package net.udidb.engine.ops.results;
 /**
  * A marker interface for the result of performing an operation
  *
+ * Note: all Result implementations should provide a non-generic toString method. This will be used to obtain a
+ * String representation of the the result.
+ *
  * @author mcnulty
  */
 public interface Result {

@@ -29,15 +29,24 @@
 package net.udidb.cli.ops;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 import jline.Terminal;
 import jline.TerminalFactory;
 import jline.console.ConsoleReader;
 import net.udidb.engine.ops.Operation;
+import net.udidb.engine.ops.OperationParseException;
 import net.udidb.engine.ops.OperationReader;
-import net.udidb.engine.ops.info.Echo;
+import net.udidb.engine.ops.UnknownOperationException;
+import net.udidb.engine.ops.parser.OperationParser;
 
 /**
  * Implementation of OperationReader that reads operations from the command line interface using the JLine library
@@ -52,18 +61,29 @@ public class JlineOperationReader implements OperationReader {
 
     private final ConsoleReader reader;
 
+    private final OperationParser parser;
+
     @Inject
-    JlineOperationReader() throws Exception {
-        terminal = TerminalFactory.create();
-        terminal.init();
-        reader = new ConsoleReader(System.in, System.out, terminal);
-        reader.setPrompt(PROMPT);
+    JlineOperationReader(@Named("INPUT DESTINATION") InputStream in, @Named("OUTPUT DESTINATION") PrintStream out,
+            OperationParser parser) throws Exception
+    {
+        this.terminal = TerminalFactory.create();
+        this.terminal.init();
+        this.reader = new ConsoleReader(in, out, terminal);
+        this.reader.setPrompt(PROMPT);
+        this.parser = parser;
     }
 
     @Override
-    public Operation read() throws IOException {
-        Echo cmd = new Echo();
-        cmd.setValue(reader.readLine());
+    public Operation read() throws IOException, UnknownOperationException, OperationParseException {
+
+        Operation cmd = null;
+        while (cmd == null) {
+            String line = reader.readLine();
+            if (line.isEmpty()) continue;
+
+            cmd = parser.parse(line);
+        }
 
         return cmd;
     }

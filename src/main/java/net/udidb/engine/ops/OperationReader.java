@@ -29,6 +29,7 @@
 package net.udidb.engine.ops;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * Provides a mechanism to wait for operations to be specified to the debugger
@@ -43,6 +44,8 @@ public interface OperationReader {
      * @return the operation
      *
      * @throws IOException on failure to read the operation
+     * @throws UnknownOperationException when an unknown operation is specified
+     * @throws OperationParseException when the operation cannot be parsed from the input
      */
-    Operation read() throws IOException;
+    Operation read() throws IOException, UnknownOperationException, OperationParseException;
 }

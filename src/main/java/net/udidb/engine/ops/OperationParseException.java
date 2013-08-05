@@ -26,13 +26,42 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.engine.ops.annotations;
+package net.udidb.engine.ops;
 
 /**
- * An annotation that marks an expression parameter to an operation
+ * If there is an error parsing the operation
  *
  * @author mcnulty
  */
-public @interface Expression {
+public class OperationParseException extends OperationException {
 
+    private static final long serialVersionUID = -3103066208013724417L;
+
+    /**
+     * Constructor.
+     *
+     * @param message the message
+     */
+    public OperationParseException(String message) {
+        super(message);
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param cause the cause
+     */
+    public OperationParseException(Throwable cause) {
+        super(cause);
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param message the message
+     * @param cause the cause
+     */
+    public OperationParseException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

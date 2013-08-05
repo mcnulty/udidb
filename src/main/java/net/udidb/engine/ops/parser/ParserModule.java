@@ -26,46 +26,18 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.cli.ops;
+package net.udidb.engine.ops.parser;
 
-import java.io.PrintStream;
-
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
-
-import net.udidb.engine.ops.Operation;
-import net.udidb.engine.ops.OperationResultProcessor;
-import net.udidb.engine.ops.results.Result;
+import com.google.inject.AbstractModule;
 
 /**
- * The result processor for the debugger when run from command line.
+ * A Guice module defining dependencies for the Operation parser
  *
  * @author mcnulty
  */
-public class CliResultProcessor implements OperationResultProcessor {
-
-    private final PrintStream out;
-
-    @Inject
-    CliResultProcessor(@Named("OUTPUT DESTINATION") PrintStream out) {
-        this.out = out;
-    }
+public class ParserModule extends AbstractModule {
 
     @Override
-    public boolean process(Operation op, Result result) {
-        out.println(result);
-
-        return true;
-    }
-
-    @Override
-    public boolean process(Operation op, Exception e) {
-        if (op == null) {
-            out.println("Failed to parse operation: " + e);
-        }else{
-            out.println("Failed to execute " + op.getName() + ": " + e.getMessage());
-        }
-
-        return true;
+    protected void configure() {
     }
 }

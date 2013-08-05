@@ -33,7 +33,7 @@ package net.udidb.engine.ops;
  *
  * @author mcnulty
  */
-public class OperationException extends Exception {
+public abstract class OperationException extends Exception {
 
     /** auto-generated serial version UID */
     private static final long serialVersionUID = 750345500850969447L;

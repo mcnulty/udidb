@@ -28,11 +28,15 @@
 
 package net.udidb.engine.ops.annotations;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+
 /**
  * An annotation used to provide the help message for using a command
  *
  * @author mcnulty
  */
+@Retention(RetentionPolicy.RUNTIME)
 public @interface HelpMessage {
 
     /**
