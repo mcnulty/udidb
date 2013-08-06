@@ -38,16 +38,19 @@ import net.udidb.cli.ops.CliResultProcessor;
 import net.udidb.cli.ops.JlineOperationReader;
 import net.udidb.engine.ops.OperationReader;
 import net.udidb.engine.ops.OperationResultProcessor;
+import net.udidb.engine.ops.parser.ParserModule;
 
 /**
  * A Guice module defining dependencies for running the debugger from the command line
  *
  * @author mcnulty
  */
-public class CliModule extends AbstractModule {
+public class CliModule extends ParserModule {
 
     @Override
     protected void configure() {
+        super.configure();
+
         bind(OperationReader.class).to(JlineOperationReader.class);
 
         bind(OperationResultProcessor.class).to(CliResultProcessor.class);

@@ -31,11 +31,14 @@ package net.udidb.engine.ops.impls.help;
 import com.google.inject.Inject;
 
 import net.udidb.engine.ops.DisplayNameOperation;
+import net.udidb.engine.ops.InvalidOperandException;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.HelpMessage;
 import net.udidb.engine.ops.annotations.LongHelpMessage;
+import net.udidb.engine.ops.annotations.Operand;
 import net.udidb.engine.ops.results.Result;
+import net.udidb.engine.ops.results.ValueResult;
 
 /**
  * Display help messages for operations
@@ -50,13 +53,38 @@ import net.udidb.engine.ops.results.Result;
 @DisplayName(name = "help")
 public class Help extends DisplayNameOperation {
 
+    private final HelpMessageProvider provider;
+
+    @Operand(order=0, optional=true)
+    private String opName;
+
+    public String getOpName() {
+        return opName;
+    }
+
+    public void setOpName(String opName) {
+        this.opName = opName;
+    }
+
     @Inject
     Help(HelpMessageProvider provider) {
-
+        this.provider = provider;
     }
 
     @Override
     public Result execute() throws OperationException {
-        return null;
+        if (opName == null) {
+            StringBuilder builder = new StringBuilder();
+            provider.getAllShortMessages(builder);
+
+            return new ValueResult<>(builder.toString());
+        }
+
+        String longMessage = provider.getLongMessage(opName);
+        if (longMessage == null) {
+            throw new InvalidOperandException(getName(), "opName");
+        }
+
+        return new ValueResult<>(longMessage);
     }
 }

@@ -28,7 +28,20 @@
 
 package net.udidb.engine.ops.impls.help;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.reflections.Reflections;
+import org.reflections.scanners.SubTypesScanner;
+import org.reflections.util.ClasspathHelper;
+
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
+
+import net.udidb.engine.ops.Operation;
+import net.udidb.engine.ops.annotations.DisplayName;
+import net.udidb.engine.ops.annotations.HelpMessage;
+import net.udidb.engine.ops.annotations.LongHelpMessage;
 
 /**
  * A class that provides access to help messages for operations
@@ -37,7 +50,76 @@ import com.google.inject.Inject;
  */
 public class HelpMessageProvider {
 
+    private final Map<String, HelpMessages> helpMessages = new HashMap<>();
+
+    private static class HelpMessages {
+        public String shortMessage;
+
+        public String longMessage;
+    }
+
     @Inject
-    HelpMessageProvider() {
+    HelpMessageProvider(@Named("OP_IMPL_PACKAGE") String opImplPackage) {
+        Reflections reflections = new Reflections(ClasspathHelper.forPackage(opImplPackage),
+                new SubTypesScanner());
+        for (Class<? extends Operation> opClass : reflections.getSubTypesOf(Operation.class)) {
+            DisplayName displayName = opClass.getAnnotation(DisplayName.class);
+
+            String name;
+            if (displayName == null) {
+                name = "invalid<" + opClass.getSimpleName() + ">";
+            }else{
+                name = displayName.name();
+            }
+
+            HelpMessages messages = new HelpMessages();
+            HelpMessage helpMessageAnnotation = opClass.getAnnotation(HelpMessage.class);
+            if (helpMessageAnnotation == null) {
+                messages.shortMessage = "unspecified help message";
+            }else{
+                // TODO select message based on locale
+                messages.shortMessage = helpMessageAnnotation.enMessage();
+            }
+
+            LongHelpMessage longHelpMessageAnnotation = opClass.getAnnotation(LongHelpMessage.class);
+            if (longHelpMessageAnnotation == null) {
+                messages.longMessage = "unspecified detailed help message";
+            }else{
+                // TODO select message based on locale
+                messages.longMessage = longHelpMessageAnnotation.enMessage();
+            }
+
+            helpMessages.put(name, messages);
+        }
+    }
+
+    /**
+     * @param opName the Operation name
+     * @return the short message; null if the operation is unknown
+     */
+    public String getShortMessage(String opName) {
+        HelpMessages messages = helpMessages.get(opName);
+        if ( messages != null ) {
+            return messages.shortMessage;
+        }
+
+        return null;
+    }
+
+    /**
+     * @param opName the Operation name
+     * @return the long message; null if the operation is unknown
+     */
+    public String getLongMessage(String opName) {
+        HelpMessages messages = helpMessages.get(opName);
+        if ( messages != null ) {
+            return messages.longMessage;
+        }
+
+        return null;
+    }
+
+    public void getAllShortMessages(StringBuilder builder) {
+
     }
 }

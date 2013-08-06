@@ -26,26 +26,23 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.engine.ops.annotations;
-
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+package net.udidb.engine.ops;
 
 /**
- * An annotation that marks an operand field in an Operation
+ * Thrown to indicate that an Operation was specified an invalid operand value
  *
  * @author mcnulty
  */
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Operand {
+public class InvalidOperandException extends OperationException {
 
     /**
-     * @return the order of the operand to the Operation when being specified in a String (0-based index)
+     * Constructor.
+     *
+     * @param opName the Operation name
+     * @param operandName the Operand name
      */
-    int order();
-
-    /**
-     * @return true, if the operand is optional. Only the last operand (in order) can be optional.
-     */
-    boolean optional() default false;
+    public InvalidOperandException(String opName, String operandName) {
+        super(String.format("Invalid value specified to operand '%s' for operation '%s'",
+                opName, operandName));
+    }
 }

@@ -43,6 +43,7 @@ import org.reflections.util.ClasspathHelper;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.name.Named;
 
 import net.udidb.engine.ops.Operation;
 import net.udidb.engine.ops.OperationParseException;
@@ -66,12 +67,12 @@ public class OperationParser {
     private static final Injector injector = Guice.createInjector(new ParserModule());
 
     @Inject
-    OperationParser() {
-        addSupportedOperations();
+    OperationParser(@Named("OP_IMPL_PACKAGE") String opImplPackage) {
+        addSupportedOperations(opImplPackage);
     }
 
-    private void addSupportedOperations() {
-        Reflections reflections = new Reflections(ClasspathHelper.forPackage("net.udidb.engine.ops.impls"),
+    private void addSupportedOperations(String opImplPackage) {
+        Reflections reflections = new Reflections(ClasspathHelper.forPackage(opImplPackage),
                 new SubTypesScanner());
         for (Class<? extends Operation> opClass : reflections.getSubTypesOf(Operation.class)) {
             DisplayName displayName = opClass.getAnnotation(DisplayName.class);
@@ -81,10 +82,16 @@ public class OperationParser {
         }
     }
 
-    public Operation parse(String line) throws UnknownOperationException, OperationParseException
-    {
+    /**
+     * @param opString the String representing the operation to be performed
+     * @return the Operation (never null)
+     *
+     * @throws UnknownOperationException if the opString references an unknown operation
+     * @throws OperationParseException if their is an error parsing a knonw operation
+     */
+    public Operation parse(String opString) throws UnknownOperationException, OperationParseException {
 
-        Matcher matcher = OPERATION_PATTERN.matcher(line);
+        Matcher matcher = OPERATION_PATTERN.matcher(opString);
         if (matcher.matches()) {
             String opName = matcher.group(1);
             String operandString = matcher.group(2);
@@ -96,6 +103,7 @@ public class OperationParser {
 
             Operation cmd = injector.getInstance(opClass);
 
+            // TODO support optional operands
             Field[] operands = new Field[opClass.getFields().length];
             for (Field field : opClass.getFields()) {
                 Operand operand = field.getAnnotation(Operand.class);
@@ -123,7 +131,7 @@ public class OperationParser {
 
             return cmd;
         }else{
-            throw new UnknownOperationException(String.format("Cannot parse operation from line '%s'", line));
+            throw new UnknownOperationException(String.format("Cannot parse operation from line '%s'", opString));
         }
 
     }

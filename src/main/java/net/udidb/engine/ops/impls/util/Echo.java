@@ -34,6 +34,7 @@ import net.udidb.engine.ops.DisplayNameOperation;
 import net.udidb.engine.ops.Operation;
 import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.HelpMessage;
+import net.udidb.engine.ops.annotations.LongHelpMessage;
 import net.udidb.engine.ops.annotations.Operand;
 import net.udidb.engine.ops.results.Result;
 import net.udidb.engine.ops.results.ValueResult;
@@ -43,7 +44,11 @@ import net.udidb.engine.ops.results.ValueResult;
  *
  * @author mcnulty
  */
-@HelpMessage(enMessage="Display a line of text")
+@HelpMessage(enMessage="Display the value of an expression")
+@LongHelpMessage(enMessage=
+        "echo <expression>\n" +
+        "Display the value of an expression"
+)
 @DisplayName(name="echo")
 public class Echo extends DisplayNameOperation {
 
@@ -64,6 +69,6 @@ public class Echo extends DisplayNameOperation {
 
     @Override
     public Result execute() {
-        return new ValueResult<String>(value.toString());
+        return new ValueResult<>(value.toString());
     }
 }
