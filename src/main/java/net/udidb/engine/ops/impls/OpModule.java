@@ -26,36 +26,25 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.cli.parser.ut;
+package net.udidb.engine.ops.impls;
 
-import org.antlr.v4.runtime.ANTLRInputStream;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.junit.Test;
+import com.google.inject.AbstractModule;
 
-import net.udidb.cli.parser.OperationsLexer;
-import net.udidb.cli.parser.OperationsParser;
+import net.udidb.engine.ops.impls.help.HelpMessageProvider;
 
 /**
- * Basic test for the expression grammar
+ * A Guice module defining dependencies used by Operation implementations
  *
  * @author mcnulty
  */
-public class ExpressionTest {
+public class OpModule extends AbstractModule {
 
-    @Test
-    public void basicExpression() throws Exception {
-        String testString = "(10 + 1) - 5";
+    @Override
+    protected void configure() {
+        help();
+    }
 
-        ANTLRInputStream in = new ANTLRInputStream(testString);
-
-        OperationsLexer lexer = new OperationsLexer(in);
-
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-
-        OperationsParser parser = new OperationsParser(tokens);
-
-        ParseTree parseTree = parser.expression();
-        System.out.println(parseTree.toStringTree(parser));
+    private void help() {
+        bind(HelpMessageProvider.class).asEagerSingleton();
     }
 }

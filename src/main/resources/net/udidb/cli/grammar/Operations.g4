@@ -1,7 +1,7 @@
 grammar Operations;
 
 @header {
-package net.udidb.cli.parser;
+package net.udidb.net.udidb.cli.parser;
 }
 
 // Rules

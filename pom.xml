@@ -115,7 +115,7 @@ POSSIBILITY OF SUCH DAMAGE.
                 <artifactId>antlr4-maven-plugin</artifactId>
                 <version>4.1</version>
                 <configuration>
-                    <sourceDirectory>src/main/resources/cli/grammar</sourceDirectory>
+                    <sourceDirectory>src/main/resources/net/udidb/cli/grammar</sourceDirectory>
                     <outputDirectory>target/generated-sources/antlr4/net/udidb/engine/ops/parser</outputDirectory>
                     <visitor>false</visitor>
                     <listener>true</listener>

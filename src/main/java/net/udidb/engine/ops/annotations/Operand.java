@@ -45,7 +45,7 @@ public @interface Operand {
     int order();
 
     /**
-     * @return true, if the operand is optional. Only the last operand (in order) can be optional.
+     * @return true, if the operand is optional. Only the last operands (in order) can be optional.
      */
     boolean optional() default false;
 }

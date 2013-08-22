@@ -47,7 +47,7 @@ import net.udidb.engine.ops.results.ValueResult;
  */
 @HelpMessage(enMessage = "Display help for operations")
 @LongHelpMessage(enMessage =
-        "help [operation name]\n" +
+        "help [operation name]\n\n" +
         "Display detailed help for a specific operation or short help for all operations"
 )
 @DisplayName(name = "help")

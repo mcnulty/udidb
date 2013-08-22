@@ -30,6 +30,7 @@ package net.udidb.engine.ops.parser;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -54,13 +55,15 @@ import net.udidb.engine.ops.annotations.Operand;
 /**
  * Given a String representation of an Operation and its Operands, create and populate the Operation
  *
+ * TODO allow aliases for operations
+ *
  * @author mcnulty
  */
 public class OperationParser {
 
     private final Map<String, Class<? extends Operation>> operations = new HashMap<>();
 
-    private static final Pattern OPERATION_PATTERN = Pattern.compile("^(\\w+)(.*)$");
+    private static final Pattern OPERATION_PATTERN = Pattern.compile("^(\\S+)\\s*(.*)$");
 
     private static final String WHITE_SPACE = "\\s+";
 
@@ -75,9 +78,13 @@ public class OperationParser {
         Reflections reflections = new Reflections(ClasspathHelper.forPackage(opImplPackage),
                 new SubTypesScanner());
         for (Class<? extends Operation> opClass : reflections.getSubTypesOf(Operation.class)) {
+            if (Modifier.isAbstract(opClass.getModifiers())) continue;
+
             DisplayName displayName = opClass.getAnnotation(DisplayName.class);
             if (displayName != null ) {
                 operations.put(displayName.name(), opClass);
+            }else{
+                throw new RuntimeException(opClass.getSimpleName() + " is an invalid Operation.");
             }
         }
     }
@@ -101,26 +108,44 @@ public class OperationParser {
                 throw new UnknownOperationException(String.format("Unknown operation '%s'", opName));
             }
 
+            // TODO catch Guice runtime exceptions
             Operation cmd = injector.getInstance(opClass);
 
-            // TODO support optional operands
-            Field[] operands = new Field[opClass.getFields().length];
-            for (Field field : opClass.getFields()) {
+            int requiredOperands = 0;
+            Map<Integer, Field> operands = new HashMap<>();
+            for (Field field : opClass.getDeclaredFields()) {
                 Operand operand = field.getAnnotation(Operand.class);
                 if (operand != null) {
-                    operands[operand.order()] = field;
+                    if (!operand.optional()) {
+                        requiredOperands++;
+                    }
+
+                    if ( operands.put(operand.order(), field) != null ) {
+                        throw new OperationParseException(String.format("Order for operand '%s' is not unique.",
+                                field.getName()));
+                    }
                 }
             }
 
-            String[] operandValues = operandString.split(WHITE_SPACE);
-            if (operandValues.length != operands.length) {
-                throw new OperationParseException(String.format("Invalid number of operands. Expected %s.",
-                        operands.length));
+            if (requiredOperands != 0 && operandString.isEmpty()) {
+                throw new OperationParseException(String.format("Operands required for operation '%s'.",
+                        opName));
+            }
+
+            String[] operandValues;
+            if (operandString.isEmpty()) {
+                operandValues = new String[0];
+            }else{
+                operandValues = operandString.split(WHITE_SPACE);
+            }
+            if (operandValues.length < requiredOperands || operandValues.length > operands.size()) {
+                throw new OperationParseException(String.format("Invalid number of operands. Expected at least %s.",
+                        operands.size()));
             }
 
             Map<String, Object> properties = new HashMap<>();
             for (int i = 0; i < operandValues.length; ++i) {
-                properties.put(operands[i].getName(), operandValues[i]);
+                properties.put(operands.get(i).getName(), operandValues[i]);
             }
 
             try {

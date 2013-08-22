@@ -28,14 +28,17 @@
 
 package net.udidb.engine.ops.impls.help;
 
-import java.util.HashMap;
+import java.lang.reflect.Modifier;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
 import org.reflections.util.ClasspathHelper;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 
 import net.udidb.engine.ops.Operation;
@@ -48,9 +51,12 @@ import net.udidb.engine.ops.annotations.LongHelpMessage;
  *
  * @author mcnulty
  */
+@Singleton
 public class HelpMessageProvider {
 
-    private final Map<String, HelpMessages> helpMessages = new HashMap<>();
+    private static final String NEWLINE = System.lineSeparator();
+
+    private final Map<String, HelpMessages> helpMessages = new TreeMap<>();
 
     private static class HelpMessages {
         public String shortMessage;
@@ -63,7 +69,15 @@ public class HelpMessageProvider {
         Reflections reflections = new Reflections(ClasspathHelper.forPackage(opImplPackage),
                 new SubTypesScanner());
         for (Class<? extends Operation> opClass : reflections.getSubTypesOf(Operation.class)) {
+            if (Modifier.isAbstract(opClass.getModifiers())) continue;
+
+            HelpMessage helpMessageAnnotation = opClass.getAnnotation(HelpMessage.class);
             DisplayName displayName = opClass.getAnnotation(DisplayName.class);
+            LongHelpMessage longHelpMessageAnnotation = opClass.getAnnotation(LongHelpMessage.class);
+
+            if (helpMessageAnnotation == null || displayName == null) {
+                throw new RuntimeException(opClass.getSimpleName() + " is an invalid Operation");
+            }
 
             String name;
             if (displayName == null) {
@@ -73,7 +87,6 @@ public class HelpMessageProvider {
             }
 
             HelpMessages messages = new HelpMessages();
-            HelpMessage helpMessageAnnotation = opClass.getAnnotation(HelpMessage.class);
             if (helpMessageAnnotation == null) {
                 messages.shortMessage = "unspecified help message";
             }else{
@@ -81,12 +94,11 @@ public class HelpMessageProvider {
                 messages.shortMessage = helpMessageAnnotation.enMessage();
             }
 
-            LongHelpMessage longHelpMessageAnnotation = opClass.getAnnotation(LongHelpMessage.class);
             if (longHelpMessageAnnotation == null) {
                 messages.longMessage = "unspecified detailed help message";
             }else{
                 // TODO select message based on locale
-                messages.longMessage = longHelpMessageAnnotation.enMessage();
+                messages.longMessage = longHelpMessageAnnotation.enMessage().replaceAll("\n", NEWLINE);
             }
 
             helpMessages.put(name, messages);
@@ -119,7 +131,21 @@ public class HelpMessageProvider {
         return null;
     }
 
+    /**
+     * Appends the short message for all register commands, one per line
+     *
+     * @param builder the StringBuilder to append to
+     */
     public void getAllShortMessages(StringBuilder builder) {
+        Iterator<Map.Entry<String, HelpMessages>> iter = helpMessages.entrySet().iterator();
+        while (iter.hasNext()) {
+            Map.Entry<String, HelpMessages> entry = iter.next();
 
+            builder.append(entry.getKey()).append(" -- ").append(entry.getValue().shortMessage);
+
+            if (iter.hasNext()) {
+                builder.append(NEWLINE);
+            }
+        }
     }
 }

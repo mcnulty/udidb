@@ -26,7 +26,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.engine.ops.impls.util;
+package net.udidb.engine.ops.impls.display;
 
 import com.google.inject.Inject;
 
@@ -40,23 +40,23 @@ import net.udidb.engine.ops.results.Result;
 import net.udidb.engine.ops.results.ValueResult;
 
 /**
- * An "echo" operation
+ * An operation to display an expression
  *
  * @author mcnulty
  */
 @HelpMessage(enMessage="Display the value of an expression")
 @LongHelpMessage(enMessage=
-        "echo <expression>\n" +
+        "print <expression>\n\n" +
         "Display the value of an expression"
 )
-@DisplayName(name="echo")
-public class Echo extends DisplayNameOperation {
+@DisplayName(name="print")
+public class Print extends DisplayNameOperation {
 
     @Operand(order=0)
     private String value;
 
     @Inject
-    Echo() {
+    Print() {
     }
 
     public String getValue() {

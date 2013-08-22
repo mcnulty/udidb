@@ -61,7 +61,7 @@ public class CliResultProcessor implements OperationResultProcessor {
     @Override
     public boolean process(Operation op, Exception e) {
         if (op == null) {
-            out.println("Failed to parse operation: " + e);
+            out.println(e.getMessage());
         }else{
             out.println("Failed to execute " + op.getName() + ": " + e.getMessage());
         }

@@ -26,23 +26,35 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.engine.ops.parser;
+package net.udidb.engine.ops.impls.util;
 
-import com.google.inject.name.Names;
+import com.google.inject.Inject;
 
-import net.udidb.engine.ops.impls.OpModule;
+import net.udidb.engine.ops.DisplayNameOperation;
+import net.udidb.engine.ops.OperationException;
+import net.udidb.engine.ops.annotations.DisplayName;
+import net.udidb.engine.ops.annotations.HelpMessage;
+import net.udidb.engine.ops.annotations.LongHelpMessage;
+import net.udidb.engine.ops.results.Result;
 
 /**
- * A Guice module defining dependencies for the Operation parser
+ * An operation to quit the debugger
  *
  * @author mcnulty
  */
-public class ParserModule extends OpModule {
+@HelpMessage(enMessage="Quit the debugger")
+@LongHelpMessage(enMessage="Quit the debugger")
+@DisplayName(name="quit")
+public class Quit extends DisplayNameOperation {
+
+    @Inject
+    Quit() {
+    }
 
     @Override
-    protected void configure() {
-        super.configure();
+    public Result execute() throws OperationException {
+        System.exit(0);
 
-        bind(String.class).annotatedWith(Names.named("OP_IMPL_PACKAGE")).toInstance("net.udidb.engine.ops.impls");
+        return null;
     }
 }
