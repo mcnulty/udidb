@@ -36,7 +36,7 @@ import com.google.inject.Injector;
 import net.udidb.engine.Config;
 import net.udidb.engine.UdidbEngine;
 import net.udidb.engine.ops.OperationReader;
-import net.udidb.engine.ops.OperationResultVisitor;
+import net.udidb.engine.ops.results.OperationResultVisitor;
 
 /**
  * Driver class for udidb launched with command line arguments

@@ -34,9 +34,8 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
 import net.udidb.engine.ops.Operation;
-import net.udidb.engine.ops.OperationResultVisitor;
+import net.udidb.engine.ops.results.OperationResultVisitor;
 import net.udidb.engine.ops.impls.util.Quit;
-import net.udidb.engine.ops.results.Result;
 import net.udidb.engine.ops.results.ValueResult;
 
 /**

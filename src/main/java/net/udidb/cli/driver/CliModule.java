@@ -36,7 +36,7 @@ import com.google.inject.name.Names;
 import net.udidb.cli.ops.CliResultVisitor;
 import net.udidb.cli.ops.JlineOperationReader;
 import net.udidb.engine.ops.OperationReader;
-import net.udidb.engine.ops.OperationResultVisitor;
+import net.udidb.engine.ops.results.OperationResultVisitor;
 import net.udidb.engine.ops.parser.ParserModule;
 
 /**

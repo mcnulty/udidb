@@ -30,7 +30,7 @@ package net.udidb.engine;
 
 import net.udidb.engine.ops.Operation;
 import net.udidb.engine.ops.OperationReader;
-import net.udidb.engine.ops.OperationResultVisitor;
+import net.udidb.engine.ops.results.OperationResultVisitor;
 
 /**
  * Engine for udidb, this class executes operations for the debugger

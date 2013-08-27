@@ -29,7 +29,6 @@
 package net.udidb.engine.ops.results;
 
 import net.udidb.engine.ops.Operation;
-import net.udidb.engine.ops.OperationResultVisitor;
 
 /**
  * A marker interface for the result of performing an operation

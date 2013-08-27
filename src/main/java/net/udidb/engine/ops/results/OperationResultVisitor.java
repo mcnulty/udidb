@@ -26,8 +26,9 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.engine.ops;
+package net.udidb.engine.ops.results;
 
+import net.udidb.engine.ops.Operation;
 import net.udidb.engine.ops.results.ValueResult;
 
 /**
