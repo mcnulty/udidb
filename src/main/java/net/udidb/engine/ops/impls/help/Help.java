@@ -50,7 +50,7 @@ import net.udidb.engine.ops.results.ValueResult;
         "help [operation name]\n\n" +
         "Display detailed help for a specific operation or short help for all operations"
 )
-@DisplayName(name = "help")
+@DisplayName("help")
 public class Help extends DisplayNameOperation {
 
     private final HelpMessageProvider provider;

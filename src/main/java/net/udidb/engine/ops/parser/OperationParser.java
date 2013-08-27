@@ -82,7 +82,7 @@ public class OperationParser {
 
             DisplayName displayName = opClass.getAnnotation(DisplayName.class);
             if (displayName != null ) {
-                operations.put(displayName.name(), opClass);
+                operations.put(displayName.value(), opClass);
             }else{
                 throw new RuntimeException(opClass.getSimpleName() + " is an invalid Operation.");
             }

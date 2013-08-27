@@ -38,8 +38,8 @@ public class InvalidOperandException extends OperationException {
     /**
      * Constructor.
      *
-     * @param operationName the Operation name
-     * @param operandName the Operand name
+     * @param operationName the Operation value
+     * @param operandName the Operand value
      */
     public InvalidOperandException(String operationName, String operandName) {
         super(String.format("Invalid value specified to operand '%s' for operation '%s'",

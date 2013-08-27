@@ -39,6 +39,6 @@ public abstract class DisplayNameOperation implements Operation {
 
     @Override
     public String getName() {
-        return getClass().getAnnotation(DisplayName.class).name().toLowerCase();
+        return getClass().getAnnotation(DisplayName.class).value().toLowerCase();
     }
 }

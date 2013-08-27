@@ -45,7 +45,7 @@ import net.udidb.engine.ops.results.ValueResult;
  */
 @HelpMessage(enMessage="Quit the debugger")
 @LongHelpMessage(enMessage="Quit the debugger")
-@DisplayName(name="quit")
+@DisplayName(value ="quit")
 public class Quit extends DisplayNameOperation {
 
     @Inject

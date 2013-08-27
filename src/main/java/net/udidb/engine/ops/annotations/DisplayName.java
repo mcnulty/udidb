@@ -32,7 +32,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
- * Annotation for an Operation's display name
+ * Annotation for an Operation's display value
  *
  * @author mcnulty
  */
@@ -40,7 +40,7 @@ import java.lang.annotation.RetentionPolicy;
 public @interface DisplayName {
 
     /**
-     * @return the display name of the Operation
+     * @return the display value of the Operation
      */
-    String name();
+    String value();
 }

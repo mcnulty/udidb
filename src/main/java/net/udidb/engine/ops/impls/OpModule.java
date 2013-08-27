@@ -30,6 +30,8 @@ package net.udidb.engine.ops.impls;
 
 import com.google.inject.AbstractModule;
 
+import net.libudi.api.UdiProcessManager;
+import net.libudi.api.jni.impl.UdiProcessManagerImpl;
 import net.udidb.engine.ops.impls.help.HelpMessageProvider;
 
 /**
@@ -42,9 +44,14 @@ public class OpModule extends AbstractModule {
     @Override
     protected void configure() {
         help();
+        control();
     }
 
     private void help() {
         bind(HelpMessageProvider.class).asEagerSingleton();
+    }
+
+    private void control() {
+        bind(UdiProcessManager.class).to(UdiProcessManagerImpl.class);
     }
 }

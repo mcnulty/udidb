@@ -83,7 +83,7 @@ public class HelpMessageProvider {
             if (displayName == null) {
                 name = "invalid<" + opClass.getSimpleName() + ">";
             }else{
-                name = displayName.name();
+                name = displayName.value();
             }
 
             HelpMessages messages = new HelpMessages();
@@ -106,7 +106,7 @@ public class HelpMessageProvider {
     }
 
     /**
-     * @param opName the Operation name
+     * @param opName the Operation value
      * @return the short message; null if the operation is unknown
      */
     public String getShortMessage(String opName) {
@@ -119,7 +119,7 @@ public class HelpMessageProvider {
     }
 
     /**
-     * @param opName the Operation name
+     * @param opName the Operation value
      * @return the long message; null if the operation is unknown
      */
     public String getLongMessage(String opName) {

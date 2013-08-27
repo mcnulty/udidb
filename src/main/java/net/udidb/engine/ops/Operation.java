@@ -38,7 +38,7 @@ import net.udidb.engine.ops.results.Result;
 public interface Operation {
 
     /**
-     * @return the name of the operation
+     * @return the value of the operation
      */
     String getName();
 

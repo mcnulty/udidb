@@ -26,48 +26,42 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.engine.ops.impls.display;
+package net.udidb.engine.ops.impls.control;
 
 import com.google.inject.Inject;
 
+import net.libudi.api.UdiProcessManager;
 import net.udidb.engine.ops.DisplayNameOperation;
+import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.HelpMessage;
 import net.udidb.engine.ops.annotations.LongHelpMessage;
-import net.udidb.engine.ops.annotations.Operand;
 import net.udidb.engine.ops.results.Result;
 import net.udidb.engine.ops.results.ValueResult;
 
 /**
- * An operation to display an expression
+ * Operation to create a process
  *
  * @author mcnulty
  */
-@HelpMessage(enMessage="Display the value of an expression")
+@HelpMessage(enMessage="Create a new debuggee")
 @LongHelpMessage(enMessage=
-        "print <expression>\n\n" +
-        "Display the value of an expression"
+        "create /path/to/executable args\n\n" +
+        "Create a new debuggee"
 )
-@DisplayName("print")
-public class Print extends DisplayNameOperation {
+@DisplayName("create")
+public class CreateDebuggee extends DisplayNameOperation {
 
-    @Operand(order=0)
-    private String value;
+    private final UdiProcessManager procManager;
 
     @Inject
-    Print() {
+    CreateDebuggee(UdiProcessManager procManager) {
+        this.procManager = procManager;
     }
 
-    public String getValue() {
-        return value;
-    }
-
-    public void setValue(String value) {
-        this.value = value;
-    }
 
     @Override
-    public Result execute() {
-        return new ValueResult(value.toString());
+    public Result execute() throws OperationException {
+        return new ValueResult(procManager.getClass().getName());
     }
 }

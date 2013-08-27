@@ -29,7 +29,6 @@
 package net.udidb.engine.ops.results;
 
 import net.udidb.engine.ops.Operation;
-import net.udidb.engine.ops.results.ValueResult;
 
 /**
  * Visitor used to process a result of an operation
@@ -39,10 +38,10 @@ import net.udidb.engine.ops.results.ValueResult;
 public interface OperationResultVisitor {
 
     /**
-     * Processes the result of the specified operation
+     * Processes the ValueResult of the specified operation
      *
      * @param op the operation
-     * @param result the result of the operation
+     * @param result the ValueResult of the operation
      *
      * @return true, if the result indicates further operations should be executed; false otherwise
      */
