@@ -28,33 +28,39 @@
 
 package net.udidb.engine.ops.results;
 
+import net.udidb.engine.ops.Operation;
+import net.udidb.engine.ops.OperationResultVisitor;
+
 /**
  * A result that encapsulates a single value
- *
- * @param <T> the type of the value
  */
-public class ValueResult<T> implements Result {
+public class ValueResult implements Result {
 
-    private final T value;
+    private final Object value;
 
     /**
      * Constructor.
      *
      * @param value the value
      */
-    public ValueResult(T value) {
+    public ValueResult(Object value) {
         this.value = value;
     }
 
     /**
      * @return the value
      */
-    public T getValue() {
+    public Object getValue() {
         return this.value;
     }
 
     @Override
     public String toString() {
         return value.toString();
+    }
+
+    @Override
+    public boolean accept(Operation op, OperationResultVisitor visitor) {
+        return visitor.visit(op, this);
     }
 }

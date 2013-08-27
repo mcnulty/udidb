@@ -36,6 +36,7 @@ import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.HelpMessage;
 import net.udidb.engine.ops.annotations.LongHelpMessage;
 import net.udidb.engine.ops.results.Result;
+import net.udidb.engine.ops.results.ValueResult;
 
 /**
  * An operation to quit the debugger
@@ -53,8 +54,8 @@ public class Quit extends DisplayNameOperation {
 
     @Override
     public Result execute() throws OperationException {
-        System.exit(0);
+        // Just a no-op operation, the result visitor will need to invoke the quit operation
 
-        return null;
+        return new ValueResult(false);
     }
 }

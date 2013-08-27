@@ -69,6 +69,6 @@ public class Print extends DisplayNameOperation {
 
     @Override
     public Result execute() {
-        return new ValueResult<>(value.toString());
+        return new ValueResult(value.toString());
     }
 }

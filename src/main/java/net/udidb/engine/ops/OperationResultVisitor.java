@@ -26,46 +26,34 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.cli.ops;
+package net.udidb.engine.ops;
 
-import java.io.PrintStream;
-
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
-
-import net.udidb.engine.ops.Operation;
-import net.udidb.engine.ops.OperationResultProcessor;
-import net.udidb.engine.ops.results.Result;
+import net.udidb.engine.ops.results.ValueResult;
 
 /**
- * The result processor for the debugger when run from command line.
+ * Visitor used to process a result of an operation
  *
  * @author mcnulty
  */
-public class CliResultProcessor implements OperationResultProcessor {
+public interface OperationResultVisitor {
 
-    private final PrintStream out;
+    /**
+     * Processes the result of the specified operation
+     *
+     * @param op the operation
+     * @param result the result of the operation
+     *
+     * @return true, if the result indicates further operations should be executed; false otherwise
+     */
+    boolean visit(Operation op, ValueResult result);
 
-    @Inject
-    CliResultProcessor(@Named("OUTPUT DESTINATION") PrintStream out) {
-        this.out = out;
-    }
-
-    @Override
-    public boolean process(Operation op, Result result) {
-        out.println(result);
-
-        return true;
-    }
-
-    @Override
-    public boolean process(Operation op, Exception e) {
-        if (op == null) {
-            out.println(e.getMessage());
-        }else{
-            out.println("Failed to execute " + op.getName() + ": " + e.getMessage());
-        }
-
-        return true;
-    }
+    /**
+     * Processes the exception that occurred while executing or parsing the operation
+     *
+     * @param op the operation or null if the operation could not be determined
+     * @param e the exception
+     *
+     * @return true, if further operations should be executed; false otherwise
+     */
+    boolean visit(Operation op, Exception e);
 }

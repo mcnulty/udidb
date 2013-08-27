@@ -28,14 +28,26 @@
 
 package net.udidb.engine.ops.results;
 
+import net.udidb.engine.ops.Operation;
+import net.udidb.engine.ops.OperationResultVisitor;
+
 /**
  * A marker interface for the result of performing an operation
  *
- * Note: all Result implementations should provide a non-generic toString method. This will be used to obtain a
+ * Note: all Result implementations should provide a non-default toString method. This will be used to obtain a
  * String representation of the the result.
  *
  * @author mcnulty
  */
 public interface Result {
 
+    /**
+     * Accept a visitor to visit the result
+     *
+     * @param op the operation for which this is a result
+     * @param visitor the visitor
+     *
+     * @return true, if the result indicates further operations should be executed; false otherwise
+     */
+    boolean accept(Operation op, OperationResultVisitor visitor);
 }

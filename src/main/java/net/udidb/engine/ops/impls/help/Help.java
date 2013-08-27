@@ -77,7 +77,7 @@ public class Help extends DisplayNameOperation {
             StringBuilder builder = new StringBuilder();
             provider.getAllShortMessages(builder);
 
-            return new ValueResult<>(builder.toString());
+            return new ValueResult(builder.toString());
         }
 
         String longMessage = provider.getLongMessage(opName);
@@ -85,6 +85,6 @@ public class Help extends DisplayNameOperation {
             throw new InvalidOperandException(getName(), "opName");
         }
 
-        return new ValueResult<>(longMessage);
+        return new ValueResult(longMessage);
     }
 }

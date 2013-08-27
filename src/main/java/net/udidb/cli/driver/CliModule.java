@@ -31,13 +31,12 @@ package net.udidb.cli.driver;
 import java.io.InputStream;
 import java.io.PrintStream;
 
-import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
 
-import net.udidb.cli.ops.CliResultProcessor;
+import net.udidb.cli.ops.CliResultVisitor;
 import net.udidb.cli.ops.JlineOperationReader;
 import net.udidb.engine.ops.OperationReader;
-import net.udidb.engine.ops.OperationResultProcessor;
+import net.udidb.engine.ops.OperationResultVisitor;
 import net.udidb.engine.ops.parser.ParserModule;
 
 /**
@@ -53,7 +52,7 @@ public class CliModule extends ParserModule {
 
         bind(OperationReader.class).to(JlineOperationReader.class);
 
-        bind(OperationResultProcessor.class).to(CliResultProcessor.class);
+        bind(OperationResultVisitor.class).to(CliResultVisitor.class);
 
         bind(PrintStream.class).annotatedWith(Names.named("OUTPUT DESTINATION")).toInstance(System.out);
 

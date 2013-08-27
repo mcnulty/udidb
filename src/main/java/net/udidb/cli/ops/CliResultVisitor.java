@@ -26,34 +26,50 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.engine.ops;
+package net.udidb.cli.ops;
 
+import java.io.PrintStream;
+
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
+
+import net.udidb.engine.ops.Operation;
+import net.udidb.engine.ops.OperationResultVisitor;
+import net.udidb.engine.ops.impls.util.Quit;
 import net.udidb.engine.ops.results.Result;
+import net.udidb.engine.ops.results.ValueResult;
 
 /**
- * Provides a mechanism to process a result of an operation
+ * The result processor for the debugger when run from command line.
  *
  * @author mcnulty
  */
-public interface OperationResultProcessor {
+public class CliResultVisitor implements OperationResultVisitor {
 
-    /**
-     * Processes the result of the specified operation
-     *
-     * @param op the operation
-     * @param result the result of the operation
-     *
-     * @return true, if the result indicates further operations should be executed; false otherwise
-     */
-    boolean process(Operation op, Result result);
+    private final PrintStream out;
 
-    /**
-     * Processes the exception that occurred while executing or parsing the operation
-     *
-     * @param op the operation or null if the operation could not be determined
-     * @param e the exception
-     *
-     * @return true, if further operations should be executed; false otherwise
-     */
-    boolean process(Operation op, Exception e);
+    @Inject
+    CliResultVisitor(@Named("OUTPUT DESTINATION") PrintStream out) {
+        this.out = out;
+    }
+
+    @Override
+    public boolean visit(Operation op, ValueResult result) {
+        if (op instanceof Quit) return false;
+
+        out.println(result);
+
+        return true;
+    }
+
+    @Override
+    public boolean visit(Operation op, Exception e) {
+        if (op == null) {
+            out.println(e.getMessage());
+        }else{
+            out.println("Failed to execute " + op.getName() + ": " + e.getMessage());
+        }
+
+        return true;
+    }
 }
