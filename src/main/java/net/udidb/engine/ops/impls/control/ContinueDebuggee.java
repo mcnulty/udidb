@@ -26,47 +26,48 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.cli.driver;
-
-import java.io.InputStream;
-import java.io.PrintStream;
+package net.udidb.engine.ops.impls.control;
 
 import com.google.inject.Inject;
-import com.google.inject.name.Names;
 
-import net.udidb.cli.ops.CliResultVisitor;
-import net.udidb.cli.ops.JlineOperationReader;
-import net.udidb.cli.ops.impls.config.context.GlobalContextManager;
-import net.udidb.engine.ops.OperationReader;
-import net.udidb.engine.ops.impls.control.DebuggeeContext;
-import net.udidb.engine.ops.impls.control.DebuggeeContextFactory;
-import net.udidb.engine.ops.results.OperationResultVisitor;
-import net.udidb.engine.ops.parser.ParserModule;
+import net.libudi.api.UdiProcess;
+import net.libudi.api.exceptions.UdiException;
+import net.udidb.engine.ops.DisplayNameOperation;
+import net.udidb.engine.ops.OperationException;
+import net.udidb.engine.ops.annotations.DisplayName;
+import net.udidb.engine.ops.annotations.HelpMessage;
+import net.udidb.engine.ops.annotations.LongHelpMessage;
+import net.udidb.engine.ops.results.Result;
+import net.udidb.engine.ops.results.VoidResult;
 
 /**
- * A Guice module defining dependencies for running the debugger from the command line
+ * Operation to continue the debuggee
  *
  * @author mcnulty
  */
-public class CliModule extends ParserModule {
+@HelpMessage(enMessage="Continue a debuggee")
+@LongHelpMessage(enMessage=
+        "continue\n\n" +
+        "Continue a debuggee"
+)
+@DisplayName("continue")
+public class ContinueDebuggee extends DisplayNameOperation {
+
+    private final UdiProcess process;
+
+    @Inject
+    public ContinueDebuggee(DebuggeeContext debuggeeContext) {
+        this.process = debuggeeContext.getProcess();
+    }
 
     @Override
-    protected void configure() {
-        super.configure();
+    public Result execute() throws OperationException {
+        try {
+            process.continueProcess();
+        }catch (UdiException e) {
+            throw new OperationException(e.getMessage(), e);
+        }
 
-        bind(OperationReader.class).to(JlineOperationReader.class);
-
-        bind(OperationResultVisitor.class).to(CliResultVisitor.class);
-
-        bind(PrintStream.class).annotatedWith(Names.named("OUTPUT DESTINATION")).toInstance(System.out);
-
-        bind(InputStream.class).annotatedWith(Names.named("INPUT DESTINATION")).toInstance(System.in);
-
-        bind(String[].class).annotatedWith(Names.named("CUSTOM_IMPL_PACKAGES")).toInstance(
-                new String[]{ "net.udidb.cli.ops.impl" });
-
-        bind(DebuggeeContextFactory.class).to(GlobalContextManager.class);
-
-        bind(DebuggeeContext.class).toProvider(GlobalContextManager.class);
+        return new VoidResult();
     }
 }

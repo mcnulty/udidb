@@ -37,6 +37,7 @@ import net.udidb.engine.ops.Operation;
 import net.udidb.engine.ops.results.OperationResultVisitor;
 import net.udidb.engine.ops.impls.util.Quit;
 import net.udidb.engine.ops.results.ValueResult;
+import net.udidb.engine.ops.results.VoidResult;
 
 /**
  * The result processor for the debugger when run from command line.
@@ -47,15 +48,22 @@ public class CliResultVisitor implements OperationResultVisitor {
 
     private final PrintStream out;
 
+    private static final boolean DEBUG = true;
+
     @Inject
     CliResultVisitor(@Named("OUTPUT DESTINATION") PrintStream out) {
         this.out = out;
     }
 
     @Override
-    public boolean visit(Operation op, ValueResult result) {
+    public boolean visit(Operation op, VoidResult result) {
         if (op instanceof Quit) return false;
 
+        return true;
+    }
+
+    @Override
+    public boolean visit(Operation op, ValueResult result) {
         out.println(result);
 
         return true;
@@ -67,6 +75,9 @@ public class CliResultVisitor implements OperationResultVisitor {
             out.println(e.getMessage());
         }else{
             out.println("Failed to execute " + op.getName() + ": " + e.getMessage());
+            if (DEBUG) {
+                e.printStackTrace(out);
+            }
         }
 
         return true;

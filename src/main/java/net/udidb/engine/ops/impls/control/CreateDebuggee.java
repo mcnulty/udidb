@@ -28,16 +28,23 @@
 
 package net.udidb.engine.ops.impls.control;
 
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import com.google.inject.Inject;
 
+import net.libudi.api.UdiProcess;
 import net.libudi.api.UdiProcessManager;
+import net.libudi.api.exceptions.UdiException;
 import net.udidb.engine.ops.DisplayNameOperation;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.HelpMessage;
 import net.udidb.engine.ops.annotations.LongHelpMessage;
+import net.udidb.engine.ops.annotations.Operand;
 import net.udidb.engine.ops.results.Result;
-import net.udidb.engine.ops.results.ValueResult;
+import net.udidb.engine.ops.results.VoidResult;
 
 /**
  * Operation to create a process
@@ -54,14 +61,56 @@ public class CreateDebuggee extends DisplayNameOperation {
 
     private final UdiProcessManager procManager;
 
+    private final DebuggeeContextFactory contextFactory;
+
+    @Operand(order=0)
+    private String execPath;
+
+    @Operand(order=1, restOfLine=true)
+    private String[] args;
+
     @Inject
-    CreateDebuggee(UdiProcessManager procManager) {
+    public CreateDebuggee(UdiProcessManager procManager, DebuggeeContextFactory contextFactory) {
         this.procManager = procManager;
+        this.contextFactory = contextFactory;
     }
 
+    public String getExecPath() {
+        return execPath;
+    }
+
+    public void setExecPath(String execPath) {
+        this.execPath = execPath;
+    }
+
+    public String[] getArgs() {
+        return args;
+    }
+
+    public void setArgs(String[] args) {
+        this.args = args;
+    }
 
     @Override
     public Result execute() throws OperationException {
-        return new ValueResult(procManager.getClass().getName());
+        Path path;
+        try {
+            path = Paths.get(execPath);
+        }catch (InvalidPathException e) {
+            throw new OperationException(String.format("%s is not a valid path", execPath), e);
+        }
+
+        DebuggeeContext context = contextFactory.createContext(path, args);
+
+        UdiProcess process;
+        try {
+            process = procManager.createProcess(path, args, context.getEnv(), context.createProcessConfig());
+        }catch (UdiException e) {
+            throw new OperationException(e.getMessage(), e);
+        }
+
+        context.setProcess(process);
+
+        return new VoidResult();
     }
 }

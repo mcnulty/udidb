@@ -48,4 +48,9 @@ public @interface Operand {
      * @return true, if the operand is optional. Only the last operands (in order) can be optional.
      */
     boolean optional() default false;
+
+    /**
+     * @return true, if the operand consumes the rest of the line
+     */
+    boolean restOfLine() default false;
 }

@@ -26,23 +26,24 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.engine.ops;
+package net.udidb.engine.ops.impls.control;
+
+import java.nio.file.Path;
 
 /**
- * Thrown to indicate that an Operation was specified an invalid operand value
+ * Factory for DebuggeeContext
  *
  * @author mcnulty
  */
-public class InvalidOperandException extends OperationException {
+public interface DebuggeeContextFactory {
 
     /**
-     * Constructor.
+     * Creates a DebuggeeContext
      *
-     * @param operationName the Operation value
-     * @param operandName the Operand value
+     * @param execPath the path to the executable
+     * @param args the arguments
+     *
+     * @return the DebuggeeContext
      */
-    public InvalidOperandException(String operationName, String operandName) {
-        super(String.format("Invalid value specified to operand '%s' for operation '%s'",
-                operandName, operationName));
-    }
+    DebuggeeContext createContext(Path execPath, String[] args);
 }

@@ -13,4 +13,20 @@ if [ ! -e $JAR ]; then
     exit 1
 fi
 
+if [ -z ${UDI_LIB_DIR} ]; then
+    echo "UDI_LIB_DIR must be set"
+    exit 1
+fi
+
+if [ -z ${UDI_RT_LIB_DIR} ]; then
+    echo "UDI_RT_LIB_DIR must be set"
+    exit 1
+fi
+
+if [ ! -z ${LD_LIBRARY_PATH} ]; then
+    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${UDI_LIB_DIR}:${UDI_RT_LIB_DIR}
+else
+    export LD_LIBRARY_PATH=${UDI_LIB_DIR}:${UDI_RT_LIB_DIR}
+fi
+
 java $DEBUG -jar $JAR $*

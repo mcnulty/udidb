@@ -52,6 +52,6 @@ public class OpModule extends AbstractModule {
     }
 
     private void control() {
-        bind(UdiProcessManager.class).to(UdiProcessManagerImpl.class);
+        bind(UdiProcessManager.class).toInstance(new UdiProcessManagerImpl());
     }
 }

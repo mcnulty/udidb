@@ -31,19 +31,24 @@ package net.udidb.engine.ops.parser;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
+import java.net.URL;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Set;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
 import org.reflections.util.ClasspathHelper;
 
+import com.google.inject.ConfigurationException;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.ProvisionException;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 
 import net.udidb.engine.ops.Operation;
@@ -59,24 +64,29 @@ import net.udidb.engine.ops.annotations.Operand;
  *
  * @author mcnulty
  */
+@Singleton
 public class OperationParser {
 
     private final Map<String, Class<? extends Operation>> operations = new HashMap<>();
 
-    private static final Pattern OPERATION_PATTERN = Pattern.compile("^(\\S+)\\s*(.*)$");
-
     private static final String WHITE_SPACE = "\\s+";
 
-    private static final Injector injector = Guice.createInjector(new ParserModule());
+    private final Injector injector;
 
     @Inject
-    OperationParser(@Named("OP_IMPL_PACKAGE") String opImplPackage) {
-        addSupportedOperations(opImplPackage);
+    OperationParser(Injector injector, @Named("OP_IMPL_PACKAGE") String opImplPackage, @Named("CUSTOM_IMPL_PACKAGES") String[] customPackages) {
+        this.injector = injector;
+        addSupportedOperations(opImplPackage, customPackages);
     }
 
-    private void addSupportedOperations(String opImplPackage) {
-        Reflections reflections = new Reflections(ClasspathHelper.forPackage(opImplPackage),
-                new SubTypesScanner());
+    private void addSupportedOperations(String opImplPackage, String[] customPackages) {
+        Set<URL> packages = new HashSet<>();
+        packages.addAll(ClasspathHelper.forPackage(opImplPackage));
+        for (String pack : customPackages) {
+            packages.addAll(ClasspathHelper.forPackage(pack));
+        }
+
+        Reflections reflections = new Reflections(packages, new SubTypesScanner());
         for (Class<? extends Operation> opClass : reflections.getSubTypesOf(Operation.class)) {
             if (Modifier.isAbstract(opClass.getModifiers())) continue;
 
@@ -94,70 +104,102 @@ public class OperationParser {
      * @return the Operation (never null)
      *
      * @throws UnknownOperationException if the opString references an unknown operation
-     * @throws OperationParseException if their is an error parsing a knonw operation
+     * @throws OperationParseException if their is an error parsing a known operation
      */
     public Operation parse(String opString) throws UnknownOperationException, OperationParseException {
 
-        Matcher matcher = OPERATION_PATTERN.matcher(opString);
-        if (matcher.matches()) {
-            String opName = matcher.group(1);
-            String operandString = matcher.group(2);
+        // Determine the operation
+        String[] tokens = opString.split(WHITE_SPACE);
 
-            Class<? extends Operation> opClass = operations.get(opName);
-            if ( opClass == null ) {
-                throw new UnknownOperationException(String.format("Unknown operation '%s'", opName));
+        Class<? extends Operation > opClass = null;
+        String opName = null;
+        String[] operandValues = new String[0];
+        if (tokens.length > 0) {
+            // Look up the hierarchical operation
+            StringBuilder opNameBuilder = new StringBuilder();
+
+            int operationSplit = 0;
+            opNameBuilder.append(tokens[operationSplit]);
+            for (; operationSplit < tokens.length; ++operationSplit) {
+                opClass = operations.get(opNameBuilder.toString());
+                if (opClass != null) break;
             }
+            opName = opNameBuilder.toString();
 
-            // TODO catch Guice runtime exceptions
-            Operation cmd = injector.getInstance(opClass);
+            operationSplit++;
 
-            int requiredOperands = 0;
-            Map<Integer, Field> operands = new HashMap<>();
-            for (Field field : opClass.getDeclaredFields()) {
-                Operand operand = field.getAnnotation(Operand.class);
-                if (operand != null) {
-                    if (!operand.optional()) {
-                        requiredOperands++;
-                    }
-
-                    if ( operands.put(operand.order(), field) != null ) {
-                        throw new OperationParseException(String.format("Order for operand '%s' is not unique.",
-                                field.getName()));
-                    }
-                }
+            if (operationSplit < tokens.length) {
+                operandValues = Arrays.copyOfRange(tokens, operationSplit, tokens.length);
             }
+        }
 
-            if (requiredOperands != 0 && operandString.isEmpty()) {
-                throw new OperationParseException(String.format("Operands required for operation '%s'.",
-                        opName));
-            }
-
-            String[] operandValues;
-            if (operandString.isEmpty()) {
-                operandValues = new String[0];
-            }else{
-                operandValues = operandString.split(WHITE_SPACE);
-            }
-            if (operandValues.length < requiredOperands || operandValues.length > operands.size()) {
-                throw new OperationParseException(String.format("Invalid number of operands. Expected at least %s.",
-                        operands.size()));
-            }
-
-            Map<String, Object> properties = new HashMap<>();
-            for (int i = 0; i < operandValues.length; ++i) {
-                properties.put(operands.get(i).getName(), operandValues[i]);
-            }
-
-            try {
-                BeanUtils.populate(cmd, properties);
-            } catch (IllegalAccessException | InvocationTargetException e) {
-                throw new OperationParseException(String.format("Failed to construct %s operation", opName), e);
-            }
-
-            return cmd;
-        }else{
+        if (opClass == null) {
             throw new UnknownOperationException(String.format("Cannot parse operation from line '%s'", opString));
         }
 
+        Operation cmd;
+        try {
+            cmd = injector.getInstance(opClass);
+        }catch (ConfigurationException | ProvisionException e) {
+            throw new UnknownOperationException(String.format("Failed to configure operation '%s'", opName));
+        }
+
+        int requiredOperands = 0;
+        int restOfLineIndex = -1;
+        Map<Integer, Field> operands = new HashMap<>();
+        for (Field field : opClass.getDeclaredFields()) {
+            Operand operand = field.getAnnotation(Operand.class);
+            if (operand != null) {
+                if (operand.order() > restOfLineIndex && restOfLineIndex != -1) {
+                    throw new OperationParseException(String.format("Operand '%s' cannot fall after rest of line operand.",
+                            field.getName()));
+                }
+
+                if (!operand.optional()) {
+                    requiredOperands++;
+                }
+
+                if (operand.restOfLine()) {
+                    if (restOfLineIndex != -1) {
+                        throw new OperationParseException("The rest of line property can only be set on one operand.");
+                    }
+
+                    restOfLineIndex = operand.order();
+                }
+
+                if ( operands.put(operand.order(), field) != null ) {
+                    throw new OperationParseException(String.format("Order for operand '%s' is not unique.",
+                            field.getName()));
+                }
+            }
+        }
+
+        if (requiredOperands != 0 && operandValues.length == 0) {
+            throw new OperationParseException(String.format("Operands required for operation '%s'.",
+                    opName));
+        }
+
+        if (operandValues.length < requiredOperands || operandValues.length > operands.size()) {
+            throw new OperationParseException(String.format("Invalid number of operands. Expected at least %s.",
+                    operands.size()));
+        }
+
+        Map<String, Object> properties = new HashMap<>();
+        for (int i = 0; i < operandValues.length; ++i) {
+            if (i == restOfLineIndex) {
+                properties.put(operands.get(i).getName(), Arrays.copyOfRange(operandValues, i, operandValues.length));
+                break;
+            }else{
+                properties.put(operands.get(i).getName(), operandValues[i]);
+            }
+        }
+
+        try {
+            BeanUtils.populate(cmd, properties);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new OperationParseException(String.format("Failed to construct %s operation", opName), e);
+        }
+
+        return cmd;
     }
 }

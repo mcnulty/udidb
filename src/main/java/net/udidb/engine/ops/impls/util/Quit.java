@@ -36,7 +36,7 @@ import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.HelpMessage;
 import net.udidb.engine.ops.annotations.LongHelpMessage;
 import net.udidb.engine.ops.results.Result;
-import net.udidb.engine.ops.results.ValueResult;
+import net.udidb.engine.ops.results.VoidResult;
 
 /**
  * An operation to quit the debugger
@@ -49,13 +49,13 @@ import net.udidb.engine.ops.results.ValueResult;
 public class Quit extends DisplayNameOperation {
 
     @Inject
-    Quit() {
+    public Quit() {
     }
 
     @Override
     public Result execute() throws OperationException {
         // Just a no-op operation, the result visitor will need to invoke the quit operation
 
-        return new ValueResult(false);
+        return new VoidResult();
     }
 }

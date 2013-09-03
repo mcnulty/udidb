@@ -26,47 +26,74 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.cli.driver;
+package net.udidb.engine.ops.impls.control;
 
-import java.io.InputStream;
-import java.io.PrintStream;
+import java.nio.file.Path;
+import java.util.Map;
 
-import com.google.inject.Inject;
-import com.google.inject.name.Names;
-
-import net.udidb.cli.ops.CliResultVisitor;
-import net.udidb.cli.ops.JlineOperationReader;
-import net.udidb.cli.ops.impls.config.context.GlobalContextManager;
-import net.udidb.engine.ops.OperationReader;
-import net.udidb.engine.ops.impls.control.DebuggeeContext;
-import net.udidb.engine.ops.impls.control.DebuggeeContextFactory;
-import net.udidb.engine.ops.results.OperationResultVisitor;
-import net.udidb.engine.ops.parser.ParserModule;
+import net.libudi.api.UdiProcess;
+import net.libudi.api.UdiProcessConfig;
+import net.udidb.engine.ops.util.Copy;
 
 /**
- * A Guice module defining dependencies for running the debugger from the command line
- *
- * @author mcnulty
+ * A bean class used to encapsulate all the configuration and state for a specific debuggee.
  */
-public class CliModule extends ParserModule {
+public class DebuggeeContext {
 
-    @Override
-    protected void configure() {
-        super.configure();
+    private Path rootDir;
 
-        bind(OperationReader.class).to(JlineOperationReader.class);
+    private Map<String, String> env;
 
-        bind(OperationResultVisitor.class).to(CliResultVisitor.class);
+    private Path execPath;
 
-        bind(PrintStream.class).annotatedWith(Names.named("OUTPUT DESTINATION")).toInstance(System.out);
+    private String[] args;
 
-        bind(InputStream.class).annotatedWith(Names.named("INPUT DESTINATION")).toInstance(System.in);
+    private UdiProcess process;
 
-        bind(String[].class).annotatedWith(Names.named("CUSTOM_IMPL_PACKAGES")).toInstance(
-                new String[]{ "net.udidb.cli.ops.impl" });
+    public Path getRootDir() {
+        return rootDir;
+    }
 
-        bind(DebuggeeContextFactory.class).to(GlobalContextManager.class);
+    public void setRootDir(Path rootDir) {
+        this.rootDir = rootDir;
+    }
 
-        bind(DebuggeeContext.class).toProvider(GlobalContextManager.class);
+    public Map<String, String> getEnv() {
+        return env;
+    }
+
+    public void setEnv(Map<String, String> env) {
+        this.env = env;
+    }
+
+    public Path getExecPath() {
+        return execPath;
+    }
+
+    public void setExecPath(Path execPath) {
+        this.execPath = execPath;
+    }
+
+    public String[] getArgs() {
+        return args;
+    }
+
+    public void setArgs(String[] args) {
+        this.args = args;
+    }
+
+    public UdiProcess getProcess() {
+        return process;
+    }
+
+    public void setProcess(UdiProcess process) {
+        this.process = process;
+    }
+
+    public UdiProcessConfig createProcessConfig() {
+        UdiProcessConfig config = new UdiProcessConfig();
+        config.setRootDir(rootDir);
+
+        return config;
     }
 }

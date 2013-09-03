@@ -55,7 +55,7 @@ public class Print extends DisplayNameOperation {
     private String value;
 
     @Inject
-    Print() {
+    public Print() {
     }
 
     public String getValue() {

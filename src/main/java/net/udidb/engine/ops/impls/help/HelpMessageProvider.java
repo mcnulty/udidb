@@ -65,7 +65,7 @@ public class HelpMessageProvider {
     }
 
     @Inject
-    HelpMessageProvider(@Named("OP_IMPL_PACKAGE") String opImplPackage) {
+    public HelpMessageProvider(@Named("OP_IMPL_PACKAGE") String opImplPackage) {
         Reflections reflections = new Reflections(ClasspathHelper.forPackage(opImplPackage),
                 new SubTypesScanner());
         for (Class<? extends Operation> opClass : reflections.getSubTypesOf(Operation.class)) {

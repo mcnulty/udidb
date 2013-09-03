@@ -31,7 +31,6 @@ package net.udidb.engine.ops.impls.help;
 import com.google.inject.Inject;
 
 import net.udidb.engine.ops.DisplayNameOperation;
-import net.udidb.engine.ops.InvalidOperandException;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.HelpMessage;
@@ -67,7 +66,7 @@ public class Help extends DisplayNameOperation {
     }
 
     @Inject
-    Help(HelpMessageProvider provider) {
+    public Help(HelpMessageProvider provider) {
         this.provider = provider;
     }
 
@@ -82,7 +81,7 @@ public class Help extends DisplayNameOperation {
 
         String longMessage = provider.getLongMessage(opName);
         if (longMessage == null) {
-            throw new InvalidOperandException(getName(), "opName");
+            throw new OperationException(String.format("No help available for operation '%s'", getName()));
         }
 
         return new ValueResult(longMessage);

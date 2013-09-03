@@ -38,6 +38,16 @@ import net.udidb.engine.ops.Operation;
 public interface OperationResultVisitor {
 
     /**
+     * Processes the VoidResult of the specified operation
+     *
+     * @param op the operation
+     * @param result the VoidResult of the operation
+     *
+     * @return true, if the result indicates further operations should be executed; false otherwise
+     */
+    boolean visit(Operation op, VoidResult result);
+
+    /**
      * Processes the ValueResult of the specified operation
      *
      * @param op the operation
