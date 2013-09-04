@@ -26,17 +26,11 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.engine.ops.impls.control;
-
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+package net.udidb.cli.ops.impls.internals;
 
 import com.google.inject.Inject;
 
-import net.libudi.api.UdiProcess;
-import net.libudi.api.UdiProcessManager;
-import net.libudi.api.exceptions.UdiException;
+import net.udidb.cli.ops.CliResultVisitor;
 import net.udidb.engine.ops.DisplayNameOperation;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
@@ -47,69 +41,39 @@ import net.udidb.engine.ops.results.Result;
 import net.udidb.engine.ops.results.VoidResult;
 
 /**
- * Operation to create a process
+ * Operation to control whether stack traces are printed for exceptions
  *
  * @author mcnulty
  */
-@HelpMessage(enMessage="Create a new debuggee")
+@HelpMessage(enMessage = "Disable/enable stack traces")
 @LongHelpMessage(enMessage=
-        "create /path/to/executable args\n\n" +
-        "Create a new debuggee"
+        "internals stack-trace <boolean>\n\n" +
+        "Disable/enable stack traces"
 )
-@DisplayName("create")
-public class CreateDebuggee extends DisplayNameOperation {
+@DisplayName("internals stack-trace")
+public class SetStackTrace extends DisplayNameOperation {
 
-    private final UdiProcessManager procManager;
-
-    private final DebuggeeContextFactory contextFactory;
+    private final CliResultVisitor resultVisitor;
 
     @Operand(order=0)
-    private String execPath;
-
-    @Operand(order=1, restOfLine=true, optional=true)
-    private String[] args;
+    private boolean value;
 
     @Inject
-    public CreateDebuggee(UdiProcessManager procManager, DebuggeeContextFactory contextFactory) {
-        this.procManager = procManager;
-        this.contextFactory = contextFactory;
+    public SetStackTrace(CliResultVisitor resultVisitor) {
+        this.resultVisitor = resultVisitor;
     }
 
-    public String getExecPath() {
-        return execPath;
+    public boolean isValue() {
+        return value;
     }
 
-    public void setExecPath(String execPath) {
-        this.execPath = execPath;
-    }
-
-    public String[] getArgs() {
-        return args;
-    }
-
-    public void setArgs(String[] args) {
-        this.args = args;
+    public void setValue(boolean value) {
+        this.value = value;
     }
 
     @Override
     public Result execute() throws OperationException {
-        Path path;
-        try {
-            path = Paths.get(execPath);
-        }catch (InvalidPathException e) {
-            throw new OperationException(String.format("%s is not a valid path", execPath), e);
-        }
-
-        DebuggeeContext context = contextFactory.createContext(path, args);
-
-        UdiProcess process;
-        try {
-            process = procManager.createProcess(path, args, context.getEnv(), context.createProcessConfig());
-        }catch (UdiException e) {
-            throw new OperationException(e.getMessage(), e);
-        }
-
-        context.setProcess(process);
+        resultVisitor.setPrintStackTraces(value);
 
         return new VoidResult();
     }

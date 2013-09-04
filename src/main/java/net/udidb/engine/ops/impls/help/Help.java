@@ -28,6 +28,8 @@
 
 package net.udidb.engine.ops.impls.help;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.google.inject.Inject;
 
 import net.udidb.engine.ops.DisplayNameOperation;
@@ -54,14 +56,14 @@ public class Help extends DisplayNameOperation {
 
     private final HelpMessageProvider provider;
 
-    @Operand(order=0, optional=true)
-    private String opName;
+    @Operand(order=0, optional=true, restOfLine=true)
+    private String[] opName;
 
-    public String getOpName() {
+    public String[] getOpName() {
         return opName;
     }
 
-    public void setOpName(String opName) {
+    public void setOpName(String[] opName) {
         this.opName = opName;
     }
 
@@ -79,7 +81,7 @@ public class Help extends DisplayNameOperation {
             return new ValueResult(builder.toString());
         }
 
-        String longMessage = provider.getLongMessage(opName);
+        String longMessage = provider.getLongMessage(StringUtils.join(opName, " "));
         if (longMessage == null) {
             throw new OperationException(String.format("No help available for operation '%s'", getName()));
         }

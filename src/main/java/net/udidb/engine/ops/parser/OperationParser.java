@@ -120,9 +120,13 @@ public class OperationParser {
 
             int operationSplit = 0;
             opNameBuilder.append(tokens[operationSplit]);
-            for (; operationSplit < tokens.length; ++operationSplit) {
+            while (operationSplit < tokens.length) {
                 opClass = operations.get(opNameBuilder.toString());
                 if (opClass != null) break;
+
+                if (++operationSplit < tokens.length) {
+                    opNameBuilder.append(" ").append(tokens[operationSplit]);
+                }
             }
             opName = opNameBuilder.toString();
 
@@ -179,7 +183,7 @@ public class OperationParser {
                     opName));
         }
 
-        if (operandValues.length < requiredOperands || operandValues.length > operands.size()) {
+        if (operandValues.length < requiredOperands || (restOfLineIndex == -1 && operandValues.length > operands.size()) ) {
             throw new OperationParseException(String.format("Invalid number of operands. Expected at least %s.",
                     operands.size()));
         }

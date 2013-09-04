@@ -31,6 +31,7 @@ package net.udidb.cli.ops;
 import java.io.PrintStream;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 
 import net.udidb.engine.ops.Operation;
@@ -44,15 +45,24 @@ import net.udidb.engine.ops.results.VoidResult;
  *
  * @author mcnulty
  */
+@Singleton
 public class CliResultVisitor implements OperationResultVisitor {
 
     private final PrintStream out;
 
-    private static final boolean DEBUG = true;
+    private boolean printStackTraces = false;
 
     @Inject
     CliResultVisitor(@Named("OUTPUT DESTINATION") PrintStream out) {
         this.out = out;
+    }
+
+    public boolean isPrintStackTraces() {
+        return printStackTraces;
+    }
+
+    public void setPrintStackTraces(boolean printStackTraces) {
+        this.printStackTraces = printStackTraces;
     }
 
     @Override
@@ -74,8 +84,14 @@ public class CliResultVisitor implements OperationResultVisitor {
         if (op == null) {
             out.println(e.getMessage());
         }else{
-            out.println("Failed to execute " + op.getName() + ": " + e.getMessage());
-            if (DEBUG) {
+            out.print("Failed to execute " + op.getName());
+
+            if (e.getMessage() != null) {
+                out.print(": " + e.getMessage());
+            }
+
+            out.println();
+            if (printStackTraces) {
                 e.printStackTrace(out);
             }
         }
