@@ -30,7 +30,7 @@ package net.udidb.engine.ops.impls.util;
 
 import com.google.inject.Inject;
 
-import net.udidb.engine.ops.DisplayNameOperation;
+import net.udidb.engine.ops.impls.DisplayNameOperation;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.HelpMessage;

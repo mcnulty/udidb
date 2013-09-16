@@ -26,11 +26,11 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.cli.ops.impls.internals;
+package net.udidb.cli.ops.impls.control;
 
 import com.google.inject.Inject;
 
-import net.udidb.cli.ops.CliResultVisitor;
+import net.udidb.cli.ops.events.CliEventDispatcher;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.HelpMessage;
@@ -40,28 +40,28 @@ import net.udidb.engine.ops.results.Result;
 import net.udidb.engine.ops.results.VoidResult;
 
 /**
- * Operation to control whether stack traces are printed for exceptions
+ * Sets the block-for-event configuration property
  *
  * @author mcnulty
  */
-@HelpMessage(enMessage = "Disable/enable stack traces")
-@LongHelpMessage(enMessage=
-        "internals stack-trace <boolean>\n\n" +
-        "Disable/enable stack traces"
+@HelpMessage(enMessage = "Disable/enable whether to block for an event after continuing a debuggee")
+@LongHelpMessage(enMessage =
+        "set block-for-event <boolean>\n\n" +
+        "Disable/enable whether to block for an event after continuing a debuggee"
 )
-@DisplayName("internals stack-trace")
-public class SetStackTrace extends SetterOperation<Boolean> {
+@DisplayName("set block-for-event")
+public class SetBlockForEvent extends SetterOperation<Boolean> {
 
-    private final CliResultVisitor resultVisitor;
+    private final CliEventDispatcher eventDispatcher;
 
     @Inject
-    public SetStackTrace(CliResultVisitor resultVisitor) {
-        this.resultVisitor = resultVisitor;
+    public SetBlockForEvent(CliEventDispatcher eventDispatcher) {
+        this.eventDispatcher = eventDispatcher;
     }
 
     @Override
     public Result execute() throws OperationException {
-        resultVisitor.setPrintStackTraces(value);
+        eventDispatcher.setBlockForEvent(value);
 
         return new VoidResult();
     }

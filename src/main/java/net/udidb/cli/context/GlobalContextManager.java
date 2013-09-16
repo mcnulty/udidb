@@ -26,11 +26,13 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.cli.ops.impls.config.context;
+package net.udidb.cli.context;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -39,8 +41,9 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
-import net.udidb.engine.ops.impls.control.DebuggeeContext;
-import net.udidb.engine.ops.impls.control.DebuggeeContextFactory;
+import net.libudi.api.UdiProcess;
+import net.udidb.engine.ops.context.DebuggeeContext;
+import net.udidb.engine.ops.context.DebuggeeContextFactory;
 
 /**
  * A class that maintains the current global DebuggeeContext that is passed to control Operations
@@ -115,5 +118,15 @@ public class GlobalContextManager implements Provider<DebuggeeContext>, Debuggee
         current = context;
 
         return context;
+    }
+
+    public List<UdiProcess> getProcesses() {
+        List<UdiProcess> processes = new ArrayList<>();
+        synchronized (contexts) {
+            for (DebuggeeContext context : contexts.values()) {
+                processes.add(context.getProcess());
+            }
+        }
+        return processes;
     }
 }

@@ -31,17 +31,15 @@ package net.udidb.cli.ops;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 
 import jline.Terminal;
 import jline.TerminalFactory;
 import jline.console.ConsoleReader;
+import net.udidb.engine.events.EventDispatcher;
 import net.udidb.engine.ops.Operation;
 import net.udidb.engine.ops.OperationParseException;
 import net.udidb.engine.ops.OperationReader;
@@ -53,6 +51,7 @@ import net.udidb.engine.ops.parser.OperationParser;
  *
  * @author mcnulty
  */
+@Singleton
 public class JlineOperationReader implements OperationReader {
 
     private static final String PROMPT = "(udidb) ";
@@ -76,7 +75,6 @@ public class JlineOperationReader implements OperationReader {
 
     @Override
     public Operation read() throws IOException, UnknownOperationException, OperationParseException {
-
         Operation cmd = null;
         while (cmd == null) {
             String line = reader.readLine();

@@ -34,7 +34,15 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 
+import net.libudi.api.event.UdiEventBreakpoint;
+import net.libudi.api.event.UdiEventError;
+import net.libudi.api.event.UdiEventProcessExit;
+import net.libudi.api.event.UdiEventThreadCreate;
+import net.libudi.api.event.UdiEventVisitor;
+import net.libudi.api.exceptions.UdiException;
+import net.udidb.engine.events.EventDispatcher;
 import net.udidb.engine.ops.Operation;
+import net.udidb.engine.ops.results.EventResult;
 import net.udidb.engine.ops.results.OperationResultVisitor;
 import net.udidb.engine.ops.impls.util.Quit;
 import net.udidb.engine.ops.results.ValueResult;
@@ -46,15 +54,17 @@ import net.udidb.engine.ops.results.VoidResult;
  * @author mcnulty
  */
 @Singleton
-public class CliResultVisitor implements OperationResultVisitor {
+public class CliResultVisitor implements OperationResultVisitor, UdiEventVisitor {
 
     private final PrintStream out;
+    private final EventDispatcher eventDispatcher;
 
     private boolean printStackTraces = false;
 
     @Inject
-    CliResultVisitor(@Named("OUTPUT DESTINATION") PrintStream out) {
+    CliResultVisitor(@Named("OUTPUT DESTINATION") PrintStream out, EventDispatcher eventDispatcher) {
         this.out = out;
+        this.eventDispatcher = eventDispatcher;
     }
 
     public boolean isPrintStackTraces() {
@@ -79,23 +89,71 @@ public class CliResultVisitor implements OperationResultVisitor {
         return true;
     }
 
-    @Override
-    public boolean visit(Operation op, Exception e) {
-        if (op == null) {
-            out.println(e.getMessage());
-        }else{
-            out.print("Failed to execute " + op.getName());
+    private void printException(Exception e) {
+        printException("", e);
+    }
+
+    private void printException(String msg, Exception e) {
+        if (!msg.isEmpty()) {
+            out.print(msg);
 
             if (e.getMessage() != null) {
                 out.print(": " + e.getMessage());
             }
-
-            out.println();
-            if (printStackTraces) {
-                e.printStackTrace(out);
+        }else{
+            if (e.getMessage() != null) {
+                out.print(e.getMessage());
+            }else{
+                out.print("Failed to parse operation");
             }
         }
 
+        out.println();
+
+        if (printStackTraces) {
+            e.printStackTrace(out);
+        }
+    }
+
+    @Override
+    public boolean visit(Operation op, EventResult result) {
+        try {
+            eventDispatcher.handleEvents();
+        }catch (UdiException e) {
+            printException("Failed to handle event for " + op.getName(), e);
+        }
+
         return true;
+    }
+
+    @Override
+    public boolean visit(Operation op, Exception e) {
+        if (op == null) {
+            printException(e);
+        }else{
+            printException("Failed to execute " + op.getName(), e);
+        }
+
+        return true;
+    }
+
+    @Override
+    public void visit(UdiEventBreakpoint breakpointEvent) {
+        out.print(String.format("Breakpoint at 0x%x", breakpointEvent.getAddress()));
+    }
+
+    @Override
+    public void visit(UdiEventError errorEvent) {
+        out.print(String.format("Error event occurred: %s", errorEvent.getErrorString()));
+    }
+
+    @Override
+    public void visit(UdiEventProcessExit processExitEvent) {
+        out.print(String.format("Process exited with code = %d", processExitEvent.getExitCode()));
+    }
+
+    @Override
+    public void visit(UdiEventThreadCreate threadCreateEvent) {
+        out.print(String.format("Thread created id = 0x%x", threadCreateEvent.getNewThread().getTid()));
     }
 }

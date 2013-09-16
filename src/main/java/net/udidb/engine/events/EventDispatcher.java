@@ -26,43 +26,21 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.cli.ops.impls.internals;
+package net.udidb.engine.events;
 
-import com.google.inject.Inject;
-
-import net.udidb.cli.ops.CliResultVisitor;
-import net.udidb.engine.ops.OperationException;
-import net.udidb.engine.ops.annotations.DisplayName;
-import net.udidb.engine.ops.annotations.HelpMessage;
-import net.udidb.engine.ops.annotations.LongHelpMessage;
-import net.udidb.engine.ops.impls.SetterOperation;
-import net.udidb.engine.ops.results.Result;
-import net.udidb.engine.ops.results.VoidResult;
+import net.libudi.api.exceptions.UdiException;
 
 /**
- * Operation to control whether stack traces are printed for exceptions
+ * Provides methods to dispatch and handle events that occur in a process
  *
  * @author mcnulty
  */
-@HelpMessage(enMessage = "Disable/enable stack traces")
-@LongHelpMessage(enMessage=
-        "internals stack-trace <boolean>\n\n" +
-        "Disable/enable stack traces"
-)
-@DisplayName("internals stack-trace")
-public class SetStackTrace extends SetterOperation<Boolean> {
+public interface EventDispatcher {
 
-    private final CliResultVisitor resultVisitor;
-
-    @Inject
-    public SetStackTrace(CliResultVisitor resultVisitor) {
-        this.resultVisitor = resultVisitor;
-    }
-
-    @Override
-    public Result execute() throws OperationException {
-        resultVisitor.setPrintStackTraces(value);
-
-        return new VoidResult();
-    }
+    /**
+     * Handle any pending events in all managed processes. Whether or not this call blocks is dependent on the implementation.
+     *
+     * @throws UdiException on failure during handling the events
+     */
+    void handleEvents() throws UdiException;
 }

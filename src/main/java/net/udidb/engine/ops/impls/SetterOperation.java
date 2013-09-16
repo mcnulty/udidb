@@ -26,43 +26,27 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.cli.ops.impls.internals;
+package net.udidb.engine.ops.impls;
 
-import com.google.inject.Inject;
-
-import net.udidb.cli.ops.CliResultVisitor;
-import net.udidb.engine.ops.OperationException;
-import net.udidb.engine.ops.annotations.DisplayName;
-import net.udidb.engine.ops.annotations.HelpMessage;
-import net.udidb.engine.ops.annotations.LongHelpMessage;
-import net.udidb.engine.ops.impls.SetterOperation;
-import net.udidb.engine.ops.results.Result;
-import net.udidb.engine.ops.results.VoidResult;
+import net.udidb.engine.ops.annotations.Operand;
 
 /**
- * Operation to control whether stack traces are printed for exceptions
+ * Operation that sets a single value
+ *
+ * @param <T> the type of the value
  *
  * @author mcnulty
  */
-@HelpMessage(enMessage = "Disable/enable stack traces")
-@LongHelpMessage(enMessage=
-        "internals stack-trace <boolean>\n\n" +
-        "Disable/enable stack traces"
-)
-@DisplayName("internals stack-trace")
-public class SetStackTrace extends SetterOperation<Boolean> {
+public abstract class SetterOperation<T> extends DisplayNameOperation {
 
-    private final CliResultVisitor resultVisitor;
+    @Operand(order=0)
+    protected T value;
 
-    @Inject
-    public SetStackTrace(CliResultVisitor resultVisitor) {
-        this.resultVisitor = resultVisitor;
+    public T getValue() {
+        return value;
     }
 
-    @Override
-    public Result execute() throws OperationException {
-        resultVisitor.setPrintStackTraces(value);
-
-        return new VoidResult();
+    public void setValue(T value) {
+        this.value = value;
     }
 }

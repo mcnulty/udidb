@@ -32,7 +32,8 @@ import com.google.inject.Inject;
 
 import net.libudi.api.UdiProcess;
 import net.libudi.api.exceptions.UdiException;
-import net.udidb.engine.ops.DisplayNameOperation;
+import net.udidb.engine.ops.context.DebuggeeContext;
+import net.udidb.engine.ops.impls.DisplayNameOperation;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.HelpMessage;

@@ -31,15 +31,16 @@ package net.udidb.cli.driver;
 import java.io.InputStream;
 import java.io.PrintStream;
 
-import com.google.inject.Inject;
 import com.google.inject.name.Names;
 
 import net.udidb.cli.ops.CliResultVisitor;
 import net.udidb.cli.ops.JlineOperationReader;
-import net.udidb.cli.ops.impls.config.context.GlobalContextManager;
+import net.udidb.cli.context.GlobalContextManager;
+import net.udidb.cli.ops.events.CliEventDispatcher;
+import net.udidb.engine.events.EventDispatcher;
 import net.udidb.engine.ops.OperationReader;
-import net.udidb.engine.ops.impls.control.DebuggeeContext;
-import net.udidb.engine.ops.impls.control.DebuggeeContextFactory;
+import net.udidb.engine.ops.context.DebuggeeContext;
+import net.udidb.engine.ops.context.DebuggeeContextFactory;
 import net.udidb.engine.ops.results.OperationResultVisitor;
 import net.udidb.engine.ops.parser.ParserModule;
 
@@ -68,5 +69,7 @@ public class CliModule extends ParserModule {
         bind(DebuggeeContextFactory.class).to(GlobalContextManager.class);
 
         bind(DebuggeeContext.class).toProvider(GlobalContextManager.class);
+
+        bind(EventDispatcher.class).to(CliEventDispatcher.class);
     }
 }

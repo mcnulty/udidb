@@ -26,74 +26,20 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.engine.ops.impls.control;
+package net.udidb.engine.ops.impls;
 
-import java.nio.file.Path;
-import java.util.Map;
-
-import net.libudi.api.UdiProcess;
-import net.libudi.api.UdiProcessConfig;
-import net.udidb.engine.ops.util.Copy;
+import net.udidb.engine.ops.Operation;
+import net.udidb.engine.ops.annotations.DisplayName;
 
 /**
- * A bean class used to encapsulate all the configuration and state for a specific debuggee.
+ * An implementation of Operation that is annotated with the DisplayName operation
+ *
+ * @author mcnulty
  */
-public class DebuggeeContext {
+public abstract class DisplayNameOperation implements Operation {
 
-    private Path rootDir;
-
-    private Map<String, String> env;
-
-    private Path execPath;
-
-    private String[] args;
-
-    private UdiProcess process;
-
-    public Path getRootDir() {
-        return rootDir;
-    }
-
-    public void setRootDir(Path rootDir) {
-        this.rootDir = rootDir;
-    }
-
-    public Map<String, String> getEnv() {
-        return env;
-    }
-
-    public void setEnv(Map<String, String> env) {
-        this.env = env;
-    }
-
-    public Path getExecPath() {
-        return execPath;
-    }
-
-    public void setExecPath(Path execPath) {
-        this.execPath = execPath;
-    }
-
-    public String[] getArgs() {
-        return args;
-    }
-
-    public void setArgs(String[] args) {
-        this.args = args;
-    }
-
-    public UdiProcess getProcess() {
-        return process;
-    }
-
-    public void setProcess(UdiProcess process) {
-        this.process = process;
-    }
-
-    public UdiProcessConfig createProcessConfig() {
-        UdiProcessConfig config = new UdiProcessConfig();
-        config.setRootDir(rootDir);
-
-        return config;
+    @Override
+    public String getName() {
+        return getClass().getAnnotation(DisplayName.class).value().toLowerCase();
     }
 }

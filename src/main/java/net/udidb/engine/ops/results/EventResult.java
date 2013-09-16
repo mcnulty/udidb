@@ -26,24 +26,35 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.engine.ops.impls.control;
+package net.udidb.engine.ops.results;
 
-import java.nio.file.Path;
+import net.udidb.engine.ops.Operation;
 
 /**
- * Factory for DebuggeeContext
+ * A result indicating that the execution of the operation will create an event in the underlying process
  *
  * @author mcnulty
  */
-public interface DebuggeeContextFactory {
+public class EventResult implements Result {
+
+    private final Result result;
 
     /**
-     * Creates a DebuggeeContext
+     * Constructor.
      *
-     * @param execPath the path to the executable
-     * @param args the arguments
-     *
-     * @return the DebuggeeContext
+     * @param result the result wrapped by this EventResult
      */
-    DebuggeeContext createContext(Path execPath, String[] args);
+    public EventResult(Result result) {
+        this.result = result;
+    }
+
+    @Override
+    public boolean accept(Operation op, OperationResultVisitor visitor) {
+
+        if (!result.accept(op, visitor)) {
+            return false;
+        }
+
+        return visitor.visit(op, this);
+    }
 }
