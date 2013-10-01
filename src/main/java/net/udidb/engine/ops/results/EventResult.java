@@ -48,11 +48,17 @@ public class EventResult implements Result {
         this.result = result;
     }
 
+    public EventResult() {
+        this.result = null;
+    }
+
     @Override
     public boolean accept(Operation op, OperationResultVisitor visitor) {
 
-        if (!result.accept(op, visitor)) {
-            return false;
+        if (result != null) {
+            if (!result.accept(op, visitor)) {
+                return false;
+            }
         }
 
         return visitor.visit(op, this);

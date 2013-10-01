@@ -42,8 +42,8 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 import net.libudi.api.UdiProcess;
-import net.udidb.engine.ops.context.DebuggeeContext;
-import net.udidb.engine.ops.context.DebuggeeContextFactory;
+import net.udidb.engine.context.DebuggeeContext;
+import net.udidb.engine.context.DebuggeeContextFactory;
 
 /**
  * A class that maintains the current global DebuggeeContext that is passed to control Operations
@@ -88,7 +88,11 @@ public class GlobalContextManager implements Provider<DebuggeeContext>, Debuggee
     }
 
     public void setCurrent(DebuggeeContext current) {
+        if (this.current != null) {
+            this.current.setActive(false);
+        }
         this.current = current;
+        this.current.setActive(true);
     }
 
     public void setCurrent(int id) {
@@ -97,7 +101,7 @@ public class GlobalContextManager implements Provider<DebuggeeContext>, Debuggee
             throw new IllegalArgumentException(String.format("No context with id '%s' exists.", id));
         }
 
-        this.current = currentContext;
+        setCurrent(currentContext);
     }
 
     @Override
@@ -115,9 +119,25 @@ public class GlobalContextManager implements Provider<DebuggeeContext>, Debuggee
         context.setArgs(args);
 
         contexts.put(currentId.getAndIncrement(), context);
-        current = context;
+        setCurrent(context);
 
         return context;
+    }
+
+    @Override
+    public void deleteContext(DebuggeeContext context) {
+        synchronized (contexts) {
+            Integer contextId = null;
+            for (Map.Entry<Integer, DebuggeeContext> entry : contexts.entrySet()) {
+                if (entry.getValue().equals(context)) {
+                    contextId = entry.getKey();
+                }
+            }
+
+            if (contextId != null) {
+                contexts.remove(contextId);
+            }
+        }
     }
 
     public List<UdiProcess> getProcesses() {
@@ -128,5 +148,9 @@ public class GlobalContextManager implements Provider<DebuggeeContext>, Debuggee
             }
         }
         return processes;
+    }
+
+    public List<DebuggeeContext> getContexts() {
+        return new ArrayList<>(contexts.values());
     }
 }

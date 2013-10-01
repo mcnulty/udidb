@@ -29,6 +29,7 @@
 package net.udidb.cli.ops;
 
 import java.io.PrintStream;
+import java.util.List;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -45,6 +46,8 @@ import net.udidb.engine.ops.Operation;
 import net.udidb.engine.ops.results.EventResult;
 import net.udidb.engine.ops.results.OperationResultVisitor;
 import net.udidb.engine.ops.impls.util.Quit;
+import net.udidb.engine.ops.results.TableResult;
+import net.udidb.engine.ops.results.TableRow;
 import net.udidb.engine.ops.results.ValueResult;
 import net.udidb.engine.ops.results.VoidResult;
 
@@ -127,6 +130,52 @@ public class CliResultVisitor implements OperationResultVisitor, UdiEventVisitor
     }
 
     @Override
+    public boolean visit(Operation op, TableResult result) {
+
+        final int PADDING = 2;
+
+        List<TableRow> rows = result.getRows();
+        if (rows.size() > 0) {
+            List<String> headers = result.getColumnHeaders();
+
+            // Determine the maximum length string for every column for formatting purposes
+            int[] widths = new int[headers.size()];
+            for (TableRow row : rows) {
+                List<String> values = row.getColumnValues();
+                for (int i = 0; i < values.size(); ++i) {
+                    String value = values.get(i);
+                    if (value.length() > widths[i]) {
+                        widths[i] = value.length();
+                    }
+                }
+            }
+
+            for (int i = 0; i < headers.size(); ++i) {
+                String header = headers.get(i);
+                if (header.length() > widths[i]) {
+                    widths[i] = header.length();
+                }
+            }
+
+            StringBuilder formatString = new StringBuilder();
+            for (int i = 0; i < widths.length; ++i) {
+                formatString.append("%-" + (widths[i] + PADDING) + "s");
+                if (i < (widths.length-1)) {
+                    formatString.append(" ");
+                }
+            }
+
+            out.println(String.format(formatString.toString(), headers.toArray()));
+
+            for (TableRow row : rows) {
+               out.println(String.format(formatString.toString(), row.getColumnValues().toArray()));
+            }
+        }
+
+        return true;
+    }
+
+    @Override
     public boolean visit(Operation op, Exception e) {
         if (op == null) {
             printException(e);
@@ -139,21 +188,21 @@ public class CliResultVisitor implements OperationResultVisitor, UdiEventVisitor
 
     @Override
     public void visit(UdiEventBreakpoint breakpointEvent) {
-        out.print(String.format("Breakpoint at 0x%x", breakpointEvent.getAddress()));
+        out.println(String.format("Breakpoint at 0x%x", breakpointEvent.getAddress()));
     }
 
     @Override
     public void visit(UdiEventError errorEvent) {
-        out.print(String.format("Error event occurred: %s", errorEvent.getErrorString()));
+        out.println(String.format("Error event occurred: %s", errorEvent.getErrorString()));
     }
 
     @Override
     public void visit(UdiEventProcessExit processExitEvent) {
-        out.print(String.format("Process exited with code = %d", processExitEvent.getExitCode()));
+        out.println(String.format("Process exited with code = %d", processExitEvent.getExitCode()));
     }
 
     @Override
     public void visit(UdiEventThreadCreate threadCreateEvent) {
-        out.print(String.format("Thread created id = 0x%x", threadCreateEvent.getNewThread().getTid()));
+        out.println(String.format("Thread created id = 0x%x", threadCreateEvent.getNewThread().getTid()));
     }
 }

@@ -85,7 +85,10 @@ public class CliEventDispatcher implements EventDispatcher {
     private EventThread getEventThread() {
         if (eventThread == null) {
             synchronized (this) {
-                eventThread = new EventThread(processManager, contextManager);
+                if (eventThread == null) {
+                    eventThread = new EventThread(processManager, contextManager);
+                    eventThread.start();
+                }
             }
         }
         return eventThread;
@@ -123,7 +126,7 @@ public class CliEventDispatcher implements EventDispatcher {
     }
 
     /**
-     * Fake UdiEvent used to terminate the event thread
+     * Fake UdiEvent used to report errors from the event thread
      */
     private static class WaitError implements UdiEvent {
 

@@ -26,7 +26,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.engine.ops.impls.help;
+package net.udidb.cli.ops.impls.help;
 
 import java.lang.reflect.Modifier;
 import java.util.Iterator;

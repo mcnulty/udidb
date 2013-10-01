@@ -26,7 +26,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.engine.ops.util;
+package net.udidb.engine.util;
 
 /**
  * Provides a type-safe copy method for an object

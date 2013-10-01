@@ -26,66 +26,49 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.engine.ops.impls.help;
-
-import org.apache.commons.lang3.StringUtils;
+package net.udidb.cli.ops.impls.set;
 
 import com.google.inject.Inject;
 
-import net.udidb.engine.ops.impls.DisplayNameOperation;
+import net.udidb.cli.ops.events.CliEventDispatcher;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.HelpMessage;
 import net.udidb.engine.ops.annotations.LongHelpMessage;
-import net.udidb.engine.ops.annotations.Operand;
+import net.udidb.engine.ops.impls.SetterOperation;
+import net.udidb.engine.ops.impls.Setting;
 import net.udidb.engine.ops.results.Result;
-import net.udidb.engine.ops.results.ValueResult;
+import net.udidb.engine.ops.results.VoidResult;
 
 /**
- * Display help messages for operations
+ * Sets the block-for-event configuration property
  *
  * @author mcnulty
  */
-@HelpMessage(enMessage = "Display help for operations")
+@HelpMessage(enMessage = "Disable/enable whether to block for an event after continuing a debuggee")
 @LongHelpMessage(enMessage =
-        "help [operation name]\n\n" +
-        "Display detailed help for a specific operation or short help for all operations"
+        "set block-for-event <boolean>\n\n" +
+        "Disable/enable whether to block for an event after continuing a debuggee"
 )
-@DisplayName("help")
-public class Help extends DisplayNameOperation {
+@DisplayName("set block-for-event")
+public class BlockForEvent extends SetterOperation<Boolean> implements Setting {
 
-    private final HelpMessageProvider provider;
-
-    @Operand(order=0, optional=true, restOfLine=true)
-    private String[] opName;
-
-    public String[] getOpName() {
-        return opName;
-    }
-
-    public void setOpName(String[] opName) {
-        this.opName = opName;
-    }
+    private final CliEventDispatcher eventDispatcher;
 
     @Inject
-    public Help(HelpMessageProvider provider) {
-        this.provider = provider;
+    public BlockForEvent(CliEventDispatcher eventDispatcher) {
+        this.eventDispatcher = eventDispatcher;
     }
 
     @Override
     public Result execute() throws OperationException {
-        if (opName == null) {
-            StringBuilder builder = new StringBuilder();
-            provider.getAllShortMessages(builder);
+        eventDispatcher.setBlockForEvent(value);
 
-            return new ValueResult(builder.toString());
-        }
+        return new VoidResult();
+    }
 
-        String longMessage = provider.getLongMessage(StringUtils.join(opName, " "));
-        if (longMessage == null) {
-            throw new OperationException(String.format("No help available for operation '%s'", getName()));
-        }
-
-        return new ValueResult(longMessage);
+    @Override
+    public Object getSetting() {
+        return eventDispatcher.isBlockForEvent();
     }
 }

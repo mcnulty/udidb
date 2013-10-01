@@ -28,62 +28,46 @@
 
 package net.udidb.engine.ops.results;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import net.udidb.engine.ops.Operation;
 
 /**
- * Visitor used to process a result of an operation
+ * A result that represents a table of values
  *
  * @author mcnulty
  */
-public interface OperationResultVisitor {
+public class TableResult implements Result {
+
+    private final List<String> columnHeaders;
+
+    private final List<TableRow> rows;
 
     /**
-     * Processes the VoidResult of the specified operation
+     * Constructor.
      *
-     * @param op the operation
-     * @param result the VoidResult of the operation
-     *
-     * @return true, if the result indicates further operations should be executed; false otherwise
+     * @param rows the rows to be include in this result
      */
-    boolean visit(Operation op, VoidResult result);
+    public TableResult(List<? extends TableRow> rows) {
+        this.rows = new ArrayList<>(rows);
+        if (this.rows.size() > 0) {
+            columnHeaders = new ArrayList<>(this.rows.get(0).getColumnHeaders());
+        }else{
+            columnHeaders = new ArrayList<>(0);
+        }
+    }
 
-    /**
-     * Processes the ValueResult of the specified operation
-     *
-     * @param op the operation
-     * @param result the ValueResult of the operation
-     *
-     * @return true, if the result indicates further operations should be executed; false otherwise
-     */
-    boolean visit(Operation op, ValueResult result);
+    public List<String> getColumnHeaders() {
+        return new ArrayList<>(columnHeaders);
+    }
 
-    /**
-     * Processes the EventResult of the specified operation
-     *
-     * @param op the operation
-     * @param result the EventResult of the operation
-     *
-     * @return true, if the result indicates further operations should be executed; false otherwise
-     */
-    boolean visit(Operation op, EventResult result);
+    public List<TableRow> getRows() {
+        return new ArrayList<>(rows);
+    }
 
-    /**
-     * Processes the TableResult of the specified operation
-     *
-     * @param op the operation
-     * @param result the TableResult of the operation
-     *
-     * @return true, if the result indicates further operations should be executed; false otherwise
-     */
-    boolean visit(Operation op, TableResult result);
-
-    /**
-     * Processes the exception that occurred while executing or parsing the operation
-     *
-     * @param op the operation or null if the operation could not be determined
-     * @param e the exception
-     *
-     * @return true, if further operations should be executed; false otherwise
-     */
-    boolean visit(Operation op, Exception e);
+    @Override
+    public boolean accept(Operation op, OperationResultVisitor visitor) {
+        return visitor.visit(op, this);
+    }
 }

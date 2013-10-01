@@ -28,26 +28,14 @@
 
 package net.udidb.engine.ops.impls;
 
-import com.google.inject.AbstractModule;
-
-import net.libudi.api.UdiProcessManager;
-import net.libudi.api.jni.impl.UdiProcessManagerImpl;
-import net.udidb.cli.ops.impls.help.HelpMessageProvider;
-
 /**
- * A Guice module defining dependencies used by Operation implementations
+ * Represents a setting that controls the behavior of the debugger
  *
  * @author mcnulty
  */
-public class OpModule extends AbstractModule {
+public interface Setting {
 
-    @Override
-    protected void configure() {
-        control();
-    }
+    String getName();
 
-
-    private void control() {
-        bind(UdiProcessManager.class).toInstance(new UdiProcessManagerImpl());
-    }
+    Object getSetting();
 }

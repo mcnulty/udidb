@@ -26,48 +26,32 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.engine.ops.impls.display;
+package net.udidb.engine.context;
 
-import com.google.inject.Inject;
-
-import net.udidb.engine.ops.impls.DisplayNameOperation;
-import net.udidb.engine.ops.annotations.DisplayName;
-import net.udidb.engine.ops.annotations.HelpMessage;
-import net.udidb.engine.ops.annotations.LongHelpMessage;
-import net.udidb.engine.ops.annotations.Operand;
-import net.udidb.engine.ops.results.Result;
-import net.udidb.engine.ops.results.ValueResult;
+import java.nio.file.Path;
 
 /**
- * An operation to display an expression
+ * Factory for DebuggeeContext
  *
  * @author mcnulty
  */
-@HelpMessage(enMessage="Display the value of an expression")
-@LongHelpMessage(enMessage=
-        "print <expression>\n\n" +
-        "Display the value of an expression"
-)
-@DisplayName("print")
-public class Print extends DisplayNameOperation {
+public interface DebuggeeContextFactory {
 
-    @Operand(order=0)
-    private String value;
+    /**
+     * Creates a DebuggeeContext
+     *
+     * @param execPath the path to the executable
+     * @param args the arguments
+     *
+     * @return the DebuggeeContext
+     */
+    DebuggeeContext createContext(Path execPath, String[] args);
 
-    @Inject
-    public Print() {
-    }
-
-    public String getValue() {
-        return value;
-    }
-
-    public void setValue(String value) {
-        this.value = value;
-    }
-
-    @Override
-    public Result execute() {
-        return new ValueResult(value.toString());
-    }
+    /**
+     * Deletes a DebuggeeContext
+     *
+     *
+     * @param context the context to delete
+     */
+    void deleteContext(DebuggeeContext context);
 }

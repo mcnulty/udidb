@@ -26,28 +26,24 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.engine.ops.impls;
+package net.udidb.engine.ops.results;
 
-import com.google.inject.AbstractModule;
-
-import net.libudi.api.UdiProcessManager;
-import net.libudi.api.jni.impl.UdiProcessManagerImpl;
-import net.udidb.cli.ops.impls.help.HelpMessageProvider;
+import java.util.List;
 
 /**
- * A Guice module defining dependencies used by Operation implementations
+ * Provides a means to include an object as a row in a TableResult
  *
  * @author mcnulty
  */
-public class OpModule extends AbstractModule {
+public interface TableRow {
 
-    @Override
-    protected void configure() {
-        control();
-    }
+    /**
+     * @return gets the columns headers for the table
+     */
+    List<String> getColumnHeaders();
 
-
-    private void control() {
-        bind(UdiProcessManager.class).toInstance(new UdiProcessManagerImpl());
-    }
+    /**
+     * @return gets the column values for the row represented by this object
+     */
+    List<String> getColumnValues();
 }

@@ -30,17 +30,26 @@ package net.udidb.cli.driver;
 
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.List;
 
+import com.google.inject.Inject;
+import com.google.inject.Provides;
 import com.google.inject.name.Names;
 
+import net.libudi.api.event.UdiEventVisitor;
 import net.udidb.cli.ops.CliResultVisitor;
 import net.udidb.cli.ops.JlineOperationReader;
 import net.udidb.cli.context.GlobalContextManager;
 import net.udidb.cli.ops.events.CliEventDispatcher;
+import net.udidb.cli.ops.impls.help.HelpMessageProvider;
+import net.udidb.cli.ops.impls.internals.SetStackTrace;
+import net.udidb.cli.ops.impls.internals.ShowInternals;
 import net.udidb.engine.events.EventDispatcher;
 import net.udidb.engine.ops.OperationReader;
-import net.udidb.engine.ops.context.DebuggeeContext;
-import net.udidb.engine.ops.context.DebuggeeContextFactory;
+import net.udidb.engine.context.DebuggeeContext;
+import net.udidb.engine.context.DebuggeeContextFactory;
+import net.udidb.engine.ops.impls.Setting;
 import net.udidb.engine.ops.results.OperationResultVisitor;
 import net.udidb.engine.ops.parser.ParserModule;
 
@@ -71,5 +80,21 @@ public class CliModule extends ParserModule {
         bind(DebuggeeContext.class).toProvider(GlobalContextManager.class);
 
         bind(EventDispatcher.class).to(CliEventDispatcher.class);
+
+        bind(UdiEventVisitor.class).to(CliResultVisitor.class);
+
+        bind(HelpMessageProvider.class).asEagerSingleton();
+    }
+
+    @Inject
+    @Provides
+    public ShowInternals providesShowInternals(
+            SetStackTrace setStackTrace
+    )
+    {
+        List<Setting> internalSettings = new ArrayList<>();
+        internalSettings.add(setStackTrace);
+
+        return new ShowInternals(internalSettings);
     }
 }

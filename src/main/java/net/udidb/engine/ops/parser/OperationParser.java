@@ -43,6 +43,7 @@ import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
 import org.reflections.util.ClasspathHelper;
 
+import com.google.common.base.Predicate;
 import com.google.inject.ConfigurationException;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
@@ -56,6 +57,8 @@ import net.udidb.engine.ops.OperationParseException;
 import net.udidb.engine.ops.UnknownOperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.Operand;
+
+import static org.reflections.ReflectionUtils.withAnnotation;
 
 /**
  * Given a String representation of an Operation and its Operands, create and populate the Operation
@@ -151,7 +154,7 @@ public class OperationParser {
         int requiredOperands = 0;
         int restOfLineIndex = -1;
         Map<Integer, Field> operands = new HashMap<>();
-        for (Field field : opClass.getDeclaredFields()) {
+        for (Field field : Reflections.getAllFields(opClass, withAnnotation(Operand.class))) {
             Operand operand = field.getAnnotation(Operand.class);
             if (operand != null) {
                 if (operand.order() > restOfLineIndex && restOfLineIndex != -1) {

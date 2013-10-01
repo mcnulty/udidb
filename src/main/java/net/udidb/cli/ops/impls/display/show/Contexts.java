@@ -26,74 +26,41 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.engine.ops.context;
+package net.udidb.cli.ops.impls.display.show;
 
-import java.nio.file.Path;
-import java.util.Map;
+import com.google.inject.Inject;
 
-import net.libudi.api.UdiProcess;
-import net.libudi.api.UdiProcessConfig;
-import net.udidb.engine.ops.util.Copy;
+import net.udidb.cli.context.GlobalContextManager;
+import net.udidb.engine.ops.OperationException;
+import net.udidb.engine.ops.annotations.DisplayName;
+import net.udidb.engine.ops.annotations.HelpMessage;
+import net.udidb.engine.ops.annotations.LongHelpMessage;
+import net.udidb.engine.ops.impls.DisplayNameOperation;
+import net.udidb.engine.ops.results.Result;
+import net.udidb.engine.ops.results.TableResult;
 
 /**
- * A bean class used to encapsulate all the configuration and state for a specific debuggee.
+ * Operation to display the all the managed DebuggeeContexts
+ *
+ * @author mcnulty
  */
-public class DebuggeeContext {
+@HelpMessage(enMessage = "Display all debuggee contexts")
+@LongHelpMessage(enMessage =
+        "show contexts\n\n" +
+        "Show all debuggee contexts managed by the debugger"
+)
+@DisplayName("show contexts")
+public class Contexts extends DisplayNameOperation {
 
-    private Path rootDir;
+    private final GlobalContextManager contextManager;
 
-    private Map<String, String> env;
-
-    private Path execPath;
-
-    private String[] args;
-
-    private UdiProcess process;
-
-    public Path getRootDir() {
-        return rootDir;
+    @Inject
+    public Contexts(GlobalContextManager contextManager) {
+        this.contextManager = contextManager;
     }
 
-    public void setRootDir(Path rootDir) {
-        this.rootDir = rootDir;
-    }
-
-    public Map<String, String> getEnv() {
-        return env;
-    }
-
-    public void setEnv(Map<String, String> env) {
-        this.env = env;
-    }
-
-    public Path getExecPath() {
-        return execPath;
-    }
-
-    public void setExecPath(Path execPath) {
-        this.execPath = execPath;
-    }
-
-    public String[] getArgs() {
-        return args;
-    }
-
-    public void setArgs(String[] args) {
-        this.args = args;
-    }
-
-    public UdiProcess getProcess() {
-        return process;
-    }
-
-    public void setProcess(UdiProcess process) {
-        this.process = process;
-    }
-
-    public UdiProcessConfig createProcessConfig() {
-        UdiProcessConfig config = new UdiProcessConfig();
-        config.setRootDir(rootDir);
-
-        return config;
+    @Override
+    public Result execute() throws OperationException {
+        return new TableResult(contextManager.getContexts());
     }
 }

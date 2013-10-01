@@ -37,8 +37,8 @@ import com.google.inject.Inject;
 import net.libudi.api.UdiProcess;
 import net.libudi.api.UdiProcessManager;
 import net.libudi.api.exceptions.UdiException;
-import net.udidb.engine.ops.context.DebuggeeContext;
-import net.udidb.engine.ops.context.DebuggeeContextFactory;
+import net.udidb.engine.context.DebuggeeContext;
+import net.udidb.engine.context.DebuggeeContextFactory;
 import net.udidb.engine.ops.impls.DisplayNameOperation;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
@@ -108,6 +108,7 @@ public class CreateDebuggee extends DisplayNameOperation {
         try {
             process = procManager.createProcess(path, args, context.getEnv(), context.createProcessConfig());
         }catch (UdiException e) {
+            contextFactory.deleteContext(context);
             throw new OperationException(e.getMessage(), e);
         }
 

@@ -28,47 +28,74 @@
 
 package net.udidb.cli.ops.impls.internals;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import com.google.inject.Inject;
 
-import net.udidb.cli.ops.CliResultVisitor;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.HelpMessage;
 import net.udidb.engine.ops.annotations.LongHelpMessage;
-import net.udidb.engine.ops.impls.SetterOperation;
+import net.udidb.engine.ops.impls.DisplayNameOperation;
 import net.udidb.engine.ops.impls.Setting;
 import net.udidb.engine.ops.results.Result;
-import net.udidb.engine.ops.results.VoidResult;
+import net.udidb.engine.ops.results.TableResult;
+import net.udidb.engine.ops.results.TableRow;
 
 /**
- * Operation to control whether stack traces are printed for exceptions
+ * Shows all the values for the internals settings
  *
  * @author mcnulty
  */
-@HelpMessage(enMessage = "Disable/enable stack traces")
-@LongHelpMessage(enMessage=
-        "internals stack-trace <boolean>\n\n" +
-        "Disable/enable stack traces"
+@HelpMessage(enMessage = "Display all values of internals settings")
+@LongHelpMessage(enMessage =
+        "internals show\n\n" +
+        "Display all values of internal settings"
 )
-@DisplayName("internals stack-trace")
-public class SetStackTrace extends SetterOperation<Boolean> implements Setting {
+@DisplayName("internals show")
+public class ShowInternals extends DisplayNameOperation {
 
-    private final CliResultVisitor resultVisitor;
+    private final List<Setting> settings;
 
     @Inject
-    public SetStackTrace(CliResultVisitor resultVisitor) {
-        this.resultVisitor = resultVisitor;
+    public ShowInternals(List<Setting> internalsSettings) {
+        this.settings = internalsSettings;
     }
 
     @Override
     public Result execute() throws OperationException {
-        resultVisitor.setPrintStackTraces(value);
+        List<TableRow> rows = new ArrayList<>();
 
-        return new VoidResult();
+        for (Setting setting : settings) {
+            InternalSetting internalSetting = new InternalSetting();
+            internalSetting.setting = setting.getName();
+            internalSetting.value = setting.getSetting().toString();
+
+            rows.add(internalSetting);
+        }
+
+        return new TableResult(rows);
     }
 
-    @Override
-    public Object getSetting() {
-        return resultVisitor.isPrintStackTraces();
+    private static class InternalSetting implements TableRow {
+
+        public String setting;
+
+        public String value;
+
+        @Override
+        public List<String> getColumnHeaders() {
+           return Arrays.asList(
+                   "Setting",
+                   "Value"
+           );
+        }
+
+        @Override
+        public List<String> getColumnValues() {
+            return Arrays.asList(setting, value);
+        }
     }
 }
