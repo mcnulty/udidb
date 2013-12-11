@@ -28,21 +28,18 @@
 
 package net.udidb.engine.ops.parser;
 
+import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
-
-import net.udidb.engine.ops.impls.OpModule;
 
 /**
  * A Guice module defining dependencies for the Operation parser
  *
  * @author mcnulty
  */
-public class ParserModule extends OpModule {
+public class ParserModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        super.configure();
-
         bind(String.class).annotatedWith(Names.named("OP_IMPL_PACKAGE")).toInstance("net.udidb.engine.ops.impls");
     }
 }

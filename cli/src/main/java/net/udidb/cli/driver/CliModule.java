@@ -37,7 +37,9 @@ import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.name.Names;
 
+import net.libudi.api.UdiProcessManager;
 import net.libudi.api.event.UdiEventVisitor;
+import net.libudi.api.jni.impl.UdiProcessManagerImpl;
 import net.udidb.cli.ops.CliResultVisitor;
 import net.udidb.cli.ops.JlineOperationReader;
 import net.udidb.cli.context.GlobalContextManager;
@@ -84,6 +86,8 @@ public class CliModule extends ParserModule {
         bind(UdiEventVisitor.class).to(CliResultVisitor.class);
 
         bind(HelpMessageProvider.class).asEagerSingleton();
+
+        bind(UdiProcessManager.class).toInstance(new UdiProcessManagerImpl());
     }
 
     @Inject
