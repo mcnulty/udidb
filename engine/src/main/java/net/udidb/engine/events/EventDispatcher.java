@@ -29,6 +29,8 @@
 package net.udidb.engine.events;
 
 import net.libudi.api.exceptions.UdiException;
+import net.udidb.engine.ops.OperationException;
+import net.udidb.engine.ops.results.Result;
 
 /**
  * Provides methods to dispatch and handle events that occur in a process
@@ -40,7 +42,10 @@ public interface EventDispatcher {
     /**
      * Handle any pending events in all managed processes. Whether or not this call blocks is dependent on the implementation.
      *
+     * @param result the result of the operation that could trigger events
+     *
      * @throws UdiException on failure during handling the events
+     * @throws OperationException on failure to handle the events
      */
-    void handleEvents() throws UdiException;
+    void handleEvents(Result result) throws UdiException, OperationException;
 }

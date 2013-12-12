@@ -28,10 +28,11 @@
 
 package net.udidb.engine.ops.results;
 
+import net.udidb.engine.events.EventObserver;
 import net.udidb.engine.ops.Operation;
 
 /**
- * A marker interface for the result of performing an operation
+ * Encapsulates all new information made available by the execution of an operation.
  *
  * Note: all Result implementations should provide a non-default toString method. This will be used to obtain a
  * String representation of the the result.
@@ -49,4 +50,18 @@ public interface Result {
      * @return true, if the result indicates further operations should be executed; false otherwise
      */
     boolean accept(Operation op, OperationResultVisitor visitor);
+
+    /**
+     * @return true, if events are expected due to the execution of the operation
+     */
+    boolean isEventPending();
+
+    /**
+     * Operations can defer their completion until an event occurs in a debuggee. This method allows an Operation to
+     * create a Result that encapsulates a visitor that can be used to complete the operation after an event has
+     * occurred.
+     *
+     * @return the event observer for the operation, or null if the event has not been deferred
+     */
+    EventObserver getDeferredEventObserver();
 }

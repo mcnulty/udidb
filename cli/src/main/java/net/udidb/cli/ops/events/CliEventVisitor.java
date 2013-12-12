@@ -26,50 +26,50 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.engine.ops.impls.control;
+package net.udidb.cli.ops.events;
+
+import java.io.PrintStream;
 
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
-import net.libudi.api.UdiProcess;
-import net.libudi.api.exceptions.UdiException;
-import net.udidb.engine.context.DebuggeeContext;
-import net.udidb.engine.ops.impls.DisplayNameOperation;
-import net.udidb.engine.ops.OperationException;
-import net.udidb.engine.ops.annotations.DisplayName;
-import net.udidb.engine.ops.annotations.HelpMessage;
-import net.udidb.engine.ops.annotations.LongHelpMessage;
-import net.udidb.engine.ops.results.Result;
-import net.udidb.engine.ops.results.VoidResult;
+import net.libudi.api.event.UdiEventBreakpoint;
+import net.libudi.api.event.UdiEventError;
+import net.libudi.api.event.UdiEventProcessExit;
+import net.libudi.api.event.UdiEventThreadCreate;
+import net.libudi.api.event.UdiEventVisitor;
 
 /**
- * Operation to continue the debuggee
+ * The event visitor for the CLI
  *
  * @author mcnulty
  */
-@HelpMessage(enMessage="Continue a debuggee")
-@LongHelpMessage(enMessage=
-        "continue\n\n" +
-        "Continue a debuggee"
-)
-@DisplayName("continue")
-public class ContinueDebuggee extends DisplayNameOperation {
+public class CliEventVisitor implements UdiEventVisitor {
 
-    private final UdiProcess process;
+    private final PrintStream out;
 
     @Inject
-    public ContinueDebuggee(DebuggeeContext debuggeeContext) {
-        this.process = debuggeeContext.getProcess();
+    CliEventVisitor(@Named("OUTPUT DESTINATION") PrintStream out) {
+        this.out = out;
     }
 
     @Override
-    public Result execute() throws OperationException {
-        try {
-            process.continueProcess();
-        }catch (UdiException e) {
-            throw new OperationException(e.getMessage(), e);
-        }
+    public void visit(UdiEventBreakpoint breakpointEvent) {
+        out.println(String.format("Breakpoint at 0x%x", breakpointEvent.getAddress()));
+    }
 
-        // The process runs until an event occurs
-        return new VoidResult(true);
+    @Override
+    public void visit(UdiEventError errorEvent) {
+        out.println(String.format("Error event occurred: %s", errorEvent.getErrorString()));
+    }
+
+    @Override
+    public void visit(UdiEventProcessExit processExitEvent) {
+        out.println(String.format("Process exited with code = %d", processExitEvent.getExitCode()));
+    }
+
+    @Override
+    public void visit(UdiEventThreadCreate threadCreateEvent) {
+        out.println(String.format("Thread created id = 0x%x", threadCreateEvent.getNewThread().getTid()));
     }
 }

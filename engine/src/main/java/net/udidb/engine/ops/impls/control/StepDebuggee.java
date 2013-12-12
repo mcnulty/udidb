@@ -31,45 +31,47 @@ package net.udidb.engine.ops.impls.control;
 import com.google.inject.Inject;
 
 import net.libudi.api.UdiProcess;
-import net.libudi.api.exceptions.UdiException;
 import net.udidb.engine.context.DebuggeeContext;
-import net.udidb.engine.ops.impls.DisplayNameOperation;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.HelpMessage;
 import net.udidb.engine.ops.annotations.LongHelpMessage;
+import net.udidb.engine.ops.impls.DisplayNameOperation;
 import net.udidb.engine.ops.results.Result;
-import net.udidb.engine.ops.results.VoidResult;
 
 /**
- * Operation to continue the debuggee
+ * Operation to execute the next line of source for a debuggee, descending into method calls
  *
  * @author mcnulty
  */
-@HelpMessage(enMessage="Continue a debuggee")
+@HelpMessage(enMessage="Step a debuggee")
 @LongHelpMessage(enMessage=
-        "continue\n\n" +
-        "Continue a debuggee"
+        "step\n\n" +
+        "Execute the next line of source for the current debuggee, descending into method calls"
 )
-@DisplayName("continue")
-public class ContinueDebuggee extends DisplayNameOperation {
+@DisplayName("step")
+public class StepDebuggee extends DisplayNameOperation {
 
     private final UdiProcess process;
 
     @Inject
-    public ContinueDebuggee(DebuggeeContext debuggeeContext) {
-        this.process = debuggeeContext.getProcess();
+    public StepDebuggee(DebuggeeContext context) {
+        this.process = context.getProcess();
     }
 
     @Override
     public Result execute() throws OperationException {
-        try {
-            process.continueProcess();
-        }catch (UdiException e) {
-            throw new OperationException(e.getMessage(), e);
-        }
 
-        // The process runs until an event occurs
-        return new VoidResult(true);
+        // Need to get current pc from debuggee
+
+        // Using this need to map to the source line to display
+
+        // Determine pc of the destination line
+
+        // Set breakpoint at destination
+
+        // Continue debuggee
+
+        return null;
     }
 }

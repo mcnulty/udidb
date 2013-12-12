@@ -33,7 +33,7 @@ import net.udidb.engine.ops.Operation;
 /**
  * A result that encapsulates a single value
  */
-public class ValueResult implements Result {
+public class ValueResult extends BaseResult {
 
     private final Object value;
 

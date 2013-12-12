@@ -26,50 +26,50 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.engine.ops.impls.control;
+package net.udidb.cli.ops.impls.internals;
 
 import com.google.inject.Inject;
 
-import net.libudi.api.UdiProcess;
-import net.libudi.api.exceptions.UdiException;
-import net.udidb.engine.context.DebuggeeContext;
-import net.udidb.engine.ops.impls.DisplayNameOperation;
+import net.udidb.cli.ops.CliResultVisitor;
+import net.udidb.cli.ops.events.CliEventDispatcher;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.HelpMessage;
 import net.udidb.engine.ops.annotations.LongHelpMessage;
+import net.udidb.engine.ops.impls.SetterOperation;
+import net.udidb.engine.ops.impls.Setting;
 import net.udidb.engine.ops.results.Result;
 import net.udidb.engine.ops.results.VoidResult;
 
 /**
- * Operation to continue the debuggee
+ * Operation to control whether stack traces are printed for exceptions
  *
  * @author mcnulty
  */
-@HelpMessage(enMessage="Continue a debuggee")
+@HelpMessage(enMessage = "Disable/enable the display of all events")
 @LongHelpMessage(enMessage=
-        "continue\n\n" +
-        "Continue a debuggee"
+        "internals display-all-events <boolean>\n\n" +
+        "Disable/enable the display of all events, including the intermediate events from a complex operation"
 )
-@DisplayName("continue")
-public class ContinueDebuggee extends DisplayNameOperation {
+@DisplayName("internals display-all-events")
+public class SetDisplayAllEvents extends SetterOperation<Boolean> implements Setting {
 
-    private final UdiProcess process;
+    private final CliEventDispatcher eventDispatcher;
 
     @Inject
-    public ContinueDebuggee(DebuggeeContext debuggeeContext) {
-        this.process = debuggeeContext.getProcess();
+    public SetDisplayAllEvents(CliEventDispatcher eventDispatcher) {
+        this.eventDispatcher = eventDispatcher;
     }
 
     @Override
     public Result execute() throws OperationException {
-        try {
-            process.continueProcess();
-        }catch (UdiException e) {
-            throw new OperationException(e.getMessage(), e);
-        }
+        eventDispatcher.setDisplayAllEvents(value);
 
-        // The process runs until an event occurs
-        return new VoidResult(true);
+        return new VoidResult();
+    }
+
+    @Override
+    public Object getSetting() {
+        return eventDispatcher.isDisplayAllEvents();
     }
 }

@@ -58,16 +58,6 @@ public interface OperationResultVisitor {
     boolean visit(Operation op, ValueResult result);
 
     /**
-     * Processes the EventResult of the specified operation
-     *
-     * @param op the operation
-     * @param result the EventResult of the operation
-     *
-     * @return true, if the result indicates further operations should be executed; false otherwise
-     */
-    boolean visit(Operation op, EventResult result);
-
-    /**
      * Processes the TableResult of the specified operation
      *
      * @param op the operation

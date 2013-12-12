@@ -43,7 +43,6 @@ import net.libudi.api.event.UdiEventVisitor;
 import net.libudi.api.exceptions.UdiException;
 import net.udidb.engine.events.EventDispatcher;
 import net.udidb.engine.ops.Operation;
-import net.udidb.engine.ops.results.EventResult;
 import net.udidb.engine.ops.results.OperationResultVisitor;
 import net.udidb.engine.ops.impls.util.Quit;
 import net.udidb.engine.ops.results.TableResult;
@@ -57,17 +56,15 @@ import net.udidb.engine.ops.results.VoidResult;
  * @author mcnulty
  */
 @Singleton
-public class CliResultVisitor implements OperationResultVisitor, UdiEventVisitor {
+public class CliResultVisitor implements OperationResultVisitor {
 
     private final PrintStream out;
-    private final EventDispatcher eventDispatcher;
 
     private boolean printStackTraces = false;
 
     @Inject
-    CliResultVisitor(@Named("OUTPUT DESTINATION") PrintStream out, EventDispatcher eventDispatcher) {
+    CliResultVisitor(@Named("OUTPUT DESTINATION") PrintStream out) {
         this.out = out;
-        this.eventDispatcher = eventDispatcher;
     }
 
     public boolean isPrintStackTraces() {
@@ -116,17 +113,6 @@ public class CliResultVisitor implements OperationResultVisitor, UdiEventVisitor
         if (printStackTraces) {
             e.printStackTrace(out);
         }
-    }
-
-    @Override
-    public boolean visit(Operation op, EventResult result) {
-        try {
-            eventDispatcher.handleEvents();
-        }catch (UdiException e) {
-            printException("Failed to handle event for " + op.getName(), e);
-        }
-
-        return true;
     }
 
     @Override
@@ -184,25 +170,5 @@ public class CliResultVisitor implements OperationResultVisitor, UdiEventVisitor
         }
 
         return true;
-    }
-
-    @Override
-    public void visit(UdiEventBreakpoint breakpointEvent) {
-        out.println(String.format("Breakpoint at 0x%x", breakpointEvent.getAddress()));
-    }
-
-    @Override
-    public void visit(UdiEventError errorEvent) {
-        out.println(String.format("Error event occurred: %s", errorEvent.getErrorString()));
-    }
-
-    @Override
-    public void visit(UdiEventProcessExit processExitEvent) {
-        out.println(String.format("Process exited with code = %d", processExitEvent.getExitCode()));
-    }
-
-    @Override
-    public void visit(UdiEventThreadCreate threadCreateEvent) {
-        out.println(String.format("Thread created id = 0x%x", threadCreateEvent.getNewThread().getTid()));
     }
 }

@@ -28,6 +28,7 @@
 
 package net.udidb.engine.ops.results;
 
+import net.udidb.engine.events.EventObserver;
 import net.udidb.engine.ops.Operation;
 
 /**
@@ -35,7 +36,32 @@ import net.udidb.engine.ops.Operation;
  *
  * @author mcnulty
  */
-public class VoidResult implements Result {
+public class VoidResult extends BaseResult {
+
+    /**
+     * Constructor.
+     */
+    public VoidResult() {
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param eventPending whether or not an event is pending as a result of the operation
+     */
+    public VoidResult(boolean eventPending) {
+        this.eventPending = eventPending;
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param deferredEventVisitor the deferred event visitor, indicating that the result of the operation is incomplete
+     */
+    public VoidResult(EventObserver deferredEventVisitor) {
+        this.eventPending = true;
+        this.deferredEventObserver = deferredEventVisitor;
+    }
 
     @Override
     public boolean accept(Operation op, OperationResultVisitor visitor) {

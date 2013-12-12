@@ -44,6 +44,7 @@ import net.udidb.cli.ops.CliResultVisitor;
 import net.udidb.cli.ops.JlineOperationReader;
 import net.udidb.cli.context.GlobalContextManager;
 import net.udidb.cli.ops.events.CliEventDispatcher;
+import net.udidb.cli.ops.events.CliEventVisitor;
 import net.udidb.cli.ops.impls.help.HelpMessageProvider;
 import net.udidb.cli.ops.impls.internals.SetStackTrace;
 import net.udidb.cli.ops.impls.internals.ShowInternals;
@@ -83,7 +84,7 @@ public class CliModule extends ParserModule {
 
         bind(EventDispatcher.class).to(CliEventDispatcher.class);
 
-        bind(UdiEventVisitor.class).to(CliResultVisitor.class);
+        bind(UdiEventVisitor.class).to(CliEventVisitor.class);
 
         bind(HelpMessageProvider.class).asEagerSingleton();
 

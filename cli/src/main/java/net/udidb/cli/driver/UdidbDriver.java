@@ -35,6 +35,7 @@ import com.google.inject.Injector;
 
 import net.udidb.engine.Config;
 import net.udidb.engine.UdidbEngine;
+import net.udidb.engine.events.EventDispatcher;
 import net.udidb.engine.ops.OperationReader;
 import net.udidb.engine.ops.results.OperationResultVisitor;
 
@@ -75,7 +76,8 @@ public class UdidbDriver {
 
         UdidbEngine engine = new UdidbEngine(config,
                 injector.getInstance(OperationReader.class),
-                injector.getInstance(OperationResultVisitor.class));
+                injector.getInstance(OperationResultVisitor.class),
+                injector.getInstance(EventDispatcher.class));
 
         // When this returns, the debugger should exit
         engine.run();

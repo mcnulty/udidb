@@ -38,7 +38,7 @@ import net.udidb.engine.ops.Operation;
  *
  * @author mcnulty
  */
-public class TableResult implements Result {
+public class TableResult extends BaseResult {
 
     private final List<String> columnHeaders;
 

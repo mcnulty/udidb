@@ -28,7 +28,12 @@
 
 package net.udidb.cli.ops.events;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.slf4j.Logger;
@@ -45,7 +50,11 @@ import net.libudi.api.event.UdiEvent;
 import net.libudi.api.event.UdiEventVisitor;
 import net.libudi.api.exceptions.UdiException;
 import net.udidb.cli.context.GlobalContextManager;
+import net.udidb.engine.context.DebuggeeContext;
 import net.udidb.engine.events.EventDispatcher;
+import net.udidb.engine.events.EventObserver;
+import net.udidb.engine.ops.OperationException;
+import net.udidb.engine.ops.results.Result;
 
 /**
  * Class that dispatches events that occur in a process
@@ -61,17 +70,21 @@ public class CliEventDispatcher implements EventDispatcher {
 
     private final GlobalContextManager contextManager;
 
-    private final UdiEventVisitor eventVisitor;
+    private final UdiEventVisitor defaultEventVisitor;
 
     private boolean blockForEvent = true;
 
+    private boolean displayAllEvents = false;
+
     private EventThread eventThread = null;
 
+    private final Map<UdiProcess, Set<EventObserver>> eventObservers = new HashMap<>();
+
     @Inject
-    CliEventDispatcher(UdiProcessManager processManager, GlobalContextManager contextManager, UdiEventVisitor eventVisitor) {
+    CliEventDispatcher(UdiProcessManager processManager, GlobalContextManager contextManager, UdiEventVisitor defaultEventVisitor) {
         this.processManager = processManager;
         this.contextManager = contextManager;
-        this.eventVisitor = eventVisitor;
+        this.defaultEventVisitor = defaultEventVisitor;
     }
 
     public boolean isBlockForEvent() {
@@ -80,6 +93,14 @@ public class CliEventDispatcher implements EventDispatcher {
 
     public void setBlockForEvent(boolean blockForEvent) {
         this.blockForEvent = blockForEvent;
+    }
+
+    public boolean isDisplayAllEvents() {
+        return displayAllEvents;
+    }
+
+    public void setDisplayAllEvents(boolean displayAllEvents) {
+        this.displayAllEvents = displayAllEvents;
     }
 
     private EventThread getEventThread() {
@@ -94,19 +115,39 @@ public class CliEventDispatcher implements EventDispatcher {
         return eventThread;
     }
 
+    private void registerEventObserver(EventObserver eventObserver) {
+        Set<EventObserver> procEventObs;
+        synchronized (eventObservers) {
+            procEventObs = eventObservers.get(eventObserver.getDebuggeeContext().getProcess());
+            if (procEventObs == null) {
+                procEventObs = new HashSet<>();
+                eventObservers.put(eventObserver.getDebuggeeContext().getProcess(), procEventObs);
+            }
+        }
+        procEventObs.add(eventObserver);
+    }
+
     @Override
-    public void handleEvents() throws UdiException {
+    public void handleEvents(Result result) throws UdiException, OperationException {
+
+        if (result.getDeferredEventObserver() != null) {
+            registerEventObserver(result.getDeferredEventObserver());
+        }
 
         EventThread localThread = getEventThread();
 
+
         if (blockForEvent) {
-            // Attempt to retrieve the first event via blocking
-            UdiEvent event = null;
-            while (event == null) {
-                try {
-                    event = localThread.getEvents().take();
-                    dispatchEvent(event);
-                }catch (InterruptedException e) {
+            // Only attempt to block when an event is pending
+            if (result.isEventPending()) {
+                // Attempt to retrieve the first event via blocking
+                UdiEvent event = null;
+                while (event == null) {
+                    try {
+                        event = localThread.getEvents().take();
+                        dispatchEvent(event);
+                    }catch (InterruptedException e) {
+                    }
                 }
             }
         }
@@ -117,12 +158,30 @@ public class CliEventDispatcher implements EventDispatcher {
         }
     }
 
-    private void dispatchEvent(UdiEvent event) throws UdiException {
+    private void dispatchEvent(UdiEvent event) throws UdiException, OperationException {
         if (event instanceof WaitError) {
             throw ((WaitError)event).getException();
         }
 
-        event.accept(eventVisitor);
+        Set<EventObserver> observers = eventObservers.get(event.getProcess());
+
+        boolean observersNotified = false;
+        synchronized (observers) {
+            if (observers != null) {
+                Iterator<EventObserver> i = observers.iterator();
+                while (i.hasNext()) {
+                    EventObserver eventObserver = i.next();
+                    if (!eventObserver.publish(event)) {
+                        i.remove();
+                    }
+                    observersNotified = true;
+                }
+            }
+        }
+
+        if (displayAllEvents || !observersNotified) {
+            event.accept(defaultEventVisitor);
+        }
     }
 
     /**

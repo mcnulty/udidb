@@ -128,7 +128,7 @@
                 <version>4.1</version>
                 <configuration>
                     <sourceDirectory>../cli/src/main/resources/grammar</sourceDirectory>
-                    <outputDirectory>target/generated-sources/antlr4/net/udidb/engine/ops/parser</outputDirectory>
+                    <outputDirectory>target/generated-sources/antlr4/net/udidb/cli/ops/parser</outputDirectory>
                     <visitor>false</visitor>
                     <listener>true</listener>
                 </configuration>

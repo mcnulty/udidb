@@ -26,41 +26,32 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.engine.ops.results;
+package net.udidb.engine.events;
 
-import net.udidb.engine.ops.Operation;
+import net.libudi.api.event.UdiEvent;
+import net.udidb.engine.context.DebuggeeContext;
+import net.udidb.engine.ops.OperationException;
 
 /**
- * A result indicating that the execution of the operation will create an event in the underlying process
+ * An observer for an event dispatched by an EventDispatcher
  *
  * @author mcnulty
  */
-public class EventResult implements Result {
-
-    private final Result result;
+public interface EventObserver {
 
     /**
-     * Constructor.
-     *
-     * @param result the result wrapped by this EventResult
+     * @return the debuggee whose events are of interest to this observer
      */
-    public EventResult(Result result) {
-        this.result = result;
-    }
+    DebuggeeContext getDebuggeeContext();
 
-    public EventResult() {
-        this.result = null;
-    }
-
-    @Override
-    public boolean accept(Operation op, OperationResultVisitor visitor) {
-
-        if (result != null) {
-            if (!result.accept(op, visitor)) {
-                return false;
-            }
-        }
-
-        return visitor.visit(op, this);
-    }
+    /**
+     * Notifies this observer of an event
+     *
+     * @param event the event
+     *
+     * @return true, if this observer should continue to receive events for the corresponding debuggee; false otherwise
+     *
+     * @throws OperationException indicates the observer failed to process the event
+     */
+    boolean publish(UdiEvent event) throws OperationException;
 }

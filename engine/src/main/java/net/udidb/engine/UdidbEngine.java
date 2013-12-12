@@ -28,9 +28,11 @@
 
 package net.udidb.engine;
 
+import net.udidb.engine.events.EventDispatcher;
 import net.udidb.engine.ops.Operation;
 import net.udidb.engine.ops.OperationReader;
 import net.udidb.engine.ops.results.OperationResultVisitor;
+import net.udidb.engine.ops.results.Result;
 
 /**
  * Engine for udidb, this class executes operations for the debugger
@@ -45,17 +47,21 @@ public class UdidbEngine {
 
     private final OperationResultVisitor visitor;
 
+    private final EventDispatcher eventDispatcher;
+
     /**
      * Constructor.
      *
      * @param config the configuration
      * @param reader the reader
      * @param visitor the visitor
+     * @param eventDispatcher the event dispatcher for handling events
      */
-    public UdidbEngine(Config config, OperationReader reader, OperationResultVisitor visitor) {
+    public UdidbEngine(Config config, OperationReader reader, OperationResultVisitor visitor, EventDispatcher eventDispatcher) {
         this.config = config;
         this.reader = reader;
         this.visitor = visitor;
+        this.eventDispatcher = eventDispatcher;
     }
 
     /**
@@ -68,7 +74,12 @@ public class UdidbEngine {
             try {
                 op = reader.read();
 
-                shouldContinue = op.execute().accept(op, visitor);
+                Result result = op.execute();
+
+                shouldContinue = result.accept(op, visitor);
+                if (shouldContinue) {
+                    eventDispatcher.handleEvents(result);
+                }
             }catch (Exception e) {
                if(!visitor.visit(op, e)) {
                    shouldContinue = false;
