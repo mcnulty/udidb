@@ -30,6 +30,8 @@ package net.udidb.engine.context;
 
 import java.nio.file.Path;
 
+import net.sourcecrumbs.api.files.Executable;
+
 /**
  * Factory for DebuggeeContext
  *
@@ -42,10 +44,11 @@ public interface DebuggeeContextFactory {
      *
      * @param execPath the path to the executable
      * @param args the arguments
+     * @param executable the executable
      *
      * @return the DebuggeeContext
      */
-    DebuggeeContext createContext(Path execPath, String[] args);
+    DebuggeeContext createContext(Path execPath, String[] args, Executable executable);
 
     /**
      * Deletes a DebuggeeContext

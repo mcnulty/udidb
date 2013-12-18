@@ -30,6 +30,7 @@ package net.udidb.engine.events;
 
 import net.libudi.api.exceptions.UdiException;
 import net.udidb.engine.ops.OperationException;
+import net.udidb.engine.ops.results.OperationResultVisitor;
 import net.udidb.engine.ops.results.Result;
 
 /**
@@ -44,8 +45,7 @@ public interface EventDispatcher {
      *
      * @param result the result of the operation that could trigger events
      *
-     * @throws UdiException on failure during handling the events
      * @throws OperationException on failure to handle the events
      */
-    void handleEvents(Result result) throws UdiException, OperationException;
+    void handleEvents(Result result) throws OperationException;
 }

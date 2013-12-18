@@ -43,6 +43,7 @@ import net.libudi.api.event.UdiEventVisitor;
 import net.libudi.api.exceptions.UdiException;
 import net.udidb.engine.events.EventDispatcher;
 import net.udidb.engine.ops.Operation;
+import net.udidb.engine.ops.results.DeferredResult;
 import net.udidb.engine.ops.results.OperationResultVisitor;
 import net.udidb.engine.ops.impls.util.Quit;
 import net.udidb.engine.ops.results.TableResult;
@@ -158,6 +159,12 @@ public class CliResultVisitor implements OperationResultVisitor {
             }
         }
 
+        return true;
+    }
+
+    @Override
+    public boolean visit(Operation op, DeferredResult result) {
+        // DeferredResults are explicitly ignored for now
         return true;
     }
 

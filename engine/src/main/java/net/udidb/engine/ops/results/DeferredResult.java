@@ -26,52 +26,34 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.engine.ops.impls.control;
+package net.udidb.engine.ops.results;
 
-import com.google.inject.Inject;
-
-import net.libudi.api.UdiProcess;
-import net.udidb.engine.context.DebuggeeContext;
-import net.udidb.engine.ops.OperationException;
-import net.udidb.engine.ops.annotations.DisplayName;
-import net.udidb.engine.ops.annotations.HelpMessage;
-import net.udidb.engine.ops.annotations.LongHelpMessage;
-import net.udidb.engine.ops.impls.DisplayNameOperation;
-import net.udidb.engine.ops.results.Result;
+import net.udidb.engine.events.EventObserver;
+import net.udidb.engine.ops.Operation;
 
 /**
- * Operation to execute the next line of source for a debuggee, descending into method calls
+ * A result that indicates the operation
  *
  * @author mcnulty
  */
-@HelpMessage(enMessage="Step a debuggee")
-@LongHelpMessage(enMessage=
-        "step\n\n" +
-        "Execute the next line of source for the current debuggee, descending into method calls"
-)
-@DisplayName("step")
-public class StepDebuggee extends DisplayNameOperation {
+public class DeferredResult extends BaseResult {
 
-    private final UdiProcess process;
-
-    @Inject
-    public StepDebuggee(DebuggeeContext context) {
-        this.process = context.getProcess();
+    /**
+     * Constructor.
+     *
+     * <p>
+     *     This constructor implies an event is pending
+     * </p>
+     *
+     * @param deferredEventObserver the event observer
+     */
+    public DeferredResult(EventObserver deferredEventObserver) {
+        this.eventPending = true;
+        this.deferredEventObserver = deferredEventObserver;
     }
 
     @Override
-    public Result execute() throws OperationException {
-
-        // Need to get current pc from debuggee
-
-        // Using this need to map to the source line to display
-
-        // Determine pc of the destination line
-
-        // Set breakpoint at destination
-
-        // Continue debuggee
-
-        return null;
+    public boolean accept(Operation op, OperationResultVisitor visitor) {
+        return visitor.visit(op, this);
     }
 }

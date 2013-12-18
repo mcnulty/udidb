@@ -28,7 +28,6 @@
 
 package net.udidb.engine.ops.results;
 
-import net.udidb.engine.events.EventObserver;
 import net.udidb.engine.ops.Operation;
 
 /**
@@ -51,16 +50,6 @@ public class VoidResult extends BaseResult {
      */
     public VoidResult(boolean eventPending) {
         this.eventPending = eventPending;
-    }
-
-    /**
-     * Constructor.
-     *
-     * @param deferredEventVisitor the deferred event visitor, indicating that the result of the operation is incomplete
-     */
-    public VoidResult(EventObserver deferredEventVisitor) {
-        this.eventPending = true;
-        this.deferredEventObserver = deferredEventVisitor;
     }
 
     @Override

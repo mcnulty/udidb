@@ -42,6 +42,7 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 import net.libudi.api.UdiProcess;
+import net.sourcecrumbs.api.files.Executable;
 import net.udidb.engine.context.DebuggeeContext;
 import net.udidb.engine.context.DebuggeeContextFactory;
 
@@ -110,13 +111,14 @@ public class GlobalContextManager implements Provider<DebuggeeContext>, Debuggee
     }
 
     @Override
-    public DebuggeeContext createContext(Path execPath, String[] args) {
+    public DebuggeeContext createContext(Path execPath, String[] args, Executable executable) {
         DebuggeeContext context = new DebuggeeContext();
 
         context.setEnv(env == null ? null : new HashMap<>(env));
         context.setRootDir(rootDir);
         context.setExecPath(execPath);
         context.setArgs(args);
+        context.setExecutable(executable);
 
         contexts.put(currentId.getAndIncrement(), context);
         setCurrent(context);

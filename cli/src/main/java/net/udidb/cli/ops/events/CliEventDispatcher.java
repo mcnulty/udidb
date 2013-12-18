@@ -50,7 +50,6 @@ import net.libudi.api.event.UdiEvent;
 import net.libudi.api.event.UdiEventVisitor;
 import net.libudi.api.exceptions.UdiException;
 import net.udidb.cli.context.GlobalContextManager;
-import net.udidb.engine.context.DebuggeeContext;
 import net.udidb.engine.events.EventDispatcher;
 import net.udidb.engine.events.EventObserver;
 import net.udidb.engine.ops.OperationException;
@@ -128,33 +127,37 @@ public class CliEventDispatcher implements EventDispatcher {
     }
 
     @Override
-    public void handleEvents(Result result) throws UdiException, OperationException {
+    public void handleEvents(Result result) throws OperationException {
 
-        if (result.getDeferredEventObserver() != null) {
-            registerEventObserver(result.getDeferredEventObserver());
-        }
+        try {
+            if (result.getDeferredEventObserver() != null) {
+                registerEventObserver(result.getDeferredEventObserver());
+            }
 
-        EventThread localThread = getEventThread();
+            EventThread localThread = getEventThread();
 
 
-        if (blockForEvent) {
-            // Only attempt to block when an event is pending
-            if (result.isEventPending()) {
-                // Attempt to retrieve the first event via blocking
-                UdiEvent event = null;
-                while (event == null) {
-                    try {
-                        event = localThread.getEvents().take();
-                        dispatchEvent(event);
-                    }catch (InterruptedException e) {
+            if (blockForEvent) {
+                // Only attempt to block when an event is pending
+                if (result.isEventPending()) {
+                    // Attempt to retrieve the first event via blocking
+                    UdiEvent event = null;
+                    while (event == null) {
+                        try {
+                            event = localThread.getEvents().take();
+                            dispatchEvent(event);
+                        }catch (InterruptedException e) {
+                        }
                     }
                 }
             }
-        }
 
-        UdiEvent event;
-        while ((event = localThread.getEvents().poll()) != null) {
-            dispatchEvent(event);
+            UdiEvent event;
+            while ((event = localThread.getEvents().poll()) != null) {
+                dispatchEvent(event);
+            }
+        }catch (UdiException e) {
+            throw new OperationException("Failed to handle events", e);
         }
     }
 

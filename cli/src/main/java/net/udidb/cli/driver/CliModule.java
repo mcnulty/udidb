@@ -40,6 +40,8 @@ import com.google.inject.name.Names;
 import net.libudi.api.UdiProcessManager;
 import net.libudi.api.event.UdiEventVisitor;
 import net.libudi.api.jni.impl.UdiProcessManagerImpl;
+import net.sourcecrumbs.api.files.BinaryReader;
+import net.sourcecrumbs.refimpl.elf.ElfReader;
 import net.udidb.cli.ops.CliResultVisitor;
 import net.udidb.cli.ops.JlineOperationReader;
 import net.udidb.cli.context.GlobalContextManager;
@@ -89,6 +91,8 @@ public class CliModule extends ParserModule {
         bind(HelpMessageProvider.class).asEagerSingleton();
 
         bind(UdiProcessManager.class).toInstance(new UdiProcessManagerImpl());
+
+        bind(BinaryReader.class).toInstance(new ElfReader());
     }
 
     @Inject

@@ -68,6 +68,16 @@ public interface OperationResultVisitor {
     boolean visit(Operation op, TableResult result);
 
     /**
+     * Processes the DeferredResult of the specified operation
+     *
+     * @param op the operation
+     * @param result the DeferredResult of the operation
+     *
+     * @return true, if the result indicates further operations should be executed; false otherwise
+     */
+    boolean visit(Operation op, DeferredResult result);
+
+    /**
      * Processes the exception that occurred while executing or parsing the operation
      *
      * @param op the operation or null if the operation could not be determined

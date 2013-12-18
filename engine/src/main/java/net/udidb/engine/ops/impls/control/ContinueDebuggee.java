@@ -66,7 +66,7 @@ public class ContinueDebuggee extends DisplayNameOperation {
         try {
             process.continueProcess();
         }catch (UdiException e) {
-            throw new OperationException(e.getMessage(), e);
+            throw new OperationException("Failed to continue debuggee", e);
         }
 
         // The process runs until an event occurs

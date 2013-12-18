@@ -37,6 +37,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import net.libudi.api.UdiProcess;
 import net.libudi.api.UdiProcessConfig;
+import net.libudi.api.UdiThread;
+import net.sourcecrumbs.api.files.Executable;
 import net.udidb.engine.ops.results.TableRow;
 
 /**
@@ -56,7 +58,11 @@ public class DebuggeeContext implements TableRow {
 
     private UdiProcess process;
 
+    private UdiThread currentThread;
+
     private boolean active;
+
+    private Executable executable;
 
     public Path getRootDir() {
         return rootDir;
@@ -104,6 +110,22 @@ public class DebuggeeContext implements TableRow {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public UdiThread getCurrentThread() {
+        return currentThread;
+    }
+
+    public void setCurrentThread(UdiThread currentThread) {
+        this.currentThread = currentThread;
+    }
+
+    public Executable getExecutable() {
+        return executable;
+    }
+
+    public void setExecutable(Executable executable) {
+        this.executable = executable;
     }
 
     public UdiProcessConfig createProcessConfig() {

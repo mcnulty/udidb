@@ -28,6 +28,7 @@
 
 package net.udidb.engine.ops.impls.control;
 
+import java.io.IOException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -37,6 +38,9 @@ import com.google.inject.Inject;
 import net.libudi.api.UdiProcess;
 import net.libudi.api.UdiProcessManager;
 import net.libudi.api.exceptions.UdiException;
+import net.sourcecrumbs.api.files.BinaryReader;
+import net.sourcecrumbs.api.files.Executable;
+import net.sourcecrumbs.api.files.UnknownFormatException;
 import net.udidb.engine.context.DebuggeeContext;
 import net.udidb.engine.context.DebuggeeContextFactory;
 import net.udidb.engine.ops.impls.DisplayNameOperation;
@@ -65,6 +69,8 @@ public class CreateDebuggee extends DisplayNameOperation {
 
     private final DebuggeeContextFactory contextFactory;
 
+    private final BinaryReader reader;
+
     @Operand(order=0)
     private String execPath;
 
@@ -72,9 +78,10 @@ public class CreateDebuggee extends DisplayNameOperation {
     private String[] args;
 
     @Inject
-    public CreateDebuggee(UdiProcessManager procManager, DebuggeeContextFactory contextFactory) {
+    public CreateDebuggee(UdiProcessManager procManager, DebuggeeContextFactory contextFactory, BinaryReader reader) {
         this.procManager = procManager;
         this.contextFactory = contextFactory;
+        this.reader = reader;
     }
 
     public String getExecPath() {
@@ -102,17 +109,25 @@ public class CreateDebuggee extends DisplayNameOperation {
             throw new OperationException(String.format("%s is not a valid path", execPath), e);
         }
 
-        DebuggeeContext context = contextFactory.createContext(path, args);
+        Executable executable;
+        try {
+            executable = reader.openExecutable(path);
+        }catch (IOException | UnknownFormatException e) {
+            throw new OperationException("Failed to open " + path, e);
+        }
+
+        DebuggeeContext context = contextFactory.createContext(path, args, executable);
 
         UdiProcess process;
         try {
             process = procManager.createProcess(path, args, context.getEnv(), context.createProcessConfig());
         }catch (UdiException e) {
             contextFactory.deleteContext(context);
-            throw new OperationException(e.getMessage(), e);
+            throw new OperationException("Failed to create process", e);
         }
 
         context.setProcess(process);
+        context.setCurrentThread(process.getInitialThread());
 
         return new VoidResult();
     }
