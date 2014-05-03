@@ -26,58 +26,20 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.engine.ops.results;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import net.udidb.engine.ops.Operation;
+package net.udidb.engine.ops;
 
 /**
- * A result that represents a table of values
+ * An exception indicating that debug info is missing and the requested operation cannot be completed
  *
  * @author mcnulty
  */
-public class TableResult extends BaseResult {
+public class MissingDebugInfoException extends OperationException {
 
-    private final List<String> columnHeaders;
-
-    private final List<TableRow> rows;
-
-    /**
-     * Constructor.
-     *
-     * @param rows the rows to be include in this result
-     */
-    public TableResult(List<? extends TableRow> rows) {
-        this.rows = new ArrayList<>(rows);
-        if (this.rows.size() > 0) {
-            columnHeaders = new ArrayList<>(this.rows.get(0).getColumnHeaders());
-        }else{
-            columnHeaders = new ArrayList<>(0);
-        }
+    public MissingDebugInfoException() {
+        super("Debug information unavailable, cannot execute operation");
     }
 
-    /**
-     * Convenience constructor for a table with only one row.
-     *
-     * @param row the row
-     */
-    public TableResult(TableRow row) {
-        this(Arrays.asList(row));
-    }
-
-    public List<String> getColumnHeaders() {
-        return new ArrayList<>(columnHeaders);
-    }
-
-    public List<TableRow> getRows() {
-        return new ArrayList<>(rows);
-    }
-
-    @Override
-    public boolean accept(Operation op, OperationResultVisitor visitor) {
-        return visitor.visit(op, this);
+    public MissingDebugInfoException(Throwable cause) {
+        super(cause);
     }
 }

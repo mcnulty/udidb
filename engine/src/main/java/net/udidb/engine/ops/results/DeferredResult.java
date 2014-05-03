@@ -32,7 +32,7 @@ import net.udidb.engine.events.EventObserver;
 import net.udidb.engine.ops.Operation;
 
 /**
- * A result that indicates the operation
+ * A result that indicates the operation's result is not yet available
  *
  * @author mcnulty
  */

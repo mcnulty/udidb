@@ -26,58 +26,52 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.engine.ops.results;
+package net.udidb.engine.source;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.io.IOException;
 import java.util.List;
 
-import net.udidb.engine.ops.Operation;
+import net.sourcecrumbs.api.machinecode.SourceLine;
+import net.sourcecrumbs.api.machinecode.SourceLineRange;
+import net.sourcecrumbs.api.transunit.NoSuchLineException;
 
 /**
- * A result that represents a table of values
+ * A factory for creating SourceLineRows
  *
  * @author mcnulty
  */
-public class TableResult extends BaseResult {
-
-    private final List<String> columnHeaders;
-
-    private final List<TableRow> rows;
+public interface SourceLineRowFactory {
 
     /**
-     * Constructor.
+     * Creates a SourceLineRow from a SourceLine
      *
-     * @param rows the rows to be include in this result
+     * @param sourceLine the SourceLine
+     *
+     * @return the SourceLineRow
+     *
+     * @throws NoSuchLineException when no line information can be retrieved
      */
-    public TableResult(List<? extends TableRow> rows) {
-        this.rows = new ArrayList<>(rows);
-        if (this.rows.size() > 0) {
-            columnHeaders = new ArrayList<>(this.rows.get(0).getColumnHeaders());
-        }else{
-            columnHeaders = new ArrayList<>(0);
-        }
-    }
+    SourceLineRow create(SourceLine sourceLine) throws NoSuchLineException;
 
     /**
-     * Convenience constructor for a table with only one row.
+     * Create a collection of SourceLineRows from a collection of SourceLineRanges
      *
-     * @param row the row
+     * @param ranges the ranges
+     *
+     * @return the rows
+     *
+     * @throws NoSuchLineException when no line information can be retrieved
      */
-    public TableResult(TableRow row) {
-        this(Arrays.asList(row));
-    }
+    List<SourceLineRow> create(List<SourceLineRange> ranges) throws NoSuchLineException;
 
-    public List<String> getColumnHeaders() {
-        return new ArrayList<>(columnHeaders);
-    }
-
-    public List<TableRow> getRows() {
-        return new ArrayList<>(rows);
-    }
-
-    @Override
-    public boolean accept(Operation op, OperationResultVisitor visitor) {
-        return visitor.visit(op, this);
-    }
+    /**
+     * Create a collection of SourceLineRows from a SourceLineRange
+     *
+     * @param range the range
+     *
+     * @return the rows
+     *
+     * @throws NoSuchLineException when no line information can be retrieved
+     */
+    List<SourceLineRow> create(SourceLineRange range) throws NoSuchLineException;
 }

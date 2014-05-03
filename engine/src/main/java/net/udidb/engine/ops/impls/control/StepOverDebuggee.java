@@ -30,6 +30,9 @@ package net.udidb.engine.ops.impls.control;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.inject.Inject;
 
 import net.libudi.api.UdiProcess;
@@ -37,9 +40,12 @@ import net.libudi.api.UdiThread;
 import net.libudi.api.event.UdiEvent;
 import net.libudi.api.event.UdiEventBreakpoint;
 import net.libudi.api.exceptions.UdiException;
+import net.sourcecrumbs.api.machinecode.MachineCodeMapping;
 import net.sourcecrumbs.api.machinecode.SourceLineRange;
+import net.sourcecrumbs.api.transunit.NoSuchLineException;
 import net.udidb.engine.context.DebuggeeContext;
 import net.udidb.engine.events.EventObserver;
+import net.udidb.engine.ops.MissingDebugInfoException;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.HelpMessage;
@@ -50,6 +56,7 @@ import net.udidb.engine.ops.results.OperationResultVisitor;
 import net.udidb.engine.ops.results.Result;
 import net.udidb.engine.ops.results.TableResult;
 import net.udidb.engine.source.SourceLineRow;
+import net.udidb.engine.source.SourceLineRowFactory;
 
 /**
  * Operation to execute the next statement of source for a debuggee, stepping over method calls
@@ -64,17 +71,29 @@ import net.udidb.engine.source.SourceLineRow;
 @DisplayName("next")
 public class StepOverDebuggee extends DisplayNameOperation implements EventObserver {
 
+    private static final Logger logger = LoggerFactory.getLogger(StepOverDebuggee.class);
+
     private final DebuggeeContext context;
     private final OperationResultVisitor resultVisitor;
+    private final MachineCodeMapping machineCodeMapping;
+    private final SourceLineRowFactory sourceLineRowFactory;
 
     @Inject
-    public StepOverDebuggee(DebuggeeContext context, OperationResultVisitor resultVisitor) {
+    public StepOverDebuggee(DebuggeeContext context, OperationResultVisitor resultVisitor,
+            SourceLineRowFactory sourceLineRowFactory)
+    {
         this.context = context;
         this.resultVisitor = resultVisitor;
+        this.machineCodeMapping = context.getExecutable().getMachineCodeMapping();
+        this.sourceLineRowFactory = sourceLineRowFactory;
     }
 
     @Override
     public Result execute() throws OperationException {
+
+        if (machineCodeMapping == null) {
+            throw new MissingDebugInfoException();
+        }
 
         try {
             // Get the current pc
@@ -82,7 +101,10 @@ public class StepOverDebuggee extends DisplayNameOperation implements EventObser
             long pc = thread.getPC();
 
             // Determine pc of the destination statement to step to
-            long nextPc = context.getExecutable().getMachineCodeMapping().getNextStatementAddress(pc, false);
+            long nextPc = machineCodeMapping.getNextStatementAddress(pc);
+            if (nextPc == 0) {
+                throw new OperationException("Failed to locate line number information for next statement");
+            }
 
             // Set breakpoint at destination
             UdiProcess process = context.getProcess();
@@ -107,6 +129,10 @@ public class StepOverDebuggee extends DisplayNameOperation implements EventObser
     @Override
     public boolean publish(UdiEvent event) throws OperationException {
 
+        if (machineCodeMapping == null) {
+            throw new MissingDebugInfoException();
+        }
+
         try {
             // Don't implement a full-on event visitor since this operation just cares about breakpoints
             if (!(event instanceof UdiEventBreakpoint)) {
@@ -119,8 +145,15 @@ public class StepOverDebuggee extends DisplayNameOperation implements EventObser
             context.getProcess().deleteBreakpoint(address);
 
             // Propagates the result from the completion of the operation
-            List<SourceLineRange> lineRanges = context.getExecutable().getMachineCodeMapping().getSourceLinesRanges(address);
-            resultVisitor.visit(this, new TableResult(SourceLineRow.fromSourceLineRange(lineRanges)));
+            List<SourceLineRange> lineRanges = machineCodeMapping.getSourceLinesRanges(address);
+            TableResult result;
+            try {
+                result = new TableResult(sourceLineRowFactory.create(lineRanges));
+            }catch (NoSuchLineException e) {
+                logger.debug("No line information available", e);
+                result = new TableResult(new SourceLineRow());
+            }
+            resultVisitor.visit(this, result);
 
             // The Operation only cares about this event
             return false;

@@ -26,58 +26,65 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.engine.ops.results;
+package net.udidb.engine.ops.impls.breakpoints;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import com.google.inject.Inject;
 
-import net.udidb.engine.ops.Operation;
+import net.libudi.api.UdiProcess;
+import net.libudi.api.exceptions.UdiException;
+import net.udidb.engine.context.DebuggeeContext;
+import net.udidb.engine.ops.OperationException;
+import net.udidb.engine.ops.annotations.DisplayName;
+import net.udidb.engine.ops.annotations.HelpMessage;
+import net.udidb.engine.ops.annotations.LongHelpMessage;
+import net.udidb.engine.ops.annotations.Operand;
+import net.udidb.engine.ops.impls.DisplayNameOperation;
+import net.udidb.engine.ops.results.Result;
+import net.udidb.engine.ops.results.ValueResult;
 
 /**
- * A result that represents a table of values
+ * An operation to create and install a breakpoint in a debuggee
  *
  * @author mcnulty
  */
-public class TableResult extends BaseResult {
+@HelpMessage(enMessage="Set a breakpoint in a debuggee")
+@LongHelpMessage(enMessage=
+        "break\n\n" +
+        "Create and install a breakpoint in a debuggee"
+)
+@DisplayName("break")
+public class SetBreakpoint extends DisplayNameOperation {
 
-    private final List<String> columnHeaders;
+    // TODO need to add tracking for breakpoints
 
-    private final List<TableRow> rows;
+    private final UdiProcess process;
 
-    /**
-     * Constructor.
-     *
-     * @param rows the rows to be include in this result
-     */
-    public TableResult(List<? extends TableRow> rows) {
-        this.rows = new ArrayList<>(rows);
-        if (this.rows.size() > 0) {
-            columnHeaders = new ArrayList<>(this.rows.get(0).getColumnHeaders());
-        }else{
-            columnHeaders = new ArrayList<>(0);
-        }
+    @Operand(order=0)
+    private long address;
+
+    @Inject
+    public SetBreakpoint(DebuggeeContext context) {
+        this.process = context.getProcess();
     }
 
-    /**
-     * Convenience constructor for a table with only one row.
-     *
-     * @param row the row
-     */
-    public TableResult(TableRow row) {
-        this(Arrays.asList(row));
+    public long getAddress() {
+        return address;
     }
 
-    public List<String> getColumnHeaders() {
-        return new ArrayList<>(columnHeaders);
-    }
-
-    public List<TableRow> getRows() {
-        return new ArrayList<>(rows);
+    public void setAddress(long address) {
+        this.address = address;
     }
 
     @Override
-    public boolean accept(Operation op, OperationResultVisitor visitor) {
-        return visitor.visit(op, this);
+    public Result execute() throws OperationException {
+        try {
+            process.createBreakpoint(address);
+
+            process.installBreakpoint(address);
+        }catch (UdiException e) {
+            throw new OperationException("Failed to set breakpoint in debuggee", e);
+        }
+
+        return new ValueResult(String.format("Set breakpoint at 0x%x", address));
     }
 }

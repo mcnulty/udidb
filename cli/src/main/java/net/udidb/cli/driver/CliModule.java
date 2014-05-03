@@ -42,9 +42,6 @@ import net.libudi.api.event.UdiEventVisitor;
 import net.libudi.api.jni.impl.UdiProcessManagerImpl;
 import net.sourcecrumbs.api.files.BinaryReader;
 import net.sourcecrumbs.refimpl.CrossPlatformBinaryReader;
-import net.sourcecrumbs.refimpl.dwarf.DwarfSectionPostProcessor;
-import net.sourcecrumbs.refimpl.elf.ElfReader;
-import net.sourcecrumbs.refimpl.elf.ElfSectionPostProcessor;
 import net.udidb.cli.ops.CliResultVisitor;
 import net.udidb.cli.ops.JlineOperationReader;
 import net.udidb.cli.context.GlobalContextManager;
@@ -53,6 +50,7 @@ import net.udidb.cli.ops.events.CliEventVisitor;
 import net.udidb.cli.ops.impls.help.HelpMessageProvider;
 import net.udidb.cli.ops.impls.internals.SetStackTrace;
 import net.udidb.cli.ops.impls.internals.ShowInternals;
+import net.udidb.cli.source.CliSourceLineRowFactory;
 import net.udidb.engine.events.EventDispatcher;
 import net.udidb.engine.ops.OperationReader;
 import net.udidb.engine.context.DebuggeeContext;
@@ -60,6 +58,7 @@ import net.udidb.engine.context.DebuggeeContextFactory;
 import net.udidb.engine.ops.impls.Setting;
 import net.udidb.engine.ops.results.OperationResultVisitor;
 import net.udidb.engine.ops.parser.ParserModule;
+import net.udidb.engine.source.SourceLineRowFactory;
 
 /**
  * A Guice module defining dependencies for running the debugger from the command line
@@ -96,6 +95,8 @@ public class CliModule extends ParserModule {
         bind(UdiProcessManager.class).toInstance(new UdiProcessManagerImpl());
 
         bind(BinaryReader.class).toInstance(new CrossPlatformBinaryReader());
+
+        bind(SourceLineRowFactory.class).toInstance(new CliSourceLineRowFactory());
     }
 
     @Inject

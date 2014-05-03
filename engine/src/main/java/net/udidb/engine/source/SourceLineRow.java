@@ -28,14 +28,10 @@
 
 package net.udidb.engine.source;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import net.sourcecrumbs.api.machinecode.SourceLine;
-import net.sourcecrumbs.api.machinecode.SourceLineRange;
-import net.sourcecrumbs.api.transunit.NoSuchLineException;
 import net.udidb.engine.ops.results.TableRow;
 
 /**
@@ -45,15 +41,27 @@ import net.udidb.engine.ops.results.TableRow;
  */
 public class SourceLineRow implements TableRow {
 
-    private final SourceLine sourceLine;
+    private final int line;
+
+    private final String text;
 
     /**
      * Constructor.
      *
-     * @param sourceLine the source line
+     * @param line the line
+     * @param text the text
      */
-    public SourceLineRow(SourceLine sourceLine) {
-        this.sourceLine = sourceLine;
+    public SourceLineRow(int line, String text) {
+        this.line = line;
+        this.text = text;
+    }
+
+    /**
+     * Creates a SourceLineRow that represents invalid line information
+     */
+    public SourceLineRow() {
+        this.line = -1;
+        this.text = "Line information unavailable";
     }
 
     @Override
@@ -63,31 +71,6 @@ public class SourceLineRow implements TableRow {
 
     @Override
     public List<String> getColumnValues() {
-
-        String text;
-        try {
-            text = sourceLine.getLineText();
-        }catch (NoSuchLineException e) {
-            text = "<unknown>";
-        }
-
-        return Arrays.asList(Long.toString(sourceLine.getLine()), text);
-    }
-
-    public static List<SourceLineRow> fromSourceLineRange(SourceLineRange lineRange) {
-        return fromSourceLineRange(Arrays.asList(lineRange));
-    }
-
-    public static List<SourceLineRow> fromSourceLineRange(List<SourceLineRange> lineRanges) {
-        List<SourceLineRow> rows = new ArrayList<>();
-        for (SourceLineRange lineRange : lineRanges) {
-            for (int i = 0; i < lineRange.getLineRange().getIntLength(); ++i) {
-                SourceLine sourceLine = new SourceLine();
-                sourceLine.setLine(lineRange.getLineRange().getStart() + i);
-                sourceLine.setTranslationUnit(lineRange.getTranslationUnit());
-                rows.add(new SourceLineRow(sourceLine));
-            }
-        }
-        return rows;
+        return Arrays.asList(Integer.toString(line), text);
     }
 }

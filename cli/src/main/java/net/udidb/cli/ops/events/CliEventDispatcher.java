@@ -163,14 +163,14 @@ public class CliEventDispatcher implements EventDispatcher {
 
     private void dispatchEvent(UdiEvent event) throws UdiException, OperationException {
         if (event instanceof WaitError) {
-            throw ((WaitError)event).getException();
+            throw new OperationException(((WaitError)event).getException());
         }
 
         Set<EventObserver> observers = eventObservers.get(event.getProcess());
 
         boolean observersNotified = false;
-        synchronized (observers) {
-            if (observers != null) {
+        if (observers != null) {
+            synchronized (observers) {
                 Iterator<EventObserver> i = observers.iterator();
                 while (i.hasNext()) {
                     EventObserver eventObserver = i.next();
