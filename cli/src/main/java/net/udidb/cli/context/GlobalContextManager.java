@@ -30,6 +30,7 @@ package net.udidb.cli.context;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -88,15 +89,17 @@ public class GlobalContextManager implements Provider<DebuggeeContext>, Debuggee
         return current;
     }
 
-    public void setCurrent(DebuggeeContext current) {
+    public synchronized void setCurrent(DebuggeeContext current) {
         if (this.current != null) {
             this.current.setActive(false);
         }
         this.current = current;
-        this.current.setActive(true);
+        if (this.current != null) {
+            this.current.setActive(true);
+        }
     }
 
-    public void setCurrent(int id) {
+    public synchronized void setCurrent(int id) {
         DebuggeeContext currentContext = contexts.get(id);
         if (currentContext == null) {
             throw new IllegalArgumentException(String.format("No context with id '%s' exists.", id));
@@ -126,6 +129,26 @@ public class GlobalContextManager implements Provider<DebuggeeContext>, Debuggee
         return context;
     }
 
+    private void deleteContext(Integer contextId) {
+        synchronized (contexts) {
+            if (contextId != null) {
+                DebuggeeContext context = contexts.remove(contextId);
+                if (context.isActive()) {
+                    // Set the current context to the any context
+                    Collection<DebuggeeContext> values = contexts.values();
+
+                    DebuggeeContext newContext;
+                    if (values.size() > 0) {
+                        newContext = values.iterator().next();
+                    }else{
+                        newContext = null;
+                    }
+                    setCurrent(newContext);
+                }
+            }
+        }
+    }
+
     @Override
     public void deleteContext(DebuggeeContext context) {
         synchronized (contexts) {
@@ -133,20 +156,38 @@ public class GlobalContextManager implements Provider<DebuggeeContext>, Debuggee
             for (Map.Entry<Integer, DebuggeeContext> entry : contexts.entrySet()) {
                 if (entry.getValue().equals(context)) {
                     contextId = entry.getKey();
+                    break;
                 }
             }
-
-            if (contextId != null) {
-                contexts.remove(contextId);
-            }
+            deleteContext(contextId);
         }
     }
 
-    public List<UdiProcess> getProcesses() {
+    @Override
+    public void deleteContext(UdiProcess process) {
+        synchronized (contexts) {
+            Integer contextId = null;
+            for (Map.Entry<Integer, DebuggeeContext> entry : contexts.entrySet()) {
+                if (entry.getValue().getProcess().equals(process)) {
+                    contextId = entry.getKey();
+                    break;
+                }
+            }
+
+            deleteContext(contextId);
+        }
+    }
+
+    /**
+     * @return the processes in this manager that could possibly deliver events
+     */
+    public List<UdiProcess> getEventProcesses() {
         List<UdiProcess> processes = new ArrayList<>();
         synchronized (contexts) {
             for (DebuggeeContext context : contexts.values()) {
-                processes.add(context.getProcess());
+                if (!context.getProcess().isTerminated()) {
+                    processes.add(context.getProcess());
+                }
             }
         }
         return processes;

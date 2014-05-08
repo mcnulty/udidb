@@ -146,7 +146,7 @@ public class OperationParser {
         try {
             cmd = injector.getInstance(opClass);
         }catch (ConfigurationException | ProvisionException e) {
-            throw new UnknownOperationException(String.format("Failed to configure operation '%s'", opName));
+            throw new UnknownOperationException(String.format("Failed to configure operation '%s'", opName), e);
         }
 
         int requiredOperands = 0;

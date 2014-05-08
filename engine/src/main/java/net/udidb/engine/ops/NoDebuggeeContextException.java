@@ -26,42 +26,16 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.engine.context;
-
-import java.nio.file.Path;
-
-import net.libudi.api.UdiProcess;
-import net.sourcecrumbs.api.files.Executable;
+package net.udidb.engine.ops;
 
 /**
- * Factory for DebuggeeContext
+ * Indicates that an Operation cannot be performed because the active DebuggeeContext has not been set
  *
  * @author mcnulty
  */
-public interface DebuggeeContextFactory {
+public class NoDebuggeeContextException extends OperationException {
 
-    /**
-     * Creates a DebuggeeContext
-     *
-     * @param execPath the path to the executable
-     * @param args the arguments
-     * @param executable the executable
-     *
-     * @return the DebuggeeContext
-     */
-    DebuggeeContext createContext(Path execPath, String[] args, Executable executable);
-
-    /**
-     * Deletes a DebuggeeContext
-     *
-     * @param context the context to delete
-     */
-    void deleteContext(DebuggeeContext context);
-
-    /**
-     * Deletes a DebuggeeContext, given its associated process
-     *
-     * @param process the process
-     */
-    void deleteContext(UdiProcess process);
+    public NoDebuggeeContextException() {
+        super("No active debuggee context");
+    }
 }

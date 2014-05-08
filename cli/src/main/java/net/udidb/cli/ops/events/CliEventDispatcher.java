@@ -52,6 +52,7 @@ import net.libudi.api.exceptions.UdiException;
 import net.udidb.cli.context.GlobalContextManager;
 import net.udidb.engine.events.EventDispatcher;
 import net.udidb.engine.events.EventObserver;
+import net.udidb.engine.ops.Operation;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.results.Result;
 
@@ -129,41 +130,37 @@ public class CliEventDispatcher implements EventDispatcher {
     @Override
     public void handleEvents(Result result) throws OperationException {
 
-        try {
-            if (result.getDeferredEventObserver() != null) {
-                registerEventObserver(result.getDeferredEventObserver());
-            }
+        if (result.getDeferredEventObserver() != null) {
+            registerEventObserver(result.getDeferredEventObserver());
+        }
 
-            EventThread localThread = getEventThread();
+        EventThread localThread = getEventThread();
 
 
-            if (blockForEvent) {
-                // Only attempt to block when an event is pending
-                if (result.isEventPending()) {
-                    // Attempt to retrieve the first event via blocking
-                    UdiEvent event = null;
-                    while (event == null) {
-                        try {
-                            event = localThread.getEvents().take();
-                            dispatchEvent(event);
-                        }catch (InterruptedException e) {
-                        }
+        if (blockForEvent) {
+            // Only attempt to block when an event is pending
+            if (result.isEventPending()) {
+                // Attempt to retrieve the first event via blocking
+                UdiEvent event = null;
+                while (event == null) {
+                    try {
+                        event = localThread.getEvents().take();
+                        dispatchEvent(event);
+                    } catch (InterruptedException e) {
                     }
                 }
             }
+        }
 
-            UdiEvent event;
-            while ((event = localThread.getEvents().poll()) != null) {
-                dispatchEvent(event);
-            }
-        }catch (UdiException e) {
-            throw new OperationException("Failed to handle events", e);
+        UdiEvent event;
+        while ((event = localThread.getEvents().poll()) != null) {
+            dispatchEvent(event);
         }
     }
 
-    private void dispatchEvent(UdiEvent event) throws UdiException, OperationException {
+    private void dispatchEvent(UdiEvent event) throws OperationException {
         if (event instanceof WaitError) {
-            throw new OperationException(((WaitError)event).getException());
+            throw new OperationException(((WaitError) event).getException());
         }
 
         Set<EventObserver> observers = eventObservers.get(event.getProcess());
@@ -184,6 +181,30 @@ public class CliEventDispatcher implements EventDispatcher {
 
         if (displayAllEvents || !observersNotified) {
             event.accept(defaultEventVisitor);
+        }
+
+        if (isTerminationEvent(event)) {
+            // The context is no longer valid after this event
+            handleTermination(event.getProcess());
+        }
+    }
+
+    private void handleTermination(UdiProcess process) throws OperationException {
+        contextManager.deleteContext(process);
+
+        try {
+            process.close();
+        } catch (Exception e) {
+            throw new OperationException("Failed to cleanup terminated process", e);
+        }
+    }
+
+    private static boolean isTerminationEvent(UdiEvent event) {
+        switch (event.getEventType()) {
+            case PROCESS_CLEANUP:
+                return true;
+            default:
+                return false;
         }
     }
 
@@ -261,7 +282,7 @@ public class CliEventDispatcher implements EventDispatcher {
         public void run() {
             while (!terminate) {
                 try {
-                    List<UdiEvent> newEvents = processManager.waitForEvents(contextManager.getProcesses());
+                    List<UdiEvent> newEvents = processManager.waitForEvents(contextManager.getEventProcesses());
 
                     for (UdiEvent event : newEvents) {
                         events.add(event);

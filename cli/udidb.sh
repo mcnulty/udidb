@@ -4,8 +4,8 @@
 #
 # It assumes that udidb has been packaged as a uber-jar
 #
-
-JAR=target/udidb-cli-1.0-SNAPSHOT.jar
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+JAR=$DIR/target/udidb-cli-1.0-SNAPSHOT.jar
 DEBUG=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005
 
 if [ ! -e $JAR ]; then

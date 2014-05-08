@@ -35,6 +35,7 @@ import com.google.inject.name.Named;
 
 import net.libudi.api.event.UdiEventBreakpoint;
 import net.libudi.api.event.UdiEventError;
+import net.libudi.api.event.UdiEventProcessCleanup;
 import net.libudi.api.event.UdiEventProcessExit;
 import net.libudi.api.event.UdiEventThreadCreate;
 import net.libudi.api.event.UdiEventVisitor;
@@ -65,11 +66,16 @@ public class CliEventVisitor implements UdiEventVisitor {
 
     @Override
     public void visit(UdiEventProcessExit processExitEvent) {
-        out.println(String.format("Process exited with code = %d", processExitEvent.getExitCode()));
+        out.println(String.format("Process exiting with code = %d", processExitEvent.getExitCode()));
     }
 
     @Override
     public void visit(UdiEventThreadCreate threadCreateEvent) {
         out.println(String.format("Thread created id = 0x%x", threadCreateEvent.getNewThread().getTid()));
+    }
+
+    @Override
+    public void visit(UdiEventProcessCleanup processCleanup) {
+        out.println(String.format("Process %d terminated", processCleanup.getProcess().getPid()));
     }
 }

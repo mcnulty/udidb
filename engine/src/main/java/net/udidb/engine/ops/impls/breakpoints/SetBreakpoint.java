@@ -28,11 +28,14 @@
 
 package net.udidb.engine.ops.impls.breakpoints;
 
+import javax.annotation.Nullable;
+
 import com.google.inject.Inject;
 
 import net.libudi.api.UdiProcess;
 import net.libudi.api.exceptions.UdiException;
 import net.udidb.engine.context.DebuggeeContext;
+import net.udidb.engine.ops.NoDebuggeeContextException;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.HelpMessage;
@@ -57,14 +60,14 @@ public class SetBreakpoint extends DisplayNameOperation {
 
     // TODO need to add tracking for breakpoints
 
-    private final UdiProcess process;
+    private final DebuggeeContext context;
 
     @Operand(order=0)
     private long address;
 
     @Inject
-    public SetBreakpoint(DebuggeeContext context) {
-        this.process = context.getProcess();
+    public SetBreakpoint(@Nullable DebuggeeContext context) {
+        this.context = context;
     }
 
     public long getAddress() {
@@ -77,10 +80,14 @@ public class SetBreakpoint extends DisplayNameOperation {
 
     @Override
     public Result execute() throws OperationException {
-        try {
-            process.createBreakpoint(address);
+        if (context == null) {
+            throw new NoDebuggeeContextException();
+        }
 
-            process.installBreakpoint(address);
+        try {
+            context.getProcess().createBreakpoint(address);
+
+            context.getProcess().installBreakpoint(address);
         }catch (UdiException e) {
             throw new OperationException("Failed to set breakpoint in debuggee", e);
         }

@@ -28,11 +28,13 @@
 
 package net.udidb.engine.ops.impls.control;
 
+import javax.annotation.Nullable;
+
 import com.google.inject.Inject;
 
-import net.libudi.api.UdiProcess;
 import net.libudi.api.exceptions.UdiException;
 import net.udidb.engine.context.DebuggeeContext;
+import net.udidb.engine.ops.NoDebuggeeContextException;
 import net.udidb.engine.ops.impls.DisplayNameOperation;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
@@ -54,17 +56,21 @@ import net.udidb.engine.ops.results.VoidResult;
 @DisplayName("continue")
 public class ContinueDebuggee extends DisplayNameOperation {
 
-    private final UdiProcess process;
+    private final DebuggeeContext context;
 
     @Inject
-    public ContinueDebuggee(DebuggeeContext debuggeeContext) {
-        this.process = debuggeeContext.getProcess();
+    public ContinueDebuggee(@Nullable DebuggeeContext context) {
+        this.context = context;
     }
 
     @Override
     public Result execute() throws OperationException {
+        if (context == null) {
+            throw new NoDebuggeeContextException();
+        }
+
         try {
-            process.continueProcess();
+            context.getProcess().continueProcess();
         }catch (UdiException e) {
             throw new OperationException("Failed to continue debuggee", e);
         }

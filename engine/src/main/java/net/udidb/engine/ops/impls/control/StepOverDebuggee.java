@@ -30,6 +30,8 @@ package net.udidb.engine.ops.impls.control;
 
 import java.util.List;
 
+import javax.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +48,7 @@ import net.sourcecrumbs.api.transunit.NoSuchLineException;
 import net.udidb.engine.context.DebuggeeContext;
 import net.udidb.engine.events.EventObserver;
 import net.udidb.engine.ops.MissingDebugInfoException;
+import net.udidb.engine.ops.NoDebuggeeContextException;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.HelpMessage;
@@ -79,17 +82,21 @@ public class StepOverDebuggee extends DisplayNameOperation implements EventObser
     private final SourceLineRowFactory sourceLineRowFactory;
 
     @Inject
-    public StepOverDebuggee(DebuggeeContext context, OperationResultVisitor resultVisitor,
+    public StepOverDebuggee(@Nullable DebuggeeContext context, OperationResultVisitor resultVisitor,
             SourceLineRowFactory sourceLineRowFactory)
     {
         this.context = context;
         this.resultVisitor = resultVisitor;
-        this.machineCodeMapping = context.getExecutable().getMachineCodeMapping();
+        this.machineCodeMapping = (context != null) ? context.getExecutable().getMachineCodeMapping() : null;
         this.sourceLineRowFactory = sourceLineRowFactory;
     }
 
     @Override
     public Result execute() throws OperationException {
+
+        if (context == null) {
+            throw new NoDebuggeeContextException();
+        }
 
         if (machineCodeMapping == null) {
             throw new MissingDebugInfoException();
@@ -128,6 +135,10 @@ public class StepOverDebuggee extends DisplayNameOperation implements EventObser
 
     @Override
     public boolean publish(UdiEvent event) throws OperationException {
+
+        if (context == null) {
+            throw new NoDebuggeeContextException();
+        }
 
         if (machineCodeMapping == null) {
             throw new MissingDebugInfoException();
