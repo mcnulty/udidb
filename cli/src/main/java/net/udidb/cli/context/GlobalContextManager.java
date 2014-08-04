@@ -185,11 +185,12 @@ public class GlobalContextManager implements Provider<DebuggeeContext>, Debuggee
         List<UdiProcess> processes = new ArrayList<>();
         synchronized (contexts) {
             for (DebuggeeContext context : contexts.values()) {
-                if (!context.getProcess().isTerminated()) {
+                if (!context.getProcess().isTerminated() && context.getProcess().isRunning()) {
                     processes.add(context.getProcess());
                 }
             }
         }
+
         return processes;
     }
 

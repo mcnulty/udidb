@@ -136,10 +136,12 @@ public class CliEventDispatcher implements EventDispatcher {
 
         EventThread localThread = getEventThread();
 
+        if (result.isEventPending()) {
+            // If an event is pending, break the event thread out of its wait loop
+            localThread.notifyOfEvents();
 
-        if (blockForEvent) {
-            // Only attempt to block when an event is pending
-            if (result.isEventPending()) {
+            if (blockForEvent) {
+                // Only attempt to block when an event is pending
                 // Attempt to retrieve the first event via blocking
                 UdiEvent event = null;
                 while (event == null) {
@@ -260,6 +262,7 @@ public class CliEventDispatcher implements EventDispatcher {
             this.contextManager = contextManager;
             this.processManager = processManager;
             setDaemon(true);
+            setName(EventThread.class.getSimpleName());
         }
 
         public void terminate() {
@@ -274,6 +277,12 @@ public class CliEventDispatcher implements EventDispatcher {
             }
         }
 
+        public void notifyOfEvents() {
+            synchronized (this) {
+                notifyAll();
+            }
+        }
+
         public LinkedBlockingQueue<UdiEvent> getEvents() {
             return events;
         }
@@ -282,13 +291,25 @@ public class CliEventDispatcher implements EventDispatcher {
         public void run() {
             while (!terminate) {
                 try {
-                    List<UdiEvent> newEvents = processManager.waitForEvents(contextManager.getEventProcesses());
+                    List<UdiProcess> processes = contextManager.getEventProcesses();
+
+                    // Wait for processes in which events are expected
+                    synchronized (this) {
+                        while (processes.size() == 0) {
+                            wait();
+                            processes = contextManager.getEventProcesses();
+                        }
+                    }
+
+                    List<UdiEvent> newEvents = processManager.waitForEvents(processes);
 
                     for (UdiEvent event : newEvents) {
                         events.add(event);
                     }
                 }catch (UdiException e) {
                     events.add(new WaitError(e));
+                }catch (InterruptedException e) {
+                    log.debug("Interrupted.", e);
                 }
             }
         }

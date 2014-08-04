@@ -75,7 +75,7 @@ public class CliSourceLineRowFactory implements SourceLineRowFactory {
                 throw new NoSuchLineException(String.format("Cannot retrieve source for line %s:%d", unit.getName(), line));
             }
 
-            return new SourceLineRow(line, lines.get(line));
+            return new SourceLineRow(line, lines.get(line-1));
         }catch (IOException e) {
             throw new NoSuchLineException(e);
         }

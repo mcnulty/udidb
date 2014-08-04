@@ -26,69 +26,46 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-package net.udidb.engine.ops.results;
+package net.udidb.engine.ops.parser;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import net.udidb.engine.ops.Operation;
+import org.apache.commons.beanutils.ConversionException;
+import org.apache.commons.beanutils.Converter;
 
 /**
- * A result that represents a table of values
+ * Converts an address string (in various formats) to a Long
  *
  * @author mcnulty
  */
-public class TableResult extends BaseResult {
-
-    private final List<String> columnHeaders;
-
-    private final List<TableRow> rows;
-
-    /**
-     * Constructor.
-     *
-     * @param rows the rows to be include in this result
-     */
-    public TableResult(List<? extends TableRow> rows) {
-        this.rows = new ArrayList<>(rows);
-        if (this.rows.size() > 0) {
-            columnHeaders = new ArrayList<>(this.rows.get(0).getColumnHeaders());
-        }else{
-            columnHeaders = new ArrayList<>(0);
-        }
-    }
-
-    /**
-     * Convenience constructor for a table with only one row.
-     *
-     * @param row the row
-     */
-    public TableResult(TableRow row) {
-        this(Arrays.asList(row));
-    }
-
-    public int getNumColumns() {
-        if (columnHeaders.size() == 0) {
-            if (this.rows.size() > 0) {
-                return this.rows.get(0).getColumnValues().size();
-            }
-            return 0;
-        }else{
-            return columnHeaders.size();
-        }
-    }
-
-    public List<String> getColumnHeaders() {
-        return new ArrayList<>(columnHeaders);
-    }
-
-    public List<TableRow> getRows() {
-        return new ArrayList<>(rows);
-    }
+public class AddressConverter implements Converter {
 
     @Override
-    public boolean accept(Operation op, OperationResultVisitor visitor) {
-        return visitor.visit(op, this);
+    public Object convert(Class type, Object value) {
+        if (long.class.isAssignableFrom(type)) {
+            // Try hex first
+            try {
+                String valueString;
+                if (value.toString().startsWith("0x")) {
+                    valueString = value.toString().replaceFirst("0x", "");
+                }else{
+                    valueString = value.toString();
+                }
+                return Long.parseLong(valueString, 16);
+            }catch (NumberFormatException e) {
+            }
+
+            // Try decimal second
+            try {
+                return Long.parseLong(value.toString(), 10);
+            }catch (NumberFormatException e) {
+            }
+
+            // Try octal
+            try {
+                return Long.parseLong(value.toString(), 8);
+            }catch (NumberFormatException e) {
+            }
+        }
+
+        throw new ConversionException(String.format("Failed to convert value to convert %s to long", value));
     }
 }

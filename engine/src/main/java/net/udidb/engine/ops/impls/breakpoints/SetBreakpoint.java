@@ -52,7 +52,7 @@ import net.udidb.engine.ops.results.ValueResult;
  */
 @HelpMessage(enMessage="Set a breakpoint in a debuggee")
 @LongHelpMessage(enMessage=
-        "break\n\n" +
+        "break <address>\n\n" +
         "Create and install a breakpoint in a debuggee"
 )
 @DisplayName("break")

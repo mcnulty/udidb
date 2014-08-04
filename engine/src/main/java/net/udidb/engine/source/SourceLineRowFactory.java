@@ -28,7 +28,6 @@
 
 package net.udidb.engine.source;
 
-import java.io.IOException;
 import java.util.List;
 
 import net.sourcecrumbs.api.machinecode.SourceLine;

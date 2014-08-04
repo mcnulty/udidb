@@ -39,6 +39,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.beanutils.BeanUtilsBean;
+import org.apache.commons.beanutils.ConvertUtils;
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
 import org.reflections.util.ClasspathHelper;
@@ -74,10 +76,14 @@ public class OperationParser {
 
     private final Injector injector;
 
+    private final BeanUtilsBean beanUtils;
+
     @Inject
     OperationParser(Injector injector, @Named("OP_IMPL_PACKAGE") String opImplPackage, @Named("CUSTOM_IMPL_PACKAGES") String[] customPackages) {
         this.injector = injector;
         addSupportedOperations(opImplPackage, customPackages);
+        beanUtils = BeanUtilsBean.getInstance();
+        beanUtils.getConvertUtils().register(new AddressConverter(), long.class);
     }
 
     private void addSupportedOperations(String opImplPackage, String[] customPackages) {
@@ -189,20 +195,18 @@ public class OperationParser {
                     operands.size()));
         }
 
-        Map<String, Object> properties = new HashMap<>();
         for (int i = 0; i < operandValues.length; ++i) {
-            if (i == restOfLineIndex) {
-                properties.put(operands.get(i).getName(), Arrays.copyOfRange(operandValues, i, operandValues.length));
-                break;
-            }else{
-                properties.put(operands.get(i).getName(), operandValues[i]);
+            try {
+                if (i == restOfLineIndex) {
+                    beanUtils.copyProperty(cmd, operands.get(i).getName(),
+                            Arrays.copyOfRange(operandValues, i, operandValues.length));
+                    break;
+                }else{
+                    beanUtils.copyProperty(cmd, operands.get(i).getName(), operandValues[i]);
+                }
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                throw new OperationParseException(String.format("Failed to construct %s operation", opName), e);
             }
-        }
-
-        try {
-            BeanUtils.populate(cmd, properties);
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new OperationParseException(String.format("Failed to construct %s operation", opName), e);
         }
 
         return cmd;

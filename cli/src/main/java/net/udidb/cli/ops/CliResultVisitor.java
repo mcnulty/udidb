@@ -123,10 +123,9 @@ public class CliResultVisitor implements OperationResultVisitor {
 
         List<TableRow> rows = result.getRows();
         if (rows.size() > 0) {
-            List<String> headers = result.getColumnHeaders();
 
             // Determine the maximum length string for every column for formatting purposes
-            int[] widths = new int[headers.size()];
+            int[] widths = new int[result.getNumColumns()];
             for (TableRow row : rows) {
                 List<String> values = row.getColumnValues();
                 for (int i = 0; i < values.size(); ++i) {
@@ -137,6 +136,7 @@ public class CliResultVisitor implements OperationResultVisitor {
                 }
             }
 
+            List<String> headers = result.getColumnHeaders();
             for (int i = 0; i < headers.size(); ++i) {
                 String header = headers.get(i);
                 if (header.length() > widths[i]) {
@@ -152,7 +152,9 @@ public class CliResultVisitor implements OperationResultVisitor {
                 }
             }
 
-            out.println(String.format(formatString.toString(), headers.toArray()));
+            if (headers.size() > 0) {
+                out.println(String.format(formatString.toString(), headers.toArray()));
+            }
 
             for (TableRow row : rows) {
                out.println(String.format(formatString.toString(), row.getColumnValues().toArray()));
