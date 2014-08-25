@@ -33,12 +33,14 @@ import java.io.PrintStream;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
+import net.libudi.api.event.UdiEvent;
 import net.libudi.api.event.UdiEventBreakpoint;
 import net.libudi.api.event.UdiEventError;
 import net.libudi.api.event.UdiEventProcessCleanup;
 import net.libudi.api.event.UdiEventProcessExit;
 import net.libudi.api.event.UdiEventThreadCreate;
 import net.libudi.api.event.UdiEventVisitor;
+import net.udidb.engine.events.DbEventData;
 
 /**
  * The event visitor for the CLI
@@ -49,33 +51,70 @@ public class CliEventVisitor implements UdiEventVisitor {
 
     private final PrintStream out;
 
+    private boolean displayAllEvents = false;
+
     @Inject
     CliEventVisitor(@Named("OUTPUT DESTINATION") PrintStream out) {
         this.out = out;
     }
 
+    private boolean displayEvent(UdiEvent udiEvent) {
+        if (udiEvent.getUserData() instanceof DbEventData) {
+            DbEventData dbEventData = (DbEventData) udiEvent.getUserData();
+            if (dbEventData.isIntermediateEvent()) {
+                if (displayAllEvents) {
+                    return true;
+                }else{
+                    return false;
+                }
+            }else{
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     @Override
     public void visit(UdiEventBreakpoint breakpointEvent) {
-        out.println(String.format("Breakpoint at 0x%x", breakpointEvent.getAddress()));
+        if (displayEvent(breakpointEvent)) {
+            out.println(String.format("Breakpoint at 0x%x", breakpointEvent.getAddress()));
+        }
     }
 
     @Override
     public void visit(UdiEventError errorEvent) {
-        out.println(String.format("Error event occurred: %s", errorEvent.getErrorString()));
+        if (displayEvent(errorEvent)) {
+            out.println(String.format("Error event occurred: %s", errorEvent.getErrorString()));
+        }
     }
 
     @Override
     public void visit(UdiEventProcessExit processExitEvent) {
-        out.println(String.format("Process exiting with code = %d", processExitEvent.getExitCode()));
+        if (displayEvent(processExitEvent)) {
+            out.println(String.format("Process exiting with code = %d", processExitEvent.getExitCode()));
+        }
     }
 
     @Override
     public void visit(UdiEventThreadCreate threadCreateEvent) {
-        out.println(String.format("Thread created id = 0x%x", threadCreateEvent.getNewThread().getTid()));
+        if (displayEvent(threadCreateEvent)) {
+            out.println(String.format("Thread created id = 0x%x", threadCreateEvent.getNewThread().getTid()));
+        }
     }
 
     @Override
     public void visit(UdiEventProcessCleanup processCleanup) {
-        out.println(String.format("Process %d terminated", processCleanup.getProcess().getPid()));
+        if (displayEvent(processCleanup)) {
+            out.println(String.format("Process %d terminated", processCleanup.getProcess().getPid()));
+        }
+    }
+
+    public boolean isDisplayAllEvents() {
+        return displayAllEvents;
+    }
+
+    public void setDisplayAllEvents(boolean displayAllEvents) {
+        this.displayAllEvents = displayAllEvents;
     }
 }

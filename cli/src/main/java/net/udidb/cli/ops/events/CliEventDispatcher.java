@@ -50,6 +50,7 @@ import net.libudi.api.event.UdiEvent;
 import net.libudi.api.event.UdiEventVisitor;
 import net.libudi.api.exceptions.UdiException;
 import net.udidb.cli.context.GlobalContextManager;
+import net.udidb.engine.events.DbEventData;
 import net.udidb.engine.events.EventDispatcher;
 import net.udidb.engine.events.EventObserver;
 import net.udidb.engine.ops.Operation;
@@ -74,8 +75,6 @@ public class CliEventDispatcher implements EventDispatcher {
 
     private boolean blockForEvent = true;
 
-    private boolean displayAllEvents = false;
-
     private EventThread eventThread = null;
 
     private final Map<UdiProcess, Set<EventObserver>> eventObservers = new HashMap<>();
@@ -93,14 +92,6 @@ public class CliEventDispatcher implements EventDispatcher {
 
     public void setBlockForEvent(boolean blockForEvent) {
         this.blockForEvent = blockForEvent;
-    }
-
-    public boolean isDisplayAllEvents() {
-        return displayAllEvents;
-    }
-
-    public void setDisplayAllEvents(boolean displayAllEvents) {
-        this.displayAllEvents = displayAllEvents;
     }
 
     private EventThread getEventThread() {
@@ -161,13 +152,15 @@ public class CliEventDispatcher implements EventDispatcher {
     }
 
     private void dispatchEvent(UdiEvent event) throws OperationException {
+        DbEventData eventData = new DbEventData();
+        event.setUserData(eventData);
+
         if (event instanceof WaitError) {
             throw new OperationException(((WaitError) event).getException());
         }
 
         Set<EventObserver> observers = eventObservers.get(event.getProcess());
 
-        boolean observersNotified = false;
         if (observers != null) {
             synchronized (observers) {
                 Iterator<EventObserver> i = observers.iterator();
@@ -176,14 +169,11 @@ public class CliEventDispatcher implements EventDispatcher {
                     if (!eventObserver.publish(event)) {
                         i.remove();
                     }
-                    observersNotified = true;
                 }
             }
         }
 
-        if (displayAllEvents || !observersNotified) {
-            event.accept(defaultEventVisitor);
-        }
+        event.accept(defaultEventVisitor);
 
         if (isTerminationEvent(event)) {
             // The context is no longer valid after this event
@@ -238,6 +228,16 @@ public class CliEventDispatcher implements EventDispatcher {
         @Override
         public UdiThread getThread() {
             return null;
+        }
+
+        @Override
+        public Object getUserData() {
+            return null;
+        }
+
+        @Override
+        public void setUserData(Object object) {
+
         }
 
         @Override

@@ -41,11 +41,14 @@ import net.libudi.api.UdiProcess;
 import net.libudi.api.UdiThread;
 import net.libudi.api.event.UdiEvent;
 import net.libudi.api.event.UdiEventBreakpoint;
+import net.libudi.api.event.UdiEventProcessCleanup;
+import net.libudi.api.event.UdiEventProcessExit;
 import net.libudi.api.exceptions.UdiException;
 import net.sourcecrumbs.api.machinecode.MachineCodeMapping;
 import net.sourcecrumbs.api.machinecode.SourceLineRange;
 import net.sourcecrumbs.api.transunit.NoSuchLineException;
 import net.udidb.engine.context.DebuggeeContext;
+import net.udidb.engine.events.DbEventData;
 import net.udidb.engine.events.EventObserver;
 import net.udidb.engine.ops.MissingDebugInfoException;
 import net.udidb.engine.ops.NoDebuggeeContextException;
@@ -136,6 +139,8 @@ public class StepOverDebuggee extends DisplayNameOperation implements EventObser
     @Override
     public boolean publish(UdiEvent event) throws OperationException {
 
+        DbEventData dbEventData = (DbEventData) event.getUserData();
+
         if (context == null) {
             throw new NoDebuggeeContextException();
         }
@@ -146,6 +151,11 @@ public class StepOverDebuggee extends DisplayNameOperation implements EventObser
 
         try {
             // Don't implement a full-on event visitor since this operation just cares about breakpoints
+            if ((event instanceof UdiEventProcessExit) || (event instanceof UdiEventProcessCleanup)) {
+                // At this point, if these events are received, they indicate the operation could not be completed
+                return false;
+            }
+
             if (!(event instanceof UdiEventBreakpoint)) {
                 throw new OperationException("Unexpected event encountered while waiting for breakpoint");
             }
@@ -167,6 +177,7 @@ public class StepOverDebuggee extends DisplayNameOperation implements EventObser
             resultVisitor.visit(this, result);
 
             // The Operation only cares about this event
+            dbEventData.setIntermediateEvent(true);
             return false;
         }catch (UdiException e) {
             throw new OperationException("Failed to handle next statement completion breakpoint", e);
