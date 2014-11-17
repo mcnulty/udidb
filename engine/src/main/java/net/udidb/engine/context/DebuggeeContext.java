@@ -35,10 +35,14 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
+import net.libudi.api.Register;
 import net.libudi.api.UdiProcess;
 import net.libudi.api.UdiProcessConfig;
 import net.libudi.api.UdiThread;
+import net.libudi.api.exceptions.UdiException;
 import net.sourcecrumbs.api.files.Executable;
+import net.sourcecrumbs.api.debug.symbols.ContextInspectionException;
+import net.sourcecrumbs.api.debug.symbols.RegisterContext;
 import net.udidb.engine.ops.results.TableRow;
 
 /**
@@ -46,7 +50,8 @@ import net.udidb.engine.ops.results.TableRow;
  *
  * @author mcnulty
  */
-public class DebuggeeContext implements TableRow {
+public class DebuggeeContext implements TableRow, RegisterContext
+{
 
     private Path rootDir;
 
@@ -170,5 +175,15 @@ public class DebuggeeContext implements TableRow {
                 execPath.toString(),
                 (args != null ? StringUtils.join(args, ' ') : "")
         );
+    }
+
+    @Override
+    public long getRegisterValue(Register register) throws ContextInspectionException
+    {
+        try {
+            return currentThread.readRegister(register);
+        }catch (UdiException e) {
+            throw new ContextInspectionException(e);
+        }
     }
 }
