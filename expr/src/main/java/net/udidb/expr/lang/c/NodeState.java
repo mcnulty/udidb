@@ -28,10 +28,10 @@
 
 package net.udidb.expr.lang.c;
 
+import net.sourcecrumbs.api.debug.symbols.DebugType;
 import net.sourcecrumbs.api.debug.symbols.Function;
 import net.sourcecrumbs.api.debug.symbols.Variable;
 import net.sourcecrumbs.api.symbols.Symbol;
-import net.sourcecrumbs.api.debug.symbols.Location;
 
 /**
  * Container for all node state specific to the expression evaluator
@@ -45,6 +45,8 @@ public class NodeState
     private Symbol symbol;
 
     private Function function;
+
+    private DebugType effectiveType;
 
     public Symbol getSymbol()
     {
@@ -74,5 +76,15 @@ public class NodeState
     public void setFunction(Function function)
     {
         this.function = function;
+    }
+
+    public DebugType getEffectiveType()
+    {
+        return effectiveType;
+    }
+
+    public void setEffectiveType(DebugType effectiveType)
+    {
+        this.effectiveType = effectiveType;
     }
 }

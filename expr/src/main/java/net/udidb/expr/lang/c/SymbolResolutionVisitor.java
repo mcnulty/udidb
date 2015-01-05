@@ -75,7 +75,7 @@ public class SymbolResolutionVisitor extends BaseExpressionVisitor<Void>
             String identifier = identifierNode.getSymbol().getText();
 
             boolean resolved = false;
-            NodeState nodeState = new NodeState();
+            NodeState nodeState = getNodeState(ctx);
 
             // Is it a local variable reference?
             List<Variable> variables = currentFunction.getLocalVariablesByName(identifier);
@@ -121,8 +121,6 @@ public class SymbolResolutionVisitor extends BaseExpressionVisitor<Void>
             if (!resolved) {
                 throw new ParseCancellationException("Could not locate symbol '" + identifier + "'");
             }
-
-            setNodeState(ctx, nodeState);
         }
 
         return super.visitPrimaryExpression(ctx);

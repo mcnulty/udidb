@@ -33,20 +33,20 @@ package net.udidb.expr;
  *
  * @author mcnulty
  */
-public class EvalException extends Exception {
+public class ExpressionException extends Exception {
 
-    public EvalException() {
+    public ExpressionException() {
     }
 
-    public EvalException(String message) {
+    public ExpressionException(String message) {
         super(message);
     }
 
-    public EvalException(String message, Throwable cause) {
+    public ExpressionException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public EvalException(Throwable cause) {
+    public ExpressionException(Throwable cause) {
         super(cause);
     }
 }

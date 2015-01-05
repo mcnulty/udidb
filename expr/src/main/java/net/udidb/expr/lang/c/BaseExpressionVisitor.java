@@ -49,7 +49,13 @@ public abstract class BaseExpressionVisitor<T> extends CBaseVisitor<T>
 
     protected NodeState getNodeState(ParseTree node)
     {
-        return states.get(node);
+        NodeState nodeState = states.get(node);
+        if (nodeState == null) {
+            nodeState = new NodeState();
+            states.put(node, nodeState);
+        }
+
+        return nodeState;
     }
 
     protected void setNodeState(ParseTree node, NodeState state)

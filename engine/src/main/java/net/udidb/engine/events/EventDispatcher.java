@@ -28,9 +28,7 @@
 
 package net.udidb.engine.events;
 
-import net.libudi.api.exceptions.UdiException;
 import net.udidb.engine.ops.OperationException;
-import net.udidb.engine.ops.results.OperationResultVisitor;
 import net.udidb.engine.ops.results.Result;
 
 /**

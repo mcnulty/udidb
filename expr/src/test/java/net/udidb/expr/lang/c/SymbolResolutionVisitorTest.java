@@ -60,7 +60,8 @@ public class SymbolResolutionVisitorTest
     public void exploratoryTest() throws Exception
     {
         SymbolResolutionVisitor symbolResolutionVisitor = createVisitor();
-        ParserRuleContext parseTree = CExpressionEvaluator.createParseTree("(value + 1)*3 + increment - min(value, increment)");
+        ParserRuleContext parseTree = CExpressionCompiler.createParseTree(
+            "(value + 1)*3 + increment - min(value, increment)");
 
         parseTree.accept(symbolResolutionVisitor);
     }

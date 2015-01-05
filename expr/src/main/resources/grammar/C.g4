@@ -35,8 +35,8 @@ package net.udidb.expr.grammar.c;
 
 primaryExpression
     :   Identifier
-    |   Constant
-    |   StringLiteral+
+    |   constant
+    |   stringLiteral+
     |   '(' expression ')'
     |   genericSelection
     |   '__extension__'? '(' compoundStatement ')' // Blocks (GCC extension)
@@ -337,7 +337,7 @@ directDeclarator
     ;
 
 gccDeclaratorExtension
-    :   '__asm' '(' StringLiteral+ ')'
+    :   '__asm' '(' stringLiteral+ ')'
     |   gccAttributeSpecifier
     ;
 
@@ -447,7 +447,7 @@ designator
     ;
 
 staticAssertDeclaration
-    :   '_Static_assert' '(' constantExpression ',' StringLiteral+ ')' ';'
+    :   '_Static_assert' '(' constantExpression ',' stringLiteral+ ')' ';'
     ;
 
 statement
@@ -664,36 +664,30 @@ HexQuad
     :   HexadecimalDigit HexadecimalDigit HexadecimalDigit HexadecimalDigit
     ;
 
-Constant
-    :   IntegerConstant
-    |   FloatingConstant
-    //|   EnumerationConstant
-    |   CharacterConstant
+constant
+    :   integerConstant
+    |   floatingConstant
+    |   characterConstant
     ;
 
-fragment
-IntegerConstant
+integerConstant
     :   DecimalConstant IntegerSuffix?
     |   OctalConstant IntegerSuffix?
     |   HexadecimalConstant IntegerSuffix?
     ;
 
-fragment
 DecimalConstant
     :   NonzeroDigit Digit*
     ;
 
-fragment
 OctalConstant
     :   '0' OctalDigit*
     ;
 
-fragment
 HexadecimalConstant
     :   HexadecimalPrefix HexadecimalDigit+
     ;
 
-fragment
 HexadecimalPrefix
     :   '0' [xX]
     ;
@@ -713,7 +707,6 @@ HexadecimalDigit
     :   [0-9a-fA-F]
     ;
 
-fragment
 IntegerSuffix
     :   UnsignedSuffix LongSuffix?
     |   UnsignedSuffix LongLongSuffix
@@ -736,74 +729,78 @@ LongLongSuffix
     :   'll' | 'LL'
     ;
 
-fragment
-FloatingConstant
-    :   DecimalFloatingConstant
-    |   HexadecimalFloatingConstant
+floatingConstant
+    :   decimalFloatingConstant
+    |   hexadecimalFloatingConstant
     ;
 
-fragment
-DecimalFloatingConstant
+decimalFloatingConstant
     :   FractionalConstant ExponentPart? FloatingSuffix?
     |   DigitSequence ExponentPart FloatingSuffix?
     ;
 
-fragment
-HexadecimalFloatingConstant
+hexadecimalFloatingConstant
     :   HexadecimalPrefix HexadecimalFractionalConstant BinaryExponentPart FloatingSuffix?
     |   HexadecimalPrefix HexadecimalDigitSequence BinaryExponentPart FloatingSuffix?
     ;
 
-fragment
 FractionalConstant
     :   DigitSequence? '.' DigitSequence
     |   DigitSequence '.'
     ;
 
-fragment
 ExponentPart
     :   'e' Sign? DigitSequence
     |   'E' Sign? DigitSequence
     ;
 
-fragment
 Sign
     :   '+' | '-'
     ;
 
-fragment
 DigitSequence
     :   Digit+
     ;
 
-fragment
 HexadecimalFractionalConstant
     :   HexadecimalDigitSequence? '.' HexadecimalDigitSequence
     |   HexadecimalDigitSequence '.'
     ;
 
-fragment
 BinaryExponentPart
     :   'p' Sign? DigitSequence
     |   'P' Sign? DigitSequence
     ;
 
-fragment
 HexadecimalDigitSequence
     :   HexadecimalDigit+
     ;
 
-fragment
 FloatingSuffix
     :   'f' | 'l' | 'F' | 'L'
     ;
 
-fragment
-CharacterConstant
+characterConstant
+    :   StandardCharacterConstant
+    |   WideCharacterConstant
+    |   Utf16CharacterConstant
+    |   Utf32CharacterConstant
+    ;
+
+StandardCharacterConstant
     :   '\'' CCharSequence '\''
-    |   'L\'' CCharSequence '\''
-    |   'u\'' CCharSequence '\''
-    |   'U\'' CCharSequence '\''
+    ;
+
+WideCharacterConstant
+    :   'L\'' CCharSequence '\''
+    ;
+
+Utf16CharacterConstant
+    :   'u\'' CCharSequence '\''
+    ;
+
+Utf32CharacterConstant
+    :   'U\'' CCharSequence '\''
     ;
 
 fragment
@@ -842,7 +839,30 @@ HexadecimalEscapeSequence
     :   '\\x' HexadecimalDigit+
     ;
 
-StringLiteral
+stringLiteral
+    :   Utf8String
+    |   Utf16String
+    |   Utf32String
+    |   WideString
+    ;
+
+Utf8String
+    :   'u8' '"' SCharSequence? '"'
+    ;
+
+Utf16String
+    :   'u' '"' SCharSequence? '"'
+    ;
+
+Utf32String
+    :   'U' '"' SCharSequence? '"'
+    ;
+
+WideString
+    :   'L' '"' SCharSequence? '"'
+    ;
+
+StringLiteralToken
     :   EncodingPrefix? '"' SCharSequence? '"'
     ;
 
@@ -866,7 +886,7 @@ SChar
     ;
 
 LineDirective
-    :   '#' Whitespace? DecimalConstant Whitespace? StringLiteral ~[\r\n]*
+    :   '#' Whitespace? DecimalConstant Whitespace? StringLiteralToken ~[\r\n]*
         -> skip
     ;
 

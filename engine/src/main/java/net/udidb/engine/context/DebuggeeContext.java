@@ -28,6 +28,7 @@
 
 package net.udidb.engine.context;
 
+import java.math.BigInteger;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
@@ -178,10 +179,10 @@ public class DebuggeeContext implements TableRow, RegisterContext
     }
 
     @Override
-    public long getRegisterValue(Register register) throws ContextInspectionException
+    public BigInteger getRegisterValue(Register register) throws ContextInspectionException
     {
         try {
-            return currentThread.readRegister(register);
+            return BigInteger.valueOf(currentThread.readRegister(register));
         }catch (UdiException e) {
             throw new ContextInspectionException(e);
         }

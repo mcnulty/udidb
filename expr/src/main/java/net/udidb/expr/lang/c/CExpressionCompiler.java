@@ -42,26 +42,27 @@ import com.google.common.annotations.VisibleForTesting;
 import net.libudi.api.exceptions.UdiException;
 import net.sourcecrumbs.api.debug.symbols.Function;
 import net.udidb.engine.context.DebuggeeContext;
-import net.udidb.expr.EvalException;
-import net.udidb.expr.ExpressionEvaluator;
+import net.udidb.expr.ExpressionException;
+import net.udidb.expr.Expression;
+import net.udidb.expr.ExpressionCompiler;
 import net.udidb.expr.grammar.c.CLexer;
 import net.udidb.expr.grammar.c.CParser;
 
 /**
- * An expression evaluator for C
+ * An expression compiler for C
  *
  * @author mcnulty
  */
-public class CExpressionEvaluator implements ExpressionEvaluator
+public class CExpressionCompiler implements ExpressionCompiler
 {
     @Override
-    public String evaluate(String expression, DebuggeeContext debuggeeContext) throws EvalException
+    public Expression compile(String expression, DebuggeeContext debuggeeContext) throws ExpressionException
     {
         long pc;
         try {
             pc = debuggeeContext.getCurrentThread().getPC();
         }catch (UdiException e) {
-            throw new EvalException(e);
+            throw new ExpressionException(e);
         }
         Function currentFunction = debuggeeContext.getExecutable().getContainingFunction(pc);
 
@@ -72,29 +73,49 @@ public class CExpressionEvaluator implements ExpressionEvaluator
         try {
             parseTree = createParseTree(expression);
         }catch (IOException e) {
-            throw new EvalException(e);
+            throw new ExpressionException(e);
         }
 
         // Resolve all symbols, interrogating the debuggee as necessary
         resolveSymbols(parseTree, states, debuggeeContext, currentFunction, pc);
 
         // Type checking
+        typeCheckExpression(parseTree, states);
 
         // Simplify the expression given the current state of the AST
+        simplifyExpression(parseTree, states);
 
-        // Generate code and execute it if necessary
-
-        return null;
+        // Generate code and produce Expression to encapsulate the result
+        return generateCode(parseTree, states);
     }
 
     private static void resolveSymbols(ParserRuleContext parseTree,
-            ParseTreeProperty<NodeState> states,
-            DebuggeeContext debuggeeContext,
-            Function currentFunction,
-            long pc)
+                                       ParseTreeProperty<NodeState> states,
+                                       DebuggeeContext debuggeeContext,
+                                       Function currentFunction,
+                                       long pc)
     {
         SymbolResolutionVisitor resolutionVisitor = new SymbolResolutionVisitor(states, debuggeeContext, currentFunction, pc);
         parseTree.accept(resolutionVisitor);
+    }
+
+    private static void typeCheckExpression(ParserRuleContext parseTree,
+                                            ParseTreeProperty<NodeState> states)
+    {
+        TypeCheckingVisitor typeCheckingVisitor = new TypeCheckingVisitor(states);
+        parseTree.accept(typeCheckingVisitor);
+    }
+
+    private static void simplifyExpression(ParserRuleContext parseTree,
+                                           ParseTreeProperty<NodeState> states)
+    {
+
+    }
+
+    private static Expression generateCode(ParserRuleContext parseTree,
+                                           ParseTreeProperty<NodeState> states)
+    {
+        return null;
     }
 
     @VisibleForTesting
