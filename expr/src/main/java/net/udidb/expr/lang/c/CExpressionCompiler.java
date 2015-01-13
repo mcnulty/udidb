@@ -83,7 +83,7 @@ public class CExpressionCompiler implements ExpressionCompiler
         typeCheckExpression(parseTree, states);
 
         // Simplify the expression given the current state of the AST
-        simplifyExpression(parseTree, states);
+        simplifyExpression(parseTree, states, debuggeeContext);
 
         // Generate code and produce Expression to encapsulate the result
         return generateCode(parseTree, states);
@@ -107,9 +107,11 @@ public class CExpressionCompiler implements ExpressionCompiler
     }
 
     private static void simplifyExpression(ParserRuleContext parseTree,
-                                           ParseTreeProperty<NodeState> states)
+                                           ParseTreeProperty<NodeState> states,
+                                           DebuggeeContext debuggeeContext)
     {
-
+        ExpressionSimplificationVisitor visitor = new ExpressionSimplificationVisitor(states, debuggeeContext);
+        parseTree.accept(visitor);
     }
 
     private static Expression generateCode(ParserRuleContext parseTree,
