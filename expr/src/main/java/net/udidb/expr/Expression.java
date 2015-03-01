@@ -12,7 +12,7 @@ package net.udidb.expr;
 import net.udidb.engine.context.DebuggeeContext;
 
 /**
- * Handle to an expression returned by an ExpressionEvaluator
+ * Handle to an expression returned by an {@link ExpressionCompiler}
  *
  * @author dmcnulty
  */
@@ -21,7 +21,7 @@ public interface Expression
     /**
      * @return the value of the expression, if known or null if not known and execution is required
      */
-    String getValue();
+    ExpressionValue getValue();
 
     /**
      * Loads the expression into the debuggee for execution

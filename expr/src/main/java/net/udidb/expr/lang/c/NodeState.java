@@ -13,6 +13,7 @@ import net.sourcecrumbs.api.debug.symbols.DebugType;
 import net.sourcecrumbs.api.debug.symbols.Function;
 import net.sourcecrumbs.api.debug.symbols.Variable;
 import net.sourcecrumbs.api.symbols.Symbol;
+import net.udidb.expr.ExpressionValue;
 
 /**
  * Container for all node state specific to the expression evaluator
@@ -28,6 +29,8 @@ public class NodeState
     private Function function;
 
     private DebugType effectiveType;
+
+    private ExpressionValue expressionValue;
 
     public Symbol getSymbol()
     {
@@ -67,5 +70,40 @@ public class NodeState
     public void setEffectiveType(DebugType effectiveType)
     {
         this.effectiveType = effectiveType;
+    }
+
+    public ExpressionValue getExpressionValue()
+    {
+        return expressionValue;
+    }
+
+    public void setExpressionValue(ExpressionValue expressionValue)
+    {
+        this.expressionValue = expressionValue;
+    }
+
+    @Override
+    public String toString()
+    {
+        StringBuilder output = new StringBuilder();
+        if (variable != null) {
+            output.append("[Variable]");
+        }else if (symbol != null) {
+            output.append("[Symbol]");
+        }else if (function != null) {
+            output.append("[Function]");
+        }
+
+        if (effectiveType != null) {
+            output.append("[type(").append(effectiveType.getName()).append(")]");
+        }
+
+        if (expressionValue != null) {
+            output.append("[value(").append(expressionValue).append(")]");
+        }else{
+            output.append("[value(null)]");
+        }
+
+        return output.toString();
     }
 }

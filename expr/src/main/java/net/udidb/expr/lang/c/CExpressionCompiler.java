@@ -12,11 +12,17 @@ package net.udidb.expr.lang.c;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
+import org.antlr.v4.runtime.tree.Tree;
+import org.antlr.v4.runtime.tree.gui.TreeTextProvider;
+import org.antlr.v4.runtime.tree.gui.TreeViewer;
+import org.antlr.v4.runtime.tree.gui.TreeViewer.DefaultTreeTextProvider;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -28,6 +34,7 @@ import net.udidb.expr.Expression;
 import net.udidb.expr.ExpressionCompiler;
 import net.udidb.expr.grammar.c.CLexer;
 import net.udidb.expr.grammar.c.CParser;
+import net.udidb.expr.ExpressionValue;
 
 /**
  * An expression compiler for C
@@ -39,6 +46,12 @@ public class CExpressionCompiler implements ExpressionCompiler
     @Override
     public Expression compile(String expression, DebuggeeContext debuggeeContext) throws ExpressionException
     {
+        return compile(expression, debuggeeContext, false);
+    }
+
+    @VisibleForTesting
+    Expression compile(String expression, DebuggeeContext debuggeeContext, boolean displayTree) throws ExpressionException
+    {
         long pc;
         try {
             pc = debuggeeContext.getCurrentThread().getPC();
@@ -47,15 +60,16 @@ public class CExpressionCompiler implements ExpressionCompiler
         }
         Function currentFunction = debuggeeContext.getExecutable().getContainingFunction(pc);
 
-        ParseTreeProperty<NodeState> states = new ParseTreeProperty<>();
+        final ParseTreeProperty<NodeState> states = new ParseTreeProperty<>();
 
         // Parse the expression
-        ParserRuleContext parseTree;
+        final CParser parser;
         try {
-            parseTree = createParseTree(expression);
+            parser = createParser(expression);
         }catch (IOException e) {
             throw new ExpressionException(e);
         }
+        ParserRuleContext parseTree = parser.expression();
 
         // Resolve all symbols, interrogating the debuggee as necessary
         resolveSymbols(parseTree, states, debuggeeContext, currentFunction, pc);
@@ -67,10 +81,45 @@ public class CExpressionCompiler implements ExpressionCompiler
         simplifyExpression(parseTree, states, debuggeeContext);
 
         // Generate code and produce Expression to encapsulate the result
-        return generateCode(parseTree, states);
+        Expression output = generateCode(parseTree, states, debuggeeContext);
+
+        if (displayTree) {
+            TreeViewer viewer = new TreeViewer(Arrays.asList(parser.getRuleNames()), parseTree);
+            viewer.setTreeTextProvider(new TreeTextProvider()
+            {
+                TreeTextProvider defaultProvider = new DefaultTreeTextProvider(Arrays.asList(parser.getRuleNames()));
+
+                @Override
+                public String getText(Tree node)
+                {
+                    if (node instanceof ParseTree) {
+                        NodeState nodeState = states.get((ParseTree)node);
+
+                        ExpressionValue value;
+                        if (nodeState != null) {
+                            value = nodeState.getExpressionValue();
+                        }else{
+                            value = null;
+                        }
+
+                        if (value != null) {
+                            return defaultProvider.getText(node) + "(" + value + ")";
+                        }else{
+                            return defaultProvider.getText(node) + "(null)";
+                        }
+                    }
+
+                    return defaultProvider.getText(node);
+                }
+            });
+            viewer.open();
+        }
+
+        return output;
     }
 
-    private static void resolveSymbols(ParserRuleContext parseTree,
+    @VisibleForTesting
+    static void resolveSymbols(ParserRuleContext parseTree,
                                        ParseTreeProperty<NodeState> states,
                                        DebuggeeContext debuggeeContext,
                                        Function currentFunction,
@@ -80,14 +129,16 @@ public class CExpressionCompiler implements ExpressionCompiler
         parseTree.accept(resolutionVisitor);
     }
 
-    private static void typeCheckExpression(ParserRuleContext parseTree,
+    @VisibleForTesting
+    static void typeCheckExpression(ParserRuleContext parseTree,
                                             ParseTreeProperty<NodeState> states)
     {
         TypeCheckingVisitor typeCheckingVisitor = new TypeCheckingVisitor(states);
         parseTree.accept(typeCheckingVisitor);
     }
 
-    private static void simplifyExpression(ParserRuleContext parseTree,
+    @VisibleForTesting
+    static void simplifyExpression(ParserRuleContext parseTree,
                                            ParseTreeProperty<NodeState> states,
                                            DebuggeeContext debuggeeContext)
     {
@@ -95,19 +146,26 @@ public class CExpressionCompiler implements ExpressionCompiler
         parseTree.accept(visitor);
     }
 
-    private static Expression generateCode(ParserRuleContext parseTree,
-                                           ParseTreeProperty<NodeState> states)
+    @VisibleForTesting
+    static Expression generateCode(ParserRuleContext parseTree,
+                                           ParseTreeProperty<NodeState> states,
+                                           DebuggeeContext debuggeeContext)
     {
-        return null;
+        CodeGenVisitor visitor = new CodeGenVisitor(states, debuggeeContext);
+        return parseTree.accept(visitor);
+    }
+
+    private static CParser createParser(String expression) throws IOException
+    {
+        ANTLRInputStream inputStream = new ANTLRInputStream(new ByteArrayInputStream(expression.getBytes(StandardCharsets.UTF_8)));
+        CLexer lexer = new CLexer(inputStream);
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        return new CParser(tokens);
     }
 
     @VisibleForTesting
     static ParserRuleContext createParseTree(String expression) throws IOException
     {
-        ANTLRInputStream inputStream = new ANTLRInputStream(new ByteArrayInputStream(expression.getBytes(StandardCharsets.UTF_8)));
-        CLexer lexer = new CLexer(inputStream);
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        CParser parser = new CParser(tokens);
-        return parser.expression();
+        return createParser(expression).expression();
     }
 }
