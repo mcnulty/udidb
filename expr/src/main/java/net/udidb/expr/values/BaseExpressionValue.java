@@ -7,9 +7,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package net.udidb.expr.lang.c.values;
-
-import net.udidb.expr.ExpressionValue;
+package net.udidb.expr.values;
 
 /**
  * @author mcnulty
@@ -18,9 +16,12 @@ public abstract class BaseExpressionValue<T> implements ExpressionValue
 {
     protected final T value;
 
-    protected BaseExpressionValue(T value)
+    protected final ValueType type;
+
+    protected BaseExpressionValue(T value, ValueType type)
     {
         this.value = value;
+        this.type = type;
     }
 
     @Override
@@ -45,6 +46,12 @@ public abstract class BaseExpressionValue<T> implements ExpressionValue
     public long getAddressValue()
     {
         throw new IllegalStateException("Cannot convert " + value + " into address");
+    }
+
+    @Override
+    public ValueType getType()
+    {
+        return type;
     }
 
     @Override

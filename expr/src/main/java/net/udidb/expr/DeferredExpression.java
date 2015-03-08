@@ -9,7 +9,7 @@
 
 package net.udidb.expr;
 
-import net.udidb.engine.context.DebuggeeContext;
+import net.udidb.expr.values.ExpressionValue;
 
 /**
  * An Expression implementation that requires execution in the debuggee to produce the final value
@@ -25,13 +25,13 @@ public class DeferredExpression implements Expression
     }
 
     @Override
-    public void loadExpression(DebuggeeContext debuggeeContext) throws ExpressionException
+    public void loadExpression(ExecutionContext executionContext) throws ExpressionException
     {
         throw new ExpressionException("Debuggee expression evaluation is not yet implemented");
     }
 
     @Override
-    public boolean isExpressionCompleted(DebuggeeContext debuggeeContext) throws ExpressionException
+    public boolean isExpressionCompleted()
     {
         return false;
     }

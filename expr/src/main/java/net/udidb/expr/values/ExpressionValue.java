@@ -7,14 +7,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package net.udidb.expr;
+package net.udidb.expr.values;
 
 /**
  * Represents a value (or subvalue) of an expression.
- *
- * Note: implementations may throw IllegalStateExceptions for any method calls if the underlying data cannot be converted
- * into the requested type. The intent is that an earlier type checking pass will eliminate expressions for which invalid
- * type conversions would occur.
  *
  * @author mcnulty
  */
@@ -27,4 +23,6 @@ public interface ExpressionValue
     String getStringValue();
 
     long getAddressValue();
+
+    ValueType getType();
 }

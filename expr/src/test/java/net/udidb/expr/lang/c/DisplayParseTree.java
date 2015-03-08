@@ -15,7 +15,7 @@ import java.util.Iterator;
 import net.libudi.api.UdiThread;
 import net.sourcecrumbs.api.debug.symbols.Function;
 import net.sourcecrumbs.api.files.Executable;
-import net.udidb.engine.context.DebuggeeContext;
+import net.udidb.expr.ExecutionContext;
 
 import static org.mockito.Mockito.*;
 
@@ -25,21 +25,21 @@ import static org.mockito.Mockito.*;
 public class DisplayParseTree
 {
 
-    private static DebuggeeContext createDebuggeeContext() throws Exception
+    private static ExecutionContext createExecutionContext() throws Exception
     {
-        DebuggeeContext debuggeeContext = mock(DebuggeeContext.class);
+        ExecutionContext executionContext = mock(ExecutionContext.class);
         UdiThread udiThread = mock(UdiThread.class);
         Executable executable = mock(Executable.class);
         Function function = mock(Function.class);
 
-        when(debuggeeContext.getCurrentThread()).thenReturn(udiThread);
-        when(debuggeeContext.getExecutable()).thenReturn(executable);
+        when(executionContext.getCurrentThread()).thenReturn(udiThread);
+        when(executionContext.getExecutable()).thenReturn(executable);
 
         when(udiThread.getPC()).thenReturn(0xdeadbeefL);
 
         when(executable.getContainingFunction(0xdeadbeefL)).thenReturn(function);
 
-        return debuggeeContext;
+        return executionContext;
     }
 
     public static void main(String[] args) throws Exception {
@@ -54,6 +54,6 @@ public class DisplayParseTree
         }
 
         CExpressionCompiler compiler = new CExpressionCompiler();
-        compiler.compile(builder.toString(), createDebuggeeContext(), true);
+        compiler.compile(builder.toString(), createExecutionContext(), true);
     }
 }

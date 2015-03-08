@@ -13,15 +13,15 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringTokenizer;
 
-import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.BeanUtilsBean;
-import org.apache.commons.beanutils.ConvertUtils;
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
 import org.reflections.util.ClasspathHelper;
@@ -53,8 +53,6 @@ public class OperationParser {
 
     private final Map<String, Class<? extends Operation>> operations = new HashMap<>();
 
-    private static final String WHITE_SPACE = "\\s+";
-
     private final Injector injector;
 
     private final BeanUtilsBean beanUtils;
@@ -64,7 +62,6 @@ public class OperationParser {
         this.injector = injector;
         addSupportedOperations(opImplPackage, customPackages);
         beanUtils = BeanUtilsBean.getInstance();
-        beanUtils.getConvertUtils().register(new AddressConverter(), long.class);
     }
 
     private void addSupportedOperations(String opImplPackage, String[] customPackages) {
@@ -94,34 +91,54 @@ public class OperationParser {
      * @throws UnknownOperationException if the opString references an unknown operation
      * @throws OperationParseException if their is an error parsing a known operation
      */
-    public Operation parse(String opString) throws UnknownOperationException, OperationParseException {
+    public Operation parse(String opString) throws UnknownOperationException, OperationParseException
+    {
+        final String UNQUOTED_INITIAL_DELIMS = " \t\n\r\f\"";
+        final String QUOTED_DELIMS = "\"";
 
-        // Determine the operation
-        String[] tokens = opString.split(WHITE_SPACE);
+        StringTokenizer tokenizer = new StringTokenizer(opString, UNQUOTED_INITIAL_DELIMS, true);
 
+        String opName = "<unknown>";
         Class<? extends Operation > opClass = null;
-        String opName = null;
-        String[] operandValues = new String[0];
-        if (tokens.length > 0) {
-            // Look up the hierarchical operation
-            StringBuilder opNameBuilder = new StringBuilder();
+        List<String> operandValues = new LinkedList<>();
 
-            int operationSplit = 0;
-            opNameBuilder.append(tokens[operationSplit]);
-            while (operationSplit < tokens.length) {
-                opClass = operations.get(opNameBuilder.toString());
-                if (opClass != null) break;
+        boolean firstOpToken = true;
+        StringBuilder opNameBuilder = new StringBuilder();
 
-                if (++operationSplit < tokens.length) {
-                    opNameBuilder.append(" ").append(tokens[operationSplit]);
+        String delims = UNQUOTED_INITIAL_DELIMS;
+        while ( tokenizer.hasMoreTokens() ) {
+            String token = tokenizer.nextToken(delims);
+
+            // Is the token a delimiter?
+            if (token.length() == 1 && delims.contains(token)) {
+                if (QUOTED_DELIMS.contains(token)) {
+                    if (delims.equals(UNQUOTED_INITIAL_DELIMS)) {
+                        // start of a quoted string
+                        delims = QUOTED_DELIMS;
+                    }else{
+                        // end of a quoted string
+                        delims = UNQUOTED_INITIAL_DELIMS;
+                    }
                 }
+                continue;
             }
-            opName = opNameBuilder.toString();
 
-            operationSplit++;
+            if (opClass == null) {
+                // Parsing the operation name
+                if (!firstOpToken) {
+                    opNameBuilder.append(" ");
+                }else{
+                    firstOpToken = false;
+                }
+                opNameBuilder.append(token);
 
-            if (operationSplit < tokens.length) {
-                operandValues = Arrays.copyOfRange(tokens, operationSplit, tokens.length);
+                opClass = operations.get(opNameBuilder.toString());
+                if (opClass != null) {
+                    opName = opNameBuilder.toString();
+                }
+            }else{
+                // Parsing the operands
+                operandValues.add(token);
             }
         }
 
@@ -166,24 +183,29 @@ public class OperationParser {
             }
         }
 
-        if (requiredOperands != 0 && operandValues.length == 0) {
+        if (requiredOperands != 0 && operandValues.size() == 0) {
             throw new OperationParseException(String.format("Operands required for operation '%s'.",
                     opName));
         }
 
-        if (operandValues.length < requiredOperands || (restOfLineIndex == -1 && operandValues.length > operands.size()) ) {
+        if (operandValues.size() < requiredOperands || (restOfLineIndex == -1 && operandValues.size() > operands.size()) ) {
             throw new OperationParseException(String.format("Invalid number of operands. Expected at least %s.",
                     operands.size()));
         }
 
-        for (int i = 0; i < operandValues.length; ++i) {
+        for (int i = 0; i < operandValues.size(); ++i) {
+            Field field = operands.get(i);
+
+            OperandParser operandParser = injector.getInstance(field.getAnnotation(Operand.class).operandParser());
             try {
                 if (i == restOfLineIndex) {
-                    beanUtils.copyProperty(cmd, operands.get(i).getName(),
-                            Arrays.copyOfRange(operandValues, i, operandValues.length));
+                    beanUtils.copyProperty(cmd, field.getName(),
+                            operandParser.parse(operandValues.subList(i, operandValues.size()), field));
                     break;
-                }else{
-                    beanUtils.copyProperty(cmd, operands.get(i).getName(), operandValues[i]);
+                } else {
+                    beanUtils.copyProperty(cmd,
+                            field.getName(),
+                            operandParser.parse(operandValues.get(i), field));
                 }
             } catch (IllegalAccessException | InvocationTargetException e) {
                 throw new OperationParseException(String.format("Failed to construct %s operation", opName), e);

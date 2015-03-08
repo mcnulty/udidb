@@ -9,6 +9,8 @@
 
 package net.udidb.cli.ops.impls.help;
 
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 
 import com.google.inject.Inject;
@@ -38,14 +40,14 @@ public class Help extends DisplayNameOperation {
     private final HelpMessageProvider provider;
 
     @Operand(order=0, optional=true, restOfLine=true)
-    private String[] opName;
+    private List<String> args;
 
-    public String[] getOpName() {
-        return opName;
+    public List<String> getArgs() {
+        return args;
     }
 
-    public void setOpName(String[] opName) {
-        this.opName = opName;
+    public void setArgs(List<String> args) {
+        this.args = args;
     }
 
     @Inject
@@ -55,16 +57,18 @@ public class Help extends DisplayNameOperation {
 
     @Override
     public Result execute() throws OperationException {
-        if (opName == null) {
+        if (args == null) {
             StringBuilder builder = new StringBuilder();
             provider.getAllShortMessages(builder);
 
             return new ValueResult(builder.toString());
         }
 
-        String longMessage = provider.getLongMessage(StringUtils.join(opName, " "));
+        String opName = StringUtils.join(args, " ");
+
+        String longMessage = provider.getLongMessage(opName);
         if (longMessage == null) {
-            throw new OperationException(String.format("No help available for operation '%s'", getName()));
+            throw new OperationException(String.format("No help available for operation '%s'", opName));
         }
 
         return new ValueResult(longMessage);

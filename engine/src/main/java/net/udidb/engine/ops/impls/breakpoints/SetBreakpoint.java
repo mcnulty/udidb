@@ -13,18 +13,21 @@ import javax.annotation.Nullable;
 
 import com.google.inject.Inject;
 
-import net.libudi.api.UdiProcess;
 import net.libudi.api.exceptions.UdiException;
 import net.udidb.engine.context.DebuggeeContext;
 import net.udidb.engine.ops.NoDebuggeeContextException;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
+import net.udidb.engine.ops.annotations.ExpressionConstraint;
 import net.udidb.engine.ops.annotations.HelpMessage;
 import net.udidb.engine.ops.annotations.LongHelpMessage;
 import net.udidb.engine.ops.annotations.Operand;
 import net.udidb.engine.ops.impls.DisplayNameOperation;
+import net.udidb.engine.ops.parser.ExpressionParser;
 import net.udidb.engine.ops.results.Result;
 import net.udidb.engine.ops.results.ValueResult;
+import net.udidb.expr.Expression;
+import net.udidb.expr.values.ValueType;
 
 /**
  * An operation to create and install a breakpoint in a debuggee
@@ -43,20 +46,21 @@ public class SetBreakpoint extends DisplayNameOperation {
 
     private final DebuggeeContext context;
 
-    @Operand(order=0)
-    private long address;
+    @Operand(order=0, operandParser = ExpressionParser.class, restOfLine = true)
+    @ExpressionConstraint(expectedType = ValueType.ADDRESS, executionAllowed = false) // TODO for now execution is allowed
+    private Expression addressExpression;
 
     @Inject
     public SetBreakpoint(@Nullable DebuggeeContext context) {
         this.context = context;
     }
 
-    public long getAddress() {
-        return address;
+    public Expression getAddressExpression() {
+        return addressExpression;
     }
 
-    public void setAddress(long address) {
-        this.address = address;
+    public void setAddressExpression(Expression addressExpression) {
+        this.addressExpression = addressExpression;
     }
 
     @Override
@@ -65,6 +69,7 @@ public class SetBreakpoint extends DisplayNameOperation {
             throw new NoDebuggeeContextException();
         }
 
+        long address = addressExpression.getValue().getAddressValue();
         try {
             context.getProcess().createBreakpoint(address);
 
@@ -73,6 +78,6 @@ public class SetBreakpoint extends DisplayNameOperation {
             throw new OperationException("Failed to set breakpoint in debuggee", e);
         }
 
-        return new ValueResult(String.format("Set breakpoint at 0x%x", address));
+        return new ValueResult(String.format("Set breakpoint at 0x%x", addressExpression));
     }
 }

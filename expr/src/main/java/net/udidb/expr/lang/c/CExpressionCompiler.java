@@ -28,13 +28,13 @@ import com.google.common.annotations.VisibleForTesting;
 
 import net.libudi.api.exceptions.UdiException;
 import net.sourcecrumbs.api.debug.symbols.Function;
-import net.udidb.engine.context.DebuggeeContext;
+import net.udidb.expr.ExecutionContext;
 import net.udidb.expr.ExpressionException;
 import net.udidb.expr.Expression;
 import net.udidb.expr.ExpressionCompiler;
 import net.udidb.expr.grammar.c.CLexer;
 import net.udidb.expr.grammar.c.CParser;
-import net.udidb.expr.ExpressionValue;
+import net.udidb.expr.values.ExpressionValue;
 
 /**
  * An expression compiler for C
@@ -44,21 +44,21 @@ import net.udidb.expr.ExpressionValue;
 public class CExpressionCompiler implements ExpressionCompiler
 {
     @Override
-    public Expression compile(String expression, DebuggeeContext debuggeeContext) throws ExpressionException
+    public Expression compile(String expression, ExecutionContext executionContext) throws ExpressionException
     {
-        return compile(expression, debuggeeContext, false);
+        return compile(expression, executionContext, false);
     }
 
     @VisibleForTesting
-    Expression compile(String expression, DebuggeeContext debuggeeContext, boolean displayTree) throws ExpressionException
+    Expression compile(String expression, ExecutionContext executionContext, boolean displayTree) throws ExpressionException
     {
         long pc;
         try {
-            pc = debuggeeContext.getCurrentThread().getPC();
-        }catch (UdiException e) {
+            pc = executionContext.getCurrentThread().getPC();
+        } catch (UdiException e) {
             throw new ExpressionException(e);
         }
-        Function currentFunction = debuggeeContext.getExecutable().getContainingFunction(pc);
+        Function currentFunction = executionContext.getExecutable().getContainingFunction(pc);
 
         final ParseTreeProperty<NodeState> states = new ParseTreeProperty<>();
 
@@ -72,16 +72,16 @@ public class CExpressionCompiler implements ExpressionCompiler
         ParserRuleContext parseTree = parser.expression();
 
         // Resolve all symbols, interrogating the debuggee as necessary
-        resolveSymbols(parseTree, states, debuggeeContext, currentFunction, pc);
+        resolveSymbols(parseTree, states, executionContext, currentFunction, pc);
 
         // Type checking
         typeCheckExpression(parseTree, states);
 
         // Simplify the expression given the current state of the AST
-        simplifyExpression(parseTree, states, debuggeeContext);
+        simplifyExpression(parseTree, states, executionContext);
 
         // Generate code and produce Expression to encapsulate the result
-        Expression output = generateCode(parseTree, states, debuggeeContext);
+        Expression output = generateCode(parseTree, states, executionContext);
 
         if (displayTree) {
             TreeViewer viewer = new TreeViewer(Arrays.asList(parser.getRuleNames()), parseTree);
@@ -121,11 +121,11 @@ public class CExpressionCompiler implements ExpressionCompiler
     @VisibleForTesting
     static void resolveSymbols(ParserRuleContext parseTree,
                                        ParseTreeProperty<NodeState> states,
-                                       DebuggeeContext debuggeeContext,
+                                       ExecutionContext executionContext,
                                        Function currentFunction,
                                        long pc)
     {
-        SymbolResolutionVisitor resolutionVisitor = new SymbolResolutionVisitor(states, debuggeeContext, currentFunction, pc);
+        SymbolResolutionVisitor resolutionVisitor = new SymbolResolutionVisitor(states, executionContext, currentFunction, pc);
         parseTree.accept(resolutionVisitor);
     }
 
@@ -140,18 +140,18 @@ public class CExpressionCompiler implements ExpressionCompiler
     @VisibleForTesting
     static void simplifyExpression(ParserRuleContext parseTree,
                                            ParseTreeProperty<NodeState> states,
-                                           DebuggeeContext debuggeeContext)
+                                           ExecutionContext executionContext)
     {
-        ExpressionSimplificationVisitor visitor = new ExpressionSimplificationVisitor(states, debuggeeContext);
+        ExpressionSimplificationVisitor visitor = new ExpressionSimplificationVisitor(states, executionContext);
         parseTree.accept(visitor);
     }
 
     @VisibleForTesting
     static Expression generateCode(ParserRuleContext parseTree,
                                            ParseTreeProperty<NodeState> states,
-                                           DebuggeeContext debuggeeContext)
+                                           ExecutionContext executionContext)
     {
-        CodeGenVisitor visitor = new CodeGenVisitor(states, debuggeeContext);
+        CodeGenVisitor visitor = new CodeGenVisitor(states, executionContext);
         return parseTree.accept(visitor);
     }
 

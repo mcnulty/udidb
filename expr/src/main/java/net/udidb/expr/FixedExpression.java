@@ -9,7 +9,7 @@
 
 package net.udidb.expr;
 
-import net.udidb.engine.context.DebuggeeContext;
+import net.udidb.expr.values.ExpressionValue;
 
 /**
  * An Expression implementation for which the value is known at construction time
@@ -32,13 +32,13 @@ public class FixedExpression implements Expression
     }
 
     @Override
-    public void loadExpression(DebuggeeContext debuggeeContext) throws ExpressionException
+    public void loadExpression(ExecutionContext executionContext) throws ExpressionException
     {
         throw new ExpressionException("The value for this expression is already available");
     }
 
     @Override
-    public boolean isExpressionCompleted(DebuggeeContext debuggeeContext) throws ExpressionException
+    public boolean isExpressionCompleted()
     {
         return true;
     }

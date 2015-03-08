@@ -23,19 +23,26 @@
 
     <dependencies>
         <dependency>
-            <groupId>net.udidb</groupId>
-            <artifactId>udidb-engine</artifactId>
-            <version>${project.version}</version>
+            <groupId>net.sourcecrumbs</groupId>
+            <artifactId>source-crumbs-api</artifactId>
         </dependency>
         <dependency>
             <groupId>org.antlr</groupId>
             <artifactId>antlr4-runtime</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-all</artifactId>
             <version>1.10.8</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
         </dependency>
     </dependencies>
 

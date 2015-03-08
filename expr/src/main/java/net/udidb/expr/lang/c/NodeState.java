@@ -13,7 +13,7 @@ import net.sourcecrumbs.api.debug.symbols.DebugType;
 import net.sourcecrumbs.api.debug.symbols.Function;
 import net.sourcecrumbs.api.debug.symbols.Variable;
 import net.sourcecrumbs.api.symbols.Symbol;
-import net.udidb.expr.ExpressionValue;
+import net.udidb.expr.values.ExpressionValue;
 
 /**
  * Container for all node state specific to the expression evaluator

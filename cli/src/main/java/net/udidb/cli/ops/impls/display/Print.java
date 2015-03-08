@@ -16,8 +16,10 @@ import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.HelpMessage;
 import net.udidb.engine.ops.annotations.LongHelpMessage;
 import net.udidb.engine.ops.annotations.Operand;
+import net.udidb.engine.ops.parser.ExpressionParser;
 import net.udidb.engine.ops.results.Result;
 import net.udidb.engine.ops.results.ValueResult;
+import net.udidb.expr.Expression;
 
 /**
  * An operation to display an expression
@@ -32,23 +34,29 @@ import net.udidb.engine.ops.results.ValueResult;
 @DisplayName("print")
 public class Print extends DisplayNameOperation {
 
-    @Operand(order=0)
-    private String value;
+    @Operand(order=0, operandParser = ExpressionParser.class, restOfLine = true)
+    private Expression value;
 
     @Inject
     public Print() {
     }
 
-    public String getValue() {
+    public Expression getValue() {
         return value;
     }
 
-    public void setValue(String value) {
+    public void setValue(Expression value) {
         this.value = value;
     }
 
     @Override
-    public Result execute() {
-        return new ValueResult(value.toString());
+    public Result execute()
+    {
+        if (value.isExpressionCompleted()) {
+            return new ValueResult(value.getValue().toString());
+        }
+
+        // TODO support execution
+        return new ValueResult("(expression value deferred)");
     }
 }

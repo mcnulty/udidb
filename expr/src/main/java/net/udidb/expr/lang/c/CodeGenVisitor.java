@@ -12,8 +12,8 @@ package net.udidb.expr.lang.c;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
 
-import net.udidb.engine.context.DebuggeeContext;
 import net.udidb.expr.DeferredExpression;
+import net.udidb.expr.ExecutionContext;
 import net.udidb.expr.Expression;
 import net.udidb.expr.FixedExpression;
 import net.udidb.expr.grammar.c.CParser.ExpressionContext;
@@ -26,12 +26,12 @@ import net.udidb.expr.grammar.c.CParser.ExpressionContext;
  */
 public class CodeGenVisitor extends BaseExpressionVisitor<Expression>
 {
-    private final DebuggeeContext debuggeeContext;
+    private final ExecutionContext executionContext;
 
-    public CodeGenVisitor(ParseTreeProperty<NodeState> states, DebuggeeContext debuggeeContext)
+    public CodeGenVisitor(ParseTreeProperty<NodeState> states, ExecutionContext executionContext)
     {
         super(states);
-        this.debuggeeContext = debuggeeContext;
+        this.executionContext = executionContext;
     }
 
     @Override

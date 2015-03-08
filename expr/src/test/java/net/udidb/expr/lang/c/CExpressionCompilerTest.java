@@ -14,9 +14,9 @@ import org.junit.Test;
 import net.libudi.api.UdiThread;
 import net.sourcecrumbs.api.debug.symbols.Function;
 import net.sourcecrumbs.api.files.Executable;
-import net.udidb.engine.context.DebuggeeContext;
+import net.udidb.expr.ExecutionContext;
 import net.udidb.expr.Expression;
-import net.udidb.expr.ExpressionValue;
+import net.udidb.expr.values.ExpressionValue;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
@@ -29,9 +29,9 @@ import static org.mockito.Mockito.when;
  */
 public class CExpressionCompilerTest
 {
-    private DebuggeeContext createDefaultDebuggeeContext() throws Exception
+    private ExecutionContext createDefaultExecutionContext() throws Exception
     {
-        DebuggeeContext debuggeeContext = mock(DebuggeeContext.class);
+        ExecutionContext executionContext = mock(ExecutionContext.class);
         UdiThread currentThread = mock(UdiThread.class);
         Function currentFunction = mock(Function.class);
         Executable executable = mock(Executable.class);
@@ -40,10 +40,10 @@ public class CExpressionCompilerTest
 
         when(executable.getContainingFunction(0L)).thenReturn(currentFunction);
 
-        when(debuggeeContext.getCurrentThread()).thenReturn(currentThread);
-        when(debuggeeContext.getExecutable()).thenReturn(executable);
+        when(executionContext.getCurrentThread()).thenReturn(currentThread);
+        when(executionContext.getExecutable()).thenReturn(executable);
 
-        return debuggeeContext;
+        return executionContext;
     }
 
     @Test
@@ -53,8 +53,8 @@ public class CExpressionCompilerTest
 
         CExpressionCompiler compiler = new CExpressionCompiler();
 
-        DebuggeeContext debuggeeContext = createDefaultDebuggeeContext();
-        Executable executable = debuggeeContext.getExecutable();
+        ExecutionContext executionContext = createDefaultExecutionContext();
+        Executable executable = executionContext.getExecutable();
 
         Function main = mock(Function.class);
         when(main.getName()).thenReturn("main");
@@ -63,8 +63,8 @@ public class CExpressionCompilerTest
 
         when(executable.getFunction(main.getName())).thenReturn(main);
 
-        Expression expression = compiler.compile(main.getName(), debuggeeContext);
-        assertTrue(expression.isExpressionCompleted(debuggeeContext));
+        Expression expression = compiler.compile(main.getName(), executionContext);
+        assertTrue(expression.isExpressionCompleted());
 
         ExpressionValue value = expression.getValue();
         assertNotNull(value);

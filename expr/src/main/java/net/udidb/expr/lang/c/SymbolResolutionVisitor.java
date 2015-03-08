@@ -16,14 +16,12 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
-import net.libudi.api.exceptions.UdiException;
 import net.sourcecrumbs.api.Range;
 import net.sourcecrumbs.api.debug.symbols.Function;
 import net.sourcecrumbs.api.files.Executable;
 import net.sourcecrumbs.api.symbols.Symbol;
-import net.sourcecrumbs.api.debug.symbols.ContextInspectionException;
 import net.sourcecrumbs.api.debug.symbols.Variable;
-import net.udidb.engine.context.DebuggeeContext;
+import net.udidb.expr.ExecutionContext;
 import net.udidb.expr.grammar.c.CParser.PrimaryExpressionContext;
 
 /**
@@ -38,14 +36,14 @@ public class SymbolResolutionVisitor extends BaseExpressionVisitor<Void>
     private final Executable executable;
 
     public SymbolResolutionVisitor(ParseTreeProperty<NodeState> states,
-            DebuggeeContext debuggeeContext,
+            ExecutionContext executionContext,
             Function currentFunction,
             long pc)
     {
         super(states);
         this.currentFunction = currentFunction;
         this.pc = pc;
-        this.executable = debuggeeContext.getExecutable();
+        this.executable = executionContext.getExecutable();
     }
 
     @Override

@@ -16,7 +16,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import net.sourcecrumbs.api.debug.symbols.Function;
-import net.udidb.engine.context.DebuggeeContext;
+import net.udidb.expr.ExecutionContext;
 
 import static org.mockito.Mockito.*;
 
@@ -29,11 +29,11 @@ public class SymbolResolutionVisitorTest
 {
     private static SymbolResolutionVisitor createVisitor() throws Exception
     {
-        DebuggeeContext debuggeeContext = mock(DebuggeeContext.class);
+        ExecutionContext executionContext = mock(ExecutionContext.class);
         Function currentFunction = mock(Function.class);
         ParseTreeProperty<NodeState> states = new ParseTreeProperty<>();
 
-        return new SymbolResolutionVisitor(states, debuggeeContext, currentFunction, 0);
+        return new SymbolResolutionVisitor(states, executionContext, currentFunction, 0);
     }
 
     @Ignore

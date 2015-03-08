@@ -9,8 +9,6 @@
 
 package net.udidb.expr;
 
-import net.udidb.engine.context.DebuggeeContext;
-
 /**
  * Interface that provides a mechanism to compile an expression in a source language, suitable for evaluation directly
  * by the debugger or indirectly by the debuggee
@@ -24,11 +22,11 @@ public interface ExpressionCompiler
      * Compiles an expression
      *
      * @param expression the expression
-     * @param debuggeeContext the debuggee context in which the expression will be evaluated
+     * @param executionContext the execution context in which the expression will be evaluated
      *
      * @return the handle to the expression, used to evaluate the expression
      *
      * @throws ExpressionException on failure to compile the expression
      */
-    Expression compile(String expression, DebuggeeContext debuggeeContext) throws ExpressionException;
+    Expression compile(String expression, ExecutionContext executionContext) throws ExpressionException;
 }

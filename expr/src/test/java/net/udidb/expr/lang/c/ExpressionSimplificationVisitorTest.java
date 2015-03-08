@@ -16,7 +16,7 @@ import org.junit.Test;
 import net.libudi.api.UdiThread;
 import net.sourcecrumbs.api.debug.symbols.Function;
 import net.sourcecrumbs.api.files.Executable;
-import net.udidb.engine.context.DebuggeeContext;
+import net.udidb.expr.ExecutionContext;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -28,9 +28,9 @@ import static org.mockito.Mockito.*;
  */
 public class ExpressionSimplificationVisitorTest
 {
-    private DebuggeeContext createDefaultDebuggeeContext() throws Exception
+    private ExecutionContext createDefaultExecutionContext() throws Exception
     {
-        DebuggeeContext debuggeeContext = mock(DebuggeeContext.class);
+        ExecutionContext executionContext = mock(ExecutionContext.class);
         UdiThread currentThread = mock(UdiThread.class);
         Function currentFunction = mock(Function.class);
         Executable executable = mock(Executable.class);
@@ -39,39 +39,39 @@ public class ExpressionSimplificationVisitorTest
 
         when(executable.getContainingFunction(0L)).thenReturn(currentFunction);
 
-        when(debuggeeContext.getCurrentThread()).thenReturn(currentThread);
-        when(debuggeeContext.getExecutable()).thenReturn(executable);
+        when(executionContext.getCurrentThread()).thenReturn(currentThread);
+        when(executionContext.getExecutable()).thenReturn(executable);
 
-        return debuggeeContext;
+        return executionContext;
     }
 
     private void runSimplification(ParserRuleContext parseTree,
                                    ParseTreeProperty<NodeState> states,
-                                   DebuggeeContext debuggeeContext) throws Exception
+                                   ExecutionContext executionContext) throws Exception
     {
 
-        long pc = debuggeeContext.getCurrentThread().getPC();
-        Function currentFunction = debuggeeContext.getExecutable().getContainingFunction(pc);
+        long pc = executionContext.getCurrentThread().getPC();
+        Function currentFunction = executionContext.getExecutable().getContainingFunction(pc);
 
-        CExpressionCompiler.resolveSymbols(parseTree, states, debuggeeContext, currentFunction, pc);
+        CExpressionCompiler.resolveSymbols(parseTree, states, executionContext, currentFunction, pc);
 
         CExpressionCompiler.typeCheckExpression(parseTree, states);
 
-        CExpressionCompiler.simplifyExpression(parseTree, states, debuggeeContext);
+        CExpressionCompiler.simplifyExpression(parseTree, states, executionContext);
     }
 
     private void testSimplification(String input, String output) throws Exception
     {
-        testSimplification(input, output, createDefaultDebuggeeContext());
+        testSimplification(input, output, createDefaultExecutionContext());
     }
 
-    private void testSimplification(String input, String output, DebuggeeContext debuggeeContext) throws Exception
+    private void testSimplification(String input, String output, ExecutionContext executionContext) throws Exception
     {
         ParseTreeProperty<NodeState> states = new ParseTreeProperty<>();
 
         ParserRuleContext parseTree = CExpressionCompiler.createParseTree(input);
 
-        runSimplification(parseTree, states, debuggeeContext);
+        runSimplification(parseTree, states, executionContext);
 
         NodeState nodeState = states.get(parseTree);
         assertNotNull(nodeState);

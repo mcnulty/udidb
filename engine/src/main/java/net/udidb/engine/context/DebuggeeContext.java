@@ -26,13 +26,14 @@ import net.sourcecrumbs.api.files.Executable;
 import net.sourcecrumbs.api.debug.symbols.ContextInspectionException;
 import net.sourcecrumbs.api.debug.symbols.RegisterContext;
 import net.udidb.engine.ops.results.TableRow;
+import net.udidb.expr.ExecutionContext;
 
 /**
  * A bean class used to encapsulate all the configuration and state for a specific debuggee.
  *
  * @author mcnulty
  */
-public class DebuggeeContext implements TableRow, RegisterContext
+public class DebuggeeContext implements TableRow, RegisterContext, ExecutionContext
 {
 
     private Path rootDir;

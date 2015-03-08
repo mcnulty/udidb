@@ -33,6 +33,7 @@ import net.udidb.cli.ops.impls.internals.SetStackTrace;
 import net.udidb.cli.ops.impls.internals.ShowInternals;
 import net.udidb.cli.source.CliSourceLineRowFactory;
 import net.udidb.engine.events.EventDispatcher;
+import net.udidb.engine.expr.ExpressionCompilerDelegate;
 import net.udidb.engine.ops.OperationReader;
 import net.udidb.engine.context.DebuggeeContext;
 import net.udidb.engine.context.DebuggeeContextFactory;
@@ -40,6 +41,7 @@ import net.udidb.engine.ops.impls.Setting;
 import net.udidb.engine.ops.results.OperationResultVisitor;
 import net.udidb.engine.ops.parser.ParserModule;
 import net.udidb.engine.source.SourceLineRowFactory;
+import net.udidb.expr.ExpressionCompiler;
 
 /**
  * A Guice module defining dependencies for running the debugger from the command line
@@ -76,6 +78,8 @@ public class CliModule extends ParserModule {
         bind(UdiProcessManager.class).toInstance(new UdiProcessManagerImpl());
 
         bind(BinaryReader.class).toInstance(new CrossPlatformBinaryReader());
+
+        bind(ExpressionCompiler.class).toInstance(new ExpressionCompilerDelegate());
 
         bind(SourceLineRowFactory.class).toInstance(new CliSourceLineRowFactory());
     }

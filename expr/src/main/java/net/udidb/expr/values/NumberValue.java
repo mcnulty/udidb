@@ -7,7 +7,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package net.udidb.expr.lang.c.values;
+package net.udidb.expr.values;
 
 /**
  * @author mcnulty
@@ -16,7 +16,7 @@ public class NumberValue extends BaseExpressionValue<Number>
 {
     public NumberValue(Number value)
     {
-        super(value);
+        super(value, ValueType.NUMBER);
     }
 
     @Override

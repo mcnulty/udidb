@@ -24,6 +24,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>net.udidb</groupId>
+            <artifactId>udidb-expr</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>net.libudi</groupId>
             <artifactId>java-api</artifactId>
         </dependency>

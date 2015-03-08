@@ -7,23 +7,28 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package net.udidb.expr.lang.c.values;
-
-import net.udidb.expr.ExpressionValue;
+package net.udidb.expr.values;
 
 /**
  * @author mcnulty
  */
-public class CharValue extends BaseExpressionValue<Character> implements ExpressionValue
+public enum ValueType
 {
-    public CharValue(char value)
+    CHAR("char"),
+    NUMBER("number"),
+    STRING("string"),
+    ADDRESS("address");
+
+    private final String displayName;
+
+    private ValueType(String displayName)
     {
-        super(value);
+        this.displayName = displayName;
     }
 
     @Override
-    public char getCharValue()
+    public String toString()
     {
-        return value;
+        return displayName;
     }
 }

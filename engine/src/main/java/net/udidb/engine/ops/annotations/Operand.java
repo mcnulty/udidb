@@ -12,6 +12,9 @@ package net.udidb.engine.ops.annotations;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
+import net.udidb.engine.ops.parser.OperandParser;
+import net.udidb.engine.ops.parser.PassThroughOperationParser;
+
 /**
  * An annotation that marks an operand field in an Operation
  *
@@ -34,4 +37,9 @@ public @interface Operand {
      * @return true, if the operand consumes the rest of the line
      */
     boolean restOfLine() default false;
+
+    /**
+     * @return the class used to parse the Operand
+     */
+    Class<? extends OperandParser> operandParser() default PassThroughOperationParser.class;
 }

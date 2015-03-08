@@ -15,13 +15,13 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
 
 import net.sourcecrumbs.api.debug.symbols.DebugType;
-import net.udidb.engine.context.DebuggeeContext;
+import net.udidb.expr.ExecutionContext;
 import net.udidb.expr.grammar.c.CParser;
 import net.udidb.expr.grammar.c.CParser.ConstantContext;
 import net.udidb.expr.grammar.c.CParser.FloatingConstantContext;
-import net.udidb.expr.lang.c.values.AddressValue;
-import net.udidb.expr.lang.c.values.NumberValue;
-import net.udidb.expr.lang.c.values.StringValue;
+import net.udidb.expr.values.AddressValue;
+import net.udidb.expr.values.NumberValue;
+import net.udidb.expr.values.StringValue;
 
 /**
  * Visitor that simplifies and computes expressions that do not require debuggee execution
@@ -32,12 +32,12 @@ public class ExpressionSimplificationVisitor extends BaseExpressionVisitor<Void>
 {
     private static final String INVALID_TREE_MSG = "Unexpected parse tree state encountered";
 
-    private final DebuggeeContext debuggeeContext;
+    private final ExecutionContext executionContext;
 
-    public ExpressionSimplificationVisitor(ParseTreeProperty<NodeState> states, DebuggeeContext debuggeeContext)
+    public ExpressionSimplificationVisitor(ParseTreeProperty<NodeState> states, ExecutionContext executionContext)
     {
         super(states);
-        this.debuggeeContext = debuggeeContext;
+        this.executionContext = executionContext;
     }
 
     @Override

@@ -13,7 +13,7 @@ import net.udidb.engine.ops.Operation;
 import net.udidb.engine.ops.annotations.DisplayName;
 
 /**
- * An implementation of Operation that is annotated with the DisplayName operation
+ * An implementation of Operation that is annotated with the DisplayName annotation
  *
  * @author mcnulty
  */
