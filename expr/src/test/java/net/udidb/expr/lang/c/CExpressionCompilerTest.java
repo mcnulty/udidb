@@ -11,6 +11,7 @@ package net.udidb.expr.lang.c;
 
 import org.junit.Test;
 
+import net.libudi.api.UdiProcess;
 import net.libudi.api.UdiThread;
 import net.sourcecrumbs.api.debug.symbols.Function;
 import net.sourcecrumbs.api.files.Executable;
@@ -29,14 +30,18 @@ import static org.mockito.Mockito.when;
  */
 public class CExpressionCompilerTest
 {
-    private ExecutionContext createDefaultExecutionContext() throws Exception
+    private ExecutionContext createDefaultExecutionContext(boolean waitingForState) throws Exception
     {
         ExecutionContext executionContext = mock(ExecutionContext.class);
         UdiThread currentThread = mock(UdiThread.class);
         Function currentFunction = mock(Function.class);
         Executable executable = mock(Executable.class);
+        UdiProcess parentProcess = mock(UdiProcess.class);
+
+        when(parentProcess.isWaitingForStart()).thenReturn(waitingForState);
 
         when(currentThread.getPC()).thenReturn(0L);
+        when(currentThread.getParentProcess()).thenReturn(parentProcess);
 
         when(executable.getContainingFunction(0L)).thenReturn(currentFunction);
 
@@ -46,14 +51,12 @@ public class CExpressionCompilerTest
         return executionContext;
     }
 
-    @Test
-    public void functionTest() throws Exception
+    private void functionTest(ExecutionContext executionContext) throws Exception
     {
         long entryAddress = 0xc0ffeeabcdL;
 
         CExpressionCompiler compiler = new CExpressionCompiler();
 
-        ExecutionContext executionContext = createDefaultExecutionContext();
         Executable executable = executionContext.getExecutable();
 
         Function main = mock(Function.class);
@@ -69,5 +72,17 @@ public class CExpressionCompilerTest
         ExpressionValue value = expression.getValue();
         assertNotNull(value);
         assertEquals(entryAddress, value.getAddressValue());
+    }
+
+    @Test
+    public void functionTest() throws Exception
+    {
+        functionTest(createDefaultExecutionContext(false));
+    }
+
+    @Test
+    public void functionTestWaitingForState() throws Exception
+    {
+        functionTest(createDefaultExecutionContext(true));
     }
 }

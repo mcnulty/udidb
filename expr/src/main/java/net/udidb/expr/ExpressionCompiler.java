@@ -17,7 +17,6 @@ package net.udidb.expr;
  */
 public interface ExpressionCompiler
 {
-
     /**
      * Compiles an expression
      *
@@ -29,4 +28,16 @@ public interface ExpressionCompiler
      * @throws ExpressionException on failure to compile the expression
      */
     Expression compile(String expression, ExecutionContext executionContext) throws ExpressionException;
+
+    /**
+     * Compiles an expression without an execution context. Note: the set of expressions that can be compiled without
+     * a context is limited.
+     *
+     * @param expression the expression
+     *
+     * @return the handle to the expression, used to evaluate the expression
+     *
+     * @throws ExpressionException on failure to compile the expression
+     */
+    Expression compile(String expression) throws ExpressionException;
 }

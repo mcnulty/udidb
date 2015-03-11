@@ -75,6 +75,15 @@ public class CliResultVisitor implements OperationResultVisitor {
         printException("", e);
     }
 
+    private String getBaseMessage(Throwable e)
+    {
+        if (e.getCause() == null) {
+            return e.getMessage();
+        }
+
+        return getBaseMessage(e.getCause());
+    }
+
     private void printException(String msg, Exception e) {
         if (!msg.isEmpty()) {
             out.print(msg);
@@ -84,7 +93,7 @@ public class CliResultVisitor implements OperationResultVisitor {
             }
         }else{
             if (e.getMessage() != null) {
-                out.print(e.getMessage());
+                out.print(getBaseMessage(e));
             }else{
                 out.print("Failed to parse operation");
             }

@@ -48,7 +48,12 @@ public class ExpressionParser implements OperandParser
     {
         if (Expression.class.isAssignableFrom(field.getType())) {
             try {
-                Expression expression = expressionCompiler.compile(token, debuggeeContext);
+                Expression expression;
+                if (debuggeeContext == null) {
+                    expression = expressionCompiler.compile(token);
+                }else{
+                    expression = expressionCompiler.compile(token, debuggeeContext);
+                }
 
                 ExpressionConstraint constraint = field.getAnnotation(ExpressionConstraint.class);
                 if (constraint != null) {

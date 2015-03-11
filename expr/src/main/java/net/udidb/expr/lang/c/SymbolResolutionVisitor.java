@@ -56,16 +56,18 @@ public class SymbolResolutionVisitor extends BaseExpressionVisitor<Void>
             boolean resolved = false;
             NodeState nodeState = getNodeState(ctx);
 
-            // Is it a local variable reference?
-            List<Variable> variables = currentFunction.getLocalVariablesByName(identifier);
-            if (variables != null && variables.size() > 0) {
-                // Locate the variable that is in scope
-                for (Variable variable : variables) {
-                    Range<Long> scope = variable.getContainingScope();
-                    if (scope.getStart() <= pc && pc <= scope.getEnd()) {
-                        nodeState.setVariable(variable);
-                        resolved = true;
-                        break;
+            if (currentFunction != null) {
+                // Is it a local variable reference?
+                List<Variable> variables = currentFunction.getLocalVariablesByName(identifier);
+                if (variables != null && variables.size() > 0) {
+                    // Locate the variable that is in scope
+                    for (Variable variable : variables) {
+                        Range<Long> scope = variable.getContainingScope();
+                        if (scope.getStart() <= pc && pc <= scope.getEnd()) {
+                            nodeState.setVariable(variable);
+                            resolved = true;
+                            break;
+                        }
                     }
                 }
             }

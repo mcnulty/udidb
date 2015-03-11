@@ -23,6 +23,7 @@ import net.udidb.expr.Expression;
 import net.udidb.expr.ExpressionCompiler;
 import net.udidb.expr.ExpressionException;
 import net.udidb.expr.lang.c.CExpressionCompiler;
+import net.udidb.expr.stubs.StubExecutionContext;
 
 /**
  * An ExpressionCompiler that delegates to a ExpressionCompiler configured for the current source language
@@ -37,6 +38,8 @@ public class ExpressionCompilerDelegate implements ExpressionCompiler
 
     private final Map<SourceLanguage, ExpressionCompiler> compilers = new HashMap<>();
 
+    private final SourceLanguage DEFAULT_LANGUAGE = SourceLanguage.C;
+
     public ExpressionCompilerDelegate()
     {
         compilers.put(SourceLanguage.C, new CExpressionCompiler());
@@ -47,16 +50,17 @@ public class ExpressionCompilerDelegate implements ExpressionCompiler
     {
         try {
             SourceLanguage currentLang = null;
-            long currentPc = executionContext.getCurrentThread().getPC();
+            if (!executionContext.getCurrentThread().getParentProcess().isWaitingForStart()) {
+                long currentPc = executionContext.getCurrentThread().getPC();
 
-            TranslationUnit currentUnit = executionContext.getExecutable().getContainingTranslationUnit(currentPc);
-            if (currentUnit != null) {
-                currentLang = currentUnit.getLanguage();
+                TranslationUnit currentUnit = executionContext.getExecutable().getContainingTranslationUnit(currentPc);
+                if (currentUnit != null) {
+                    currentLang = currentUnit.getLanguage();
+                }
             }
 
             if (currentLang == null) {
-                logger.warn("Could not determine current translation unit, assuming source language is C");
-                currentLang = SourceLanguage.C;
+                currentLang = DEFAULT_LANGUAGE;
             }
 
             ExpressionCompiler compiler = compilers.get(currentLang);
@@ -68,5 +72,11 @@ public class ExpressionCompilerDelegate implements ExpressionCompiler
         }catch (UdiException e) {
             throw new ExpressionException(e);
         }
+    }
+
+    @Override
+    public Expression compile(String expression) throws ExpressionException
+    {
+        return compile(expression, new StubExecutionContext());
     }
 }

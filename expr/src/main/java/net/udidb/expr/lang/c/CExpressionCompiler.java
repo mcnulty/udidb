@@ -17,6 +17,7 @@ import java.util.Arrays;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeProperty;
 import org.antlr.v4.runtime.tree.Tree;
@@ -34,6 +35,7 @@ import net.udidb.expr.Expression;
 import net.udidb.expr.ExpressionCompiler;
 import net.udidb.expr.grammar.c.CLexer;
 import net.udidb.expr.grammar.c.CParser;
+import net.udidb.expr.stubs.StubExecutionContext;
 import net.udidb.expr.values.ExpressionValue;
 
 /**
@@ -46,19 +48,36 @@ public class CExpressionCompiler implements ExpressionCompiler
     @Override
     public Expression compile(String expression, ExecutionContext executionContext) throws ExpressionException
     {
-        return compile(expression, executionContext, false);
+        try {
+            return compile(expression, executionContext, false);
+        }catch (ParseCancellationException e) {
+            throw new ExpressionException(e);
+        }
+    }
+
+    @Override
+    public Expression compile(String expression) throws ExpressionException
+    {
+        try {
+            return compile(expression, new StubExecutionContext());
+        }catch (ParseCancellationException e) {
+            throw new ExpressionException(e);
+        }
     }
 
     @VisibleForTesting
     Expression compile(String expression, ExecutionContext executionContext, boolean displayTree) throws ExpressionException
     {
-        long pc;
-        try {
-            pc = executionContext.getCurrentThread().getPC();
-        } catch (UdiException e) {
-            throw new ExpressionException(e);
+        long pc = 0;
+        Function currentFunction = null;
+        if (!executionContext.getCurrentThread().getParentProcess().isWaitingForStart()) {
+            try {
+                pc = executionContext.getCurrentThread().getPC();
+            } catch (UdiException e) {
+                throw new ExpressionException(e);
+            }
+            currentFunction = executionContext.getExecutable().getContainingFunction(pc);
         }
-        Function currentFunction = executionContext.getExecutable().getContainingFunction(pc);
 
         final ParseTreeProperty<NodeState> states = new ParseTreeProperty<>();
 

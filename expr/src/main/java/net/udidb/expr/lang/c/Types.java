@@ -228,5 +228,11 @@ public final class Types
         {
             return null;
         }
+
+        @Override
+        public String toString()
+        {
+            return name;
+        }
     }
 }

@@ -18,7 +18,6 @@ import net.udidb.engine.context.DebuggeeContext;
 import net.udidb.engine.ops.NoDebuggeeContextException;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
-import net.udidb.engine.ops.annotations.ExpressionConstraint;
 import net.udidb.engine.ops.annotations.HelpMessage;
 import net.udidb.engine.ops.annotations.LongHelpMessage;
 import net.udidb.engine.ops.annotations.Operand;
@@ -47,7 +46,6 @@ public class SetBreakpoint extends DisplayNameOperation {
     private final DebuggeeContext context;
 
     @Operand(order=0, operandParser = ExpressionParser.class, restOfLine = true)
-    @ExpressionConstraint(expectedType = ValueType.ADDRESS, executionAllowed = false) // TODO for now execution is allowed
     private Expression addressExpression;
 
     @Inject
@@ -67,6 +65,12 @@ public class SetBreakpoint extends DisplayNameOperation {
     public Result execute() throws OperationException {
         if (context == null) {
             throw new NoDebuggeeContextException();
+        }
+
+        if (addressExpression.getValue().getType() != ValueType.ADDRESS &&
+                addressExpression.getValue().getType() != ValueType.NUMBER)
+        {
+            throw new OperationException("Expression value cannot be used to set a breakpoint");
         }
 
         long address = addressExpression.getValue().getAddressValue();
