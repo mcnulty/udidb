@@ -25,7 +25,7 @@ import net.sourcecrumbs.api.files.BinaryReader;
 import net.sourcecrumbs.refimpl.CrossPlatformBinaryReader;
 import net.udidb.cli.ops.CliResultVisitor;
 import net.udidb.cli.ops.JlineOperationReader;
-import net.udidb.cli.context.GlobalContextManager;
+import net.udidb.engine.context.GlobalContextManager;
 import net.udidb.cli.ops.events.CliEventDispatcher;
 import net.udidb.cli.ops.events.CliEventVisitor;
 import net.udidb.cli.ops.impls.help.HelpMessageProvider;

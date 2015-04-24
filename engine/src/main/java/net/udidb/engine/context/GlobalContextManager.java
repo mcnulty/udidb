@@ -7,7 +7,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package net.udidb.cli.context;
+package net.udidb.engine.context;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -25,8 +25,6 @@ import com.google.inject.Singleton;
 
 import net.libudi.api.UdiProcess;
 import net.sourcecrumbs.api.files.Executable;
-import net.udidb.engine.context.DebuggeeContext;
-import net.udidb.engine.context.DebuggeeContextFactory;
 
 /**
  * A class that maintains the current global DebuggeeContext that is passed to control Operations

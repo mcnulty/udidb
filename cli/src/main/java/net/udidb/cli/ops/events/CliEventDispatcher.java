@@ -30,11 +30,10 @@ import net.libudi.api.event.EventType;
 import net.libudi.api.event.UdiEvent;
 import net.libudi.api.event.UdiEventVisitor;
 import net.libudi.api.exceptions.UdiException;
-import net.udidb.cli.context.GlobalContextManager;
+import net.udidb.engine.context.GlobalContextManager;
 import net.udidb.engine.events.DbEventData;
 import net.udidb.engine.events.EventDispatcher;
 import net.udidb.engine.events.EventObserver;
-import net.udidb.engine.ops.Operation;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.results.Result;
 
