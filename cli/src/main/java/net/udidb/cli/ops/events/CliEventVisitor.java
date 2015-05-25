@@ -59,7 +59,7 @@ public class CliEventVisitor implements UdiEventVisitor {
     @Override
     public void visit(UdiEventBreakpoint breakpointEvent) {
         if (displayEvent(breakpointEvent)) {
-            out.println(String.format("Breakpoint at 0x%x", breakpointEvent.getAddress()));
+            out.println(String.format("Breakpoint hit at 0x%x", breakpointEvent.getAddress()));
         }
     }
 

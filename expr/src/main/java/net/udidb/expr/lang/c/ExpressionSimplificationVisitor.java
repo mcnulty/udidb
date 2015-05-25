@@ -176,14 +176,6 @@ public class ExpressionSimplificationVisitor extends BaseExpressionVisitor<Void>
     }
 
     @Override
-    public Void visitAndExpression(@NotNull CParser.AndExpressionContext ctx)
-    {
-        super.visitAndExpression(ctx);
-        getNodeState(ctx).setExpressionValue(getNodeState(ctx.equalityExpression()).getExpressionValue());
-        return null;
-    }
-
-    @Override
     public Void visitAssignmentExpression(@NotNull CParser.AssignmentExpressionContext ctx)
     {
         super.visitAssignmentExpression(ctx);
@@ -193,6 +185,24 @@ public class ExpressionSimplificationVisitor extends BaseExpressionVisitor<Void>
             return null;
         }
         getNodeState(ctx).setExpressionValue(getNodeState(ctx.conditionalExpression()).getExpressionValue());
+        return null;
+    }
+
+    @Override
+    public Void visitPrimaryExpression(@NotNull CParser.PrimaryExpressionContext ctx)
+    {
+        super.visitPrimaryExpression(ctx);
+
+        NodeState nodeState = getNodeState(ctx);
+        if (nodeState.getFunction() != null && nodeState.getFunction().getEntryAddress() != null) {
+            nodeState.setExpressionValue(new AddressValue(nodeState.getFunction().getEntryAddress()));
+        }else if (nodeState.getSymbol() != null) {
+            nodeState.setExpressionValue(new AddressValue(nodeState.getSymbol().getAddress()));
+        }else{
+            // TODO need to handle variable -- the value of a variable may be available by interrogating the debuggee
+            nodeState.setExpressionValue(getNodeState(ctx.constant()).getExpressionValue());
+        }
+
         return null;
     }
 
@@ -285,20 +295,10 @@ public class ExpressionSimplificationVisitor extends BaseExpressionVisitor<Void>
     }
 
     @Override
-    public Void visitPrimaryExpression(@NotNull CParser.PrimaryExpressionContext ctx)
+    public Void visitAndExpression(@NotNull CParser.AndExpressionContext ctx)
     {
-        super.visitPrimaryExpression(ctx);
-
-        NodeState nodeState = getNodeState(ctx);
-        if (nodeState.getFunction() != null) {
-            nodeState.setExpressionValue(new AddressValue(nodeState.getFunction().getEntryAddress()));
-        }else if (nodeState.getSymbol() != null) {
-            nodeState.setExpressionValue(new AddressValue(nodeState.getSymbol().getAddress()));
-        }else{
-            // TODO need to handle variable -- the value of a variable may be available by interrogating the debuggee
-            nodeState.setExpressionValue(getNodeState(ctx.constant()).getExpressionValue());
-        }
-
+        super.visitAndExpression(ctx);
+        getNodeState(ctx).setExpressionValue(getNodeState(ctx.equalityExpression()).getExpressionValue());
         return null;
     }
 

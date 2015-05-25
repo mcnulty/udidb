@@ -7,23 +7,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package net.udidb.expr.values;
+package net.udidb.engine.tests.scenarios.driver.expect;
 
 /**
  * @author mcnulty
  */
-public class AddressValue extends BaseExpressionValue<Long>
+public interface ValueMatcher
 {
-    public AddressValue(long value)
-    {
-        super(value, ValueType.ADDRESS);
-    }
-
-    @Override
-    public long getAddressValue()
-    {
-        return value;
-    }
-
-
+    void matches(Object value) throws AssertionError;
 }

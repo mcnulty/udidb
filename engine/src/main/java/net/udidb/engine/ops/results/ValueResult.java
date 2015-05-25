@@ -16,14 +16,24 @@ import net.udidb.engine.ops.Operation;
  */
 public class ValueResult extends BaseResult {
 
+    private final String description;
     private final Object value;
 
     /**
      * Constructor.
      *
-     * @param value the value
+     * @param description a description of this result
+     * @param value a machine consumable value
      */
-    public ValueResult(Object value) {
+    public ValueResult(String description, Object value)
+    {
+        this.description = description;
+        this.value = value;
+    }
+
+    public ValueResult(Object value)
+    {
+        this.description = value.toString();
         this.value = value;
     }
 
@@ -34,9 +44,17 @@ public class ValueResult extends BaseResult {
         return this.value;
     }
 
+    /**
+     * @return the description of this result
+     */
+    public String getDescription()
+    {
+        return this.description;
+    }
+
     @Override
     public String toString() {
-        return value.toString();
+        return description;
     }
 
     @Override

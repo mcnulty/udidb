@@ -82,6 +82,6 @@ public class SetBreakpoint extends DisplayNameOperation {
             throw new OperationException("Failed to set breakpoint in debuggee", e);
         }
 
-        return new ValueResult(String.format("Set breakpoint at 0x%x", addressExpression));
+        return new ValueResult(String.format("Set breakpoint at 0x%x", address), addressExpression.getValue());
     }
 }

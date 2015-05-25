@@ -10,6 +10,7 @@
 package net.udidb.engine.tests.scenarios.driver;
 
 import net.libudi.api.event.EventType;
+import net.udidb.engine.tests.scenarios.driver.expect.ResultExpectation;
 
 /**
  * @author mcnulty
@@ -49,5 +50,11 @@ public class TestCommand
     public ResultExpectation getResultExpectation()
     {
         return resultExpectation;
+    }
+
+    @Override
+    public String toString()
+    {
+        return commandString;
     }
 }

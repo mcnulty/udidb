@@ -9,6 +9,7 @@
 
 package net.udidb.engine.tests.scenarios.driver;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -16,7 +17,6 @@ import java.util.Queue;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
-import edu.emory.mathcs.backport.java.util.Arrays;
 import net.udidb.engine.UdidbEngine;
 import net.udidb.engine.events.EventDispatcher;
 import net.udidb.engine.ops.Operation;
@@ -26,9 +26,7 @@ import net.udidb.engine.ops.results.OperationResultVisitor;
 import net.udidb.engine.ops.results.TableResult;
 import net.udidb.engine.ops.results.ValueResult;
 import net.udidb.engine.ops.results.VoidResult;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import net.udidb.engine.tests.scenarios.driver.expect.ResultExpectation;
 
 /**
  * @author mcnulty
@@ -78,49 +76,35 @@ public class TestDriver implements OperationResultVisitor
             return false;
         }
 
-        assertTrue(currentCommand.getResultExpectation().isVoidExpected());
+        currentCommand.getResultExpectation().visit(op, result);
         return advanceCommand();
     }
 
     @Override
     public boolean visit(Operation op, ValueResult result)
     {
-        assertTrue(currentCommand.getResultExpectation().isValueExpected());
-
-        if (currentCommand.getResultExpectation().getValue() != null) {
-            assertEquals(currentCommand.getResultExpectation().getValue(), result.getValue());
-        }
-
+        currentCommand.getResultExpectation().visit(op, result);
         return advanceCommand();
     }
 
     @Override
     public boolean visit(Operation op, TableResult result)
     {
-        assertTrue(currentCommand.getResultExpectation().isTableExpected());
-
-        if (currentCommand.getResultExpectation().getTableRows() != null) {
-            assertEquals(currentCommand.getResultExpectation().getTableRows(), result.getRows());
-        }
-
+        currentCommand.getResultExpectation().visit(op, result);
         return advanceCommand();
     }
 
     @Override
     public boolean visit(Operation op, DeferredResult result)
     {
-        assertTrue(currentCommand.getResultExpectation().isDeferredExpected());
+        currentCommand.getResultExpectation().visit(op, result);
         return advanceCommand();
     }
 
     @Override
     public boolean visit(Operation op, Exception e)
     {
-        if (!currentCommand.getResultExpectation().isExceptionExpected()) {
-            e.printStackTrace();
-        }
-
-        assertTrue(currentCommand.getResultExpectation().isExceptionExpected());
+        currentCommand.getResultExpectation().visit(op, e);
         return advanceCommand();
     }
 

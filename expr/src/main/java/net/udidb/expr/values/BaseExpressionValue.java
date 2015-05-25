@@ -59,4 +59,26 @@ public abstract class BaseExpressionValue<T> implements ExpressionValue
     {
         return value.toString();
     }
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o) return true;
+        if (!(o instanceof BaseExpressionValue)) return false;
+
+        BaseExpressionValue that = (BaseExpressionValue) o;
+
+        if (type != that.type) return false;
+        if (value != null ? !value.equals(that.value) : that.value != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode()
+    {
+        int result = value != null ? value.hashCode() : 0;
+        result = 31 * result + (type != null ? type.hashCode() : 0);
+        return result;
+    }
 }

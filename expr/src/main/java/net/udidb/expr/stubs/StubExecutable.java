@@ -74,7 +74,7 @@ public class StubExecutable extends Executable
     }
 
     @Override
-    public Symbol getSymbol(String name)
+    public List<Symbol> getSymbolsByName(String name)
     {
         return null;
     }

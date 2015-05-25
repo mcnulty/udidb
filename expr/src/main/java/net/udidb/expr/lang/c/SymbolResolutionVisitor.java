@@ -62,7 +62,7 @@ public class SymbolResolutionVisitor extends BaseExpressionVisitor<Void>
                 if (variables != null && variables.size() > 0) {
                     // Locate the variable that is in scope
                     for (Variable variable : variables) {
-                        Range<Long> scope = variable.getContainingScope();
+                        Range<Long> scope = variable.getScope();
                         if (scope.getStart() <= pc && pc <= scope.getEnd()) {
                             nodeState.setVariable(variable);
                             resolved = true;
@@ -92,9 +92,10 @@ public class SymbolResolutionVisitor extends BaseExpressionVisitor<Void>
 
             // Is it a generic symbol reference?
             if (!resolved) {
-                Symbol symbol = executable.getSymbol(identifier);
-                if (symbol != null) {
-                    nodeState.setSymbol(symbol);
+                List<Symbol> symbols = executable.getSymbolsByName(identifier);
+                if (symbols != null && symbols.size() > 0) {
+                    // TODO configurable strategy for picking the symbol to use
+                    nodeState.setSymbol(symbols.get(0));
                 }
             }
 

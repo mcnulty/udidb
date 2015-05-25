@@ -7,7 +7,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package net.udidb.cli.ops.impls.display;
+package net.udidb.engine.ops.impls.query;
 
 import com.google.inject.Inject;
 
@@ -28,17 +28,17 @@ import net.udidb.expr.Expression;
  */
 @HelpMessage(enMessage="Display the value of an expression")
 @LongHelpMessage(enMessage=
-        "print <expression>\n\n" +
+        "eval <expression>\n\n" +
         "Display the value of an expression"
 )
-@DisplayName("print")
-public class Print extends DisplayNameOperation {
+@DisplayName("eval")
+public class Eval extends DisplayNameOperation {
 
     @Operand(order=0, operandParser = ExpressionParser.class, restOfLine = true)
     private Expression value;
 
     @Inject
-    public Print() {
+    public Eval() {
     }
 
     public Expression getValue() {
@@ -53,7 +53,7 @@ public class Print extends DisplayNameOperation {
     public Result execute()
     {
         if (value.isExpressionCompleted()) {
-            return new ValueResult(value.getValue().toString());
+            return new ValueResult(value.getValue().toString(), value.getValue());
         }
 
         // TODO support execution

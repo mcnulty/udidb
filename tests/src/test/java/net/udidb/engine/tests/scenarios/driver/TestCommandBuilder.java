@@ -10,6 +10,7 @@
 package net.udidb.engine.tests.scenarios.driver;
 
 import net.libudi.api.event.EventType;
+import net.udidb.engine.tests.scenarios.driver.expect.ResultExpectation;
 
 /**
  * A builder for common TestCommand objects
@@ -56,5 +57,10 @@ public final class TestCommandBuilder
     public TestCommand setBreakpoint(String expression)
     {
         return new TestCommand("break " + expression, resultExpectation, eventType);
+    }
+
+    public TestCommand eval(String expression)
+    {
+        return new TestCommand("eval " + expression, resultExpectation, eventType);
     }
 }

@@ -13,7 +13,9 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import net.udidb.engine.tests.scenarios.BaseScenarioTest;
-import net.udidb.engine.tests.scenarios.driver.ResultExpectation;
+import net.udidb.engine.tests.scenarios.driver.TestCommand;
+import net.udidb.engine.tests.scenarios.driver.expect.CommandValueEquality;
+import net.udidb.engine.tests.scenarios.driver.expect.ResultExpectation;
 import net.udidb.engine.tests.scenarios.driver.TestCommandBuilder;
 import net.udidb.engine.tests.scenarios.driver.TestDriver;
 
@@ -31,15 +33,18 @@ public class BreakpointsTest extends BaseScenarioTest
     }
 
     @Test
-    public void createBreakpoint()
+    public void createBreakpointAtMain()
     {
-        new TestDriver(
-                new TestCommandBuilder()
-                        .setResultExpectation(ResultExpectation.expectVoid())
-                        .createDebuggee(getBinaryPath().toAbsolutePath().toString()),
-                new TestCommandBuilder()
-                        .setResultExpectation(ResultExpectation.value())
-                        .setBreakpoint("main")
-        ).runTest();
+        TestCommand create = new TestCommandBuilder()
+                .setResultExpectation(ResultExpectation.expectVoid())
+                .createDebuggee(getBinaryPath().toAbsolutePath().toString());
+        TestCommand getAddress = new TestCommandBuilder()
+                .setResultExpectation(ResultExpectation.value())
+                .eval("main");
+        TestCommand setBreakpoint = new TestCommandBuilder()
+                        .setResultExpectation(ResultExpectation.value(new CommandValueEquality(getAddress)))
+                        .setBreakpoint("main");
+
+        new TestDriver(create, getAddress, setBreakpoint).runTest();
     }
 }
