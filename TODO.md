@@ -6,6 +6,8 @@ A list of enhancements/bugfixes for the future
   - org.reflections in use doesn't currently process classes that use
     lambdas
 - develop paradigm for optional arguments to Operations
+- create server module that provides HTTP REST API access to engine
+  and Operations
 - expose more functionality via builtin Operations
   - breakpoint management
   - function/variable/type query
