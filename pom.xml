@@ -22,6 +22,7 @@
         <module>cli</module>
         <module>engine</module>
         <module>expr</module>
+        <module>server</module>
         <module>tests</module>
     </modules>
 
