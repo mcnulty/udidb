@@ -16,13 +16,11 @@ import java.nio.file.Paths;
 
 import com.google.inject.Inject;
 
-import net.libudi.api.UdiProcess;
 import net.libudi.api.UdiProcessManager;
 import net.libudi.api.exceptions.UdiException;
 import net.sourcecrumbs.api.files.BinaryReader;
 import net.sourcecrumbs.api.files.Executable;
 import net.sourcecrumbs.api.files.UnknownFormatException;
-import net.udidb.engine.context.DebuggeeContext;
 import net.udidb.engine.context.DebuggeeContextFactory;
 import net.udidb.engine.ops.impls.DisplayNameOperation;
 import net.udidb.engine.ops.OperationException;
@@ -97,18 +95,12 @@ public class CreateDebuggee extends DisplayNameOperation {
             throw new OperationException("Failed to open " + path, e);
         }
 
-        DebuggeeContext context = contextFactory.createContext(path, args, executable);
-
-        UdiProcess process;
         try {
-            process = procManager.createProcess(path, args, context.getEnv(), context.createProcessConfig());
+            contextFactory.createContext(path, args, executable);
         }catch (UdiException e) {
-            contextFactory.deleteContext(context);
             throw new OperationException("Failed to create process", e);
         }
 
-        context.setProcess(process);
-        context.setCurrentThread(process.getInitialThread());
 
         return new VoidResult();
     }

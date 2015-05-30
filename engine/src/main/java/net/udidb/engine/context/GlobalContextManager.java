@@ -24,6 +24,8 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 import net.libudi.api.UdiProcess;
+import net.libudi.api.UdiProcessManager;
+import net.libudi.api.exceptions.UdiException;
 import net.sourcecrumbs.api.files.Executable;
 
 /**
@@ -34,6 +36,8 @@ import net.sourcecrumbs.api.files.Executable;
 @Singleton
 public class GlobalContextManager implements Provider<DebuggeeContext>, DebuggeeContextFactory {
 
+    // This must be null as a value of null has the environment inherited from the
+    // creating process
     private Map<String, String> env = null;
 
     private Path rootDir = Files.createTempDir().toPath();
@@ -44,8 +48,12 @@ public class GlobalContextManager implements Provider<DebuggeeContext>, Debuggee
 
     private final AtomicInteger currentId = new AtomicInteger(0);
 
+    private final UdiProcessManager udiProcessManager;
+
     @Inject
-    GlobalContextManager() {
+    GlobalContextManager(UdiProcessManager udiProcessManager)
+    {
+        this.udiProcessManager = udiProcessManager;
     }
 
     public Map<String, String> getEnv() {
@@ -93,14 +101,23 @@ public class GlobalContextManager implements Provider<DebuggeeContext>, Debuggee
     }
 
     @Override
-    public DebuggeeContext createContext(Path execPath, String[] args, Executable executable) {
-        DebuggeeContext context = new DebuggeeContext();
+    public DebuggeeContext createContext(Path execPath, String[] args, Executable executable) throws UdiException
+    {
+        DebuggeeContextImpl context = new DebuggeeContextImpl();
 
         context.setEnv(env == null ? null : new HashMap<>(env));
         context.setRootDir(rootDir);
         context.setExecPath(execPath);
         context.setArgs(args);
         context.setExecutable(executable);
+
+        UdiProcess process = udiProcessManager.createProcess(context.getExecPath(),
+                context.getArgs(),
+                context.getEnv(),
+                context.createProcessConfig());
+
+        context.setProcess(process);
+        context.setCurrentThread(process.getInitialThread());
 
         contexts.put(currentId.getAndIncrement(), context);
         setCurrent(context);
@@ -113,7 +130,7 @@ public class GlobalContextManager implements Provider<DebuggeeContext>, Debuggee
             if (contextId != null) {
                 DebuggeeContext context = contexts.remove(contextId);
                 if (context.isActive()) {
-                    // Set the current context to the any context
+                    // Set the current context to any context
                     Collection<DebuggeeContext> values = contexts.values();
 
                     DebuggeeContext newContext;

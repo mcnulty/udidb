@@ -9,7 +9,6 @@
 
 package net.udidb.engine.tests.scenarios.control;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import net.udidb.engine.tests.scenarios.BaseScenarioTest;
@@ -24,7 +23,6 @@ import net.udidb.engine.tests.scenarios.driver.TestDriver;
  *
  * @author mcnulty
  */
-@Ignore
 public class BreakpointsTest extends BaseScenarioTest
 {
     public BreakpointsTest()

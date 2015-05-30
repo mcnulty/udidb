@@ -12,6 +12,7 @@ package net.udidb.engine.context;
 import java.nio.file.Path;
 
 import net.libudi.api.UdiProcess;
+import net.libudi.api.exceptions.UdiException;
 import net.sourcecrumbs.api.files.Executable;
 
 /**
@@ -22,15 +23,17 @@ import net.sourcecrumbs.api.files.Executable;
 public interface DebuggeeContextFactory {
 
     /**
-     * Creates a DebuggeeContext
+     * Creates a DebuggeeContext, spawning the underlying process
      *
      * @param execPath the path to the executable
      * @param args the arguments
      * @param executable the executable
      *
      * @return the DebuggeeContext
+     *
+     * @throws UdiException failure to
      */
-    DebuggeeContext createContext(Path execPath, String[] args, Executable executable);
+    DebuggeeContext createContext(Path execPath, String[] args, Executable executable) throws UdiException;
 
     /**
      * Deletes a DebuggeeContext
