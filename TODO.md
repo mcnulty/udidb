@@ -2,9 +2,6 @@ A list of enhancements/bugfixes for the future
 ==============================================
 - stack tracing support
 - contextualize function/global var lookup based on a TranslationUnit
-- allow use of Java8 lambdas
-  - org.reflections in use doesn't currently process classes that use
-    lambdas
 - develop paradigm for optional arguments to Operations
 - create server module that provides HTTP REST API access to engine
   and Operations

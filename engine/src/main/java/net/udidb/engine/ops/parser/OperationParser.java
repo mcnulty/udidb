@@ -22,6 +22,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 
 import org.apache.commons.beanutils.BeanUtilsBean;
+import org.reflections.ReflectionUtils;
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
 import org.reflections.util.ClasspathHelper;
@@ -156,7 +157,7 @@ public class OperationParser {
         int requiredOperands = 0;
         int restOfLineIndex = -1;
         Map<Integer, Field> operands = new HashMap<>();
-        for (Field field : Reflections.getAllFields(opClass, withAnnotation(Operand.class))) {
+        for (Field field : ReflectionUtils.getAllFields(opClass, withAnnotation(Operand.class))) {
             Operand operand = field.getAnnotation(Operand.class);
             if (operand != null) {
                 if (operand.order() > restOfLineIndex && restOfLineIndex != -1) {
