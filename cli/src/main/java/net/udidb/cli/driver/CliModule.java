@@ -14,6 +14,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.name.Names;
@@ -29,7 +30,7 @@ import net.udidb.engine.context.DebuggeeContext;
 import net.udidb.engine.context.GlobalContextManager;
 import net.udidb.cli.ops.events.CliEventDispatcher;
 import net.udidb.cli.ops.events.CliEventVisitor;
-import net.udidb.cli.ops.impls.help.HelpMessageProvider;
+import net.udidb.engine.ops.impls.help.HelpMessageProvider;
 import net.udidb.cli.ops.impls.internals.SetStackTrace;
 import net.udidb.cli.ops.impls.internals.ShowInternals;
 import net.udidb.cli.source.CliSourceLineRowFactory;
@@ -39,7 +40,6 @@ import net.udidb.engine.ops.OperationReader;
 import net.udidb.engine.context.DebuggeeContextFactory;
 import net.udidb.engine.ops.impls.Setting;
 import net.udidb.engine.ops.results.OperationResultVisitor;
-import net.udidb.engine.ops.parser.ParserModule;
 import net.udidb.engine.source.SourceLineRowFactory;
 import net.udidb.expr.ExpressionCompiler;
 
@@ -48,11 +48,11 @@ import net.udidb.expr.ExpressionCompiler;
  *
  * @author mcnulty
  */
-public class CliModule extends ParserModule {
+public class CliModule extends AbstractModule
+{
 
     @Override
     protected void configure() {
-        super.configure();
 
         bind(OperationReader.class).to(JlineOperationReader.class);
 
@@ -62,8 +62,11 @@ public class CliModule extends ParserModule {
 
         bind(InputStream.class).annotatedWith(Names.named("INPUT DESTINATION")).toInstance(System.in);
 
-        bind(String[].class).annotatedWith(Names.named("CUSTOM_IMPL_PACKAGES")).toInstance(
-                new String[]{ "net.udidb.cli.ops.impl" });
+        bind(String[].class).annotatedWith(Names.named("OP_PACKAGES")).toInstance(
+                new String[] {
+                        "net.udidb.engine.ops.impls",
+                        "net.udidb.cli.ops.impl"
+                });
 
         bind(DebuggeeContextFactory.class).to(GlobalContextManager.class);
 

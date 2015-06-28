@@ -59,17 +59,16 @@ public class OperationParser {
     private final BeanUtilsBean beanUtils;
 
     @Inject
-    OperationParser(Injector injector, @Named("OP_IMPL_PACKAGE") String opImplPackage, @Named("CUSTOM_IMPL_PACKAGES") String[] customPackages) {
+    OperationParser(Injector injector, @Named("OP_PACKAGES") String[] opPackages) {
         this.injector = injector;
-        addSupportedOperations(opImplPackage, customPackages);
+        addSupportedOperations(opPackages);
         beanUtils = BeanUtilsBean.getInstance();
     }
 
-    private void addSupportedOperations(String opImplPackage, String[] customPackages) {
+    private void addSupportedOperations(String[] opPackages) {
         Set<URL> packages = new HashSet<>();
-        packages.addAll(ClasspathHelper.forPackage(opImplPackage));
-        for (String pack : customPackages) {
-            packages.addAll(ClasspathHelper.forPackage(pack));
+        for (String opPackage : opPackages) {
+            packages.addAll(ClasspathHelper.forPackage(opPackage));
         }
 
         Reflections reflections = new Reflections(packages, new SubTypesScanner());

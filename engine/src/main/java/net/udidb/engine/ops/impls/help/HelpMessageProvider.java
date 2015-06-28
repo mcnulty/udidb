@@ -7,11 +7,14 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package net.udidb.cli.ops.impls.help;
+package net.udidb.engine.ops.impls.help;
 
 import java.lang.reflect.Modifier;
+import java.net.URL;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import org.reflections.Reflections;
@@ -46,9 +49,12 @@ public class HelpMessageProvider {
     }
 
     @Inject
-    public HelpMessageProvider(@Named("OP_IMPL_PACKAGE") String opImplPackage) {
-        Reflections reflections = new Reflections(ClasspathHelper.forPackage(opImplPackage),
-                new SubTypesScanner());
+    public HelpMessageProvider(@Named("OP_PACKAGES") String[] opPackages) {
+        Set<URL> packages = new HashSet<>();
+        for (String opPackage : opPackages) {
+            packages.addAll(ClasspathHelper.forPackage(opPackage));
+        }
+        Reflections reflections = new Reflections(packages, new SubTypesScanner());
         for (Class<? extends Operation> opClass : reflections.getSubTypesOf(Operation.class)) {
             if (Modifier.isAbstract(opClass.getModifiers())) continue;
 

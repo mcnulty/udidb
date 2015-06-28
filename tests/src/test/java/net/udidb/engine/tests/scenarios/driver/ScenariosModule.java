@@ -9,6 +9,7 @@
 
 package net.udidb.engine.tests.scenarios.driver;
 
+import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
 
 import net.libudi.api.UdiProcessManager;
@@ -23,21 +24,22 @@ import net.udidb.engine.context.DebuggeeContextFactory;
 import net.udidb.engine.context.GlobalContextManager;
 import net.udidb.engine.events.EventDispatcher;
 import net.udidb.engine.expr.ExpressionCompilerDelegate;
-import net.udidb.engine.ops.parser.ParserModule;
 import net.udidb.engine.source.SourceLineRowFactory;
 import net.udidb.expr.ExpressionCompiler;
 
 /**
  * @author mcnulty
  */
-public class ScenariosModule extends ParserModule
+public class ScenariosModule extends AbstractModule
 {
     @Override
     protected void configure()
     {
-        super.configure();
-        bind(String[].class).annotatedWith(Names.named("CUSTOM_IMPL_PACKAGES")).toInstance(
-                new String[] {"net.udidb.cli.ops.impl"});
+        bind(String[].class).annotatedWith(Names.named("OP_PACKAGES")).toInstance(
+                new String[] {
+                        "net.udidb.engine.ops.impls",
+                        "net.udidb.cli.ops.impl"
+                });
 
         TestEventVisitor eventVisitor = new TestEventVisitor();
 

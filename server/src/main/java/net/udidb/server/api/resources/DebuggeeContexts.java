@@ -11,7 +11,7 @@ package net.udidb.server.api.resources;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
-import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -71,7 +71,8 @@ public class DebuggeeContexts
         return objectMapper.writeValueAsString(new ThreadModel());
     }
 
-    @POST @Path("/{id}/process/operation")
+    @PUT
+    @Path("/{id}/process/operation")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public String createOperation(@PathParam("id") String id) throws JsonProcessingException

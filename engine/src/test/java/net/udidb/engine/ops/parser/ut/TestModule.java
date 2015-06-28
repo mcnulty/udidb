@@ -9,20 +9,22 @@
 
 package net.udidb.engine.ops.parser.ut;
 
+import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
 
-import net.udidb.engine.ops.parser.ParserModule;
 
 /**
  * @author mcnulty
  */
-public class TestModule extends ParserModule
+public class TestModule extends AbstractModule
 {
     @Override
     protected void configure()
     {
-        super.configure();
-        bind(String[].class).annotatedWith(Names.named("CUSTOM_IMPL_PACKAGES")).toInstance(
-                new String[]{ "net.udidb.engine.ops.parser.ut" });
+        bind(String[].class).annotatedWith(Names.named("OP_PACKAGES")).toInstance(
+                new String[] {
+                        "net.udidb.engine.ops.impls",
+                        "net.udidb.engine.ops.parser.ut"
+                });
     }
 }
