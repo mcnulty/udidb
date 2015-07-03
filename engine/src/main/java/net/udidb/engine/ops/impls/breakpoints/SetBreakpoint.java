@@ -9,12 +9,11 @@
 
 package net.udidb.engine.ops.impls.breakpoints;
 
-import javax.annotation.Nullable;
-
 import com.google.inject.Inject;
 
 import net.libudi.api.exceptions.UdiException;
 import net.udidb.engine.context.DebuggeeContext;
+import net.udidb.engine.context.DebuggeeContextAware;
 import net.udidb.engine.ops.NoDebuggeeContextException;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
@@ -39,18 +38,18 @@ import net.udidb.expr.values.ValueType;
         "Create and install a breakpoint in a debuggee"
 )
 @DisplayName("break")
-public class SetBreakpoint extends DisplayNameOperation {
+public class SetBreakpoint extends DisplayNameOperation implements DebuggeeContextAware
+{
 
     // TODO need to add tracking for breakpoints
 
-    private final DebuggeeContext context;
+    private DebuggeeContext context;
 
     @Operand(order=0, operandParser = ExpressionParser.class, restOfLine = true)
     private Expression addressExpression;
 
     @Inject
-    public SetBreakpoint(@Nullable DebuggeeContext context) {
-        this.context = context;
+    SetBreakpoint() {
     }
 
     public Expression getAddressExpression() {
@@ -83,5 +82,11 @@ public class SetBreakpoint extends DisplayNameOperation {
         }
 
         return new ValueResult(String.format("Set breakpoint at 0x%x", address), addressExpression.getValue());
+    }
+
+    @Override
+    public void setDebuggeeContext(DebuggeeContext debuggeeContext)
+    {
+        this.context = debuggeeContext;
     }
 }

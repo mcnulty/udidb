@@ -7,7 +7,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package net.udidb.cli.source;
+package net.udidb.engine.source;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -26,7 +26,7 @@ import net.udidb.engine.source.SourceLineRow;
 import net.udidb.engine.source.SourceLineRowFactory;
 
 /**
- * CLI implementation of SourceLineRowFactory
+ * In-memory implementation of SourceLineRowFactory
  *
  * <p>
  *     Note: this implementation is currently very naive and inefficient w.r.t memory because it caches the whole
@@ -35,7 +35,7 @@ import net.udidb.engine.source.SourceLineRowFactory;
  *
  * @author mcnulty
  */
-public class CliSourceLineRowFactory implements SourceLineRowFactory {
+public class InMemorySourceLineRowFactory implements SourceLineRowFactory {
 
     private final Map<String, List<String>> lineCache = new HashMap<>();
 

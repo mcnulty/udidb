@@ -17,7 +17,7 @@ import java.util.Queue;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
-import net.udidb.engine.UdidbEngine;
+import net.udidb.cli.driver.CliEngine;
 import net.udidb.engine.events.EventDispatcher;
 import net.udidb.engine.ops.Operation;
 import net.udidb.engine.ops.impls.util.Quit;
@@ -65,7 +65,7 @@ public class TestDriver implements OperationResultVisitor
 
     public void runTest()
     {
-        UdidbEngine engine = new UdidbEngine(config, operationReader, this, eventDispatcher);
+        CliEngine engine = new CliEngine(config, operationReader, this, eventDispatcher);
         engine.run();
     }
 

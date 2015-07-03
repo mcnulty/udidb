@@ -7,21 +7,22 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package net.udidb.engine;
+package net.udidb.cli.driver;
 
+import net.udidb.engine.Config;
 import net.udidb.engine.events.EventDispatcher;
 import net.udidb.engine.ops.Operation;
-import net.udidb.engine.ops.OperationReader;
+import net.udidb.cli.ops.OperationReader;
 import net.udidb.engine.ops.results.OperationResultVisitor;
 import net.udidb.engine.ops.results.Result;
 
 /**
- * Engine for udidb, this class executes operations for the debugger
+ * CLI engine for udidb
  *
  * @author mcnulty
  */
-public class UdidbEngine {
-
+public class CliEngine
+{
     private final Config config;
 
     private final OperationReader reader;
@@ -38,7 +39,7 @@ public class UdidbEngine {
      * @param visitor the visitor
      * @param eventDispatcher the event dispatcher for handling events
      */
-    public UdidbEngine(Config config, OperationReader reader, OperationResultVisitor visitor, EventDispatcher eventDispatcher) {
+    public CliEngine(Config config, OperationReader reader, OperationResultVisitor visitor, EventDispatcher eventDispatcher) {
         this.config = config;
         this.reader = reader;
         this.visitor = visitor;

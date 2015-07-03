@@ -34,7 +34,7 @@ public class OperationParserTest
     private void testArgs(String argsString, List<String> expectedArgs) throws Exception
     {
         OperationParser parser = injector.getInstance(OperationParser.class);
-        Operation op = parser.parse("test " + argsString);
+        Operation op = parser.parse("test " + argsString, new ParsingContext());
         assertTrue(op instanceof TestOp);
         assertEquals(expectedArgs, ((TestOp)op).getArgs());
     }

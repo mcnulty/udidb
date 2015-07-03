@@ -27,17 +27,17 @@ import net.sourcecrumbs.refimpl.CrossPlatformBinaryReader;
 import net.udidb.cli.ops.CliResultVisitor;
 import net.udidb.cli.ops.JlineOperationReader;
 import net.udidb.engine.context.DebuggeeContext;
-import net.udidb.engine.context.GlobalContextManager;
 import net.udidb.cli.ops.events.CliEventDispatcher;
 import net.udidb.cli.ops.events.CliEventVisitor;
+import net.udidb.engine.context.DebuggeeContextManagerImpl;
 import net.udidb.engine.ops.impls.help.HelpMessageProvider;
 import net.udidb.cli.ops.impls.internals.SetStackTrace;
 import net.udidb.cli.ops.impls.internals.ShowInternals;
-import net.udidb.cli.source.CliSourceLineRowFactory;
+import net.udidb.engine.source.InMemorySourceLineRowFactory;
 import net.udidb.engine.events.EventDispatcher;
 import net.udidb.engine.expr.ExpressionCompilerDelegate;
-import net.udidb.engine.ops.OperationReader;
-import net.udidb.engine.context.DebuggeeContextFactory;
+import net.udidb.cli.ops.OperationReader;
+import net.udidb.engine.context.DebuggeeContextManager;
 import net.udidb.engine.ops.impls.Setting;
 import net.udidb.engine.ops.results.OperationResultVisitor;
 import net.udidb.engine.source.SourceLineRowFactory;
@@ -68,9 +68,7 @@ public class CliModule extends AbstractModule
                         "net.udidb.cli.ops.impl"
                 });
 
-        bind(DebuggeeContextFactory.class).to(GlobalContextManager.class);
-
-        bind(DebuggeeContext.class).toProvider(GlobalContextManager.class);
+        bind(DebuggeeContextManager.class).to(DebuggeeContextManagerImpl.class);
 
         bind(EventDispatcher.class).to(CliEventDispatcher.class);
 
@@ -84,7 +82,7 @@ public class CliModule extends AbstractModule
 
         bind(ExpressionCompiler.class).toInstance(new ExpressionCompilerDelegate());
 
-        bind(SourceLineRowFactory.class).toInstance(new CliSourceLineRowFactory());
+        bind(SourceLineRowFactory.class).toInstance(new InMemorySourceLineRowFactory());
     }
 
     @Inject

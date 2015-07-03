@@ -20,12 +20,12 @@ import com.google.inject.name.Named;
 import jline.Terminal;
 import jline.TerminalFactory;
 import jline.console.ConsoleReader;
-import net.udidb.engine.events.EventDispatcher;
+import net.udidb.cli.driver.GlobalContextManager;
 import net.udidb.engine.ops.Operation;
 import net.udidb.engine.ops.OperationParseException;
-import net.udidb.engine.ops.OperationReader;
 import net.udidb.engine.ops.UnknownOperationException;
 import net.udidb.engine.ops.parser.OperationParser;
+import net.udidb.engine.ops.parser.ParsingContext;
 
 /**
  * Implementation of OperationReader that reads operations from the command line interface using the JLine library
@@ -43,15 +43,20 @@ public class JlineOperationReader implements OperationReader {
 
     private final OperationParser parser;
 
+    private final GlobalContextManager globalContextManager;
+
     @Inject
-    JlineOperationReader(@Named("INPUT DESTINATION") InputStream in, @Named("OUTPUT DESTINATION") PrintStream out,
-            OperationParser parser) throws Exception
+    JlineOperationReader(@Named("INPUT DESTINATION") InputStream in,
+                         @Named("OUTPUT DESTINATION") PrintStream out,
+                         OperationParser parser,
+                         GlobalContextManager globalContextManager) throws Exception
     {
         this.terminal = TerminalFactory.create();
         this.terminal.init();
         this.reader = new ConsoleReader(in, out, terminal);
         this.reader.setPrompt(PROMPT);
         this.parser = parser;
+        this.globalContextManager = globalContextManager;
     }
 
     @Override
@@ -61,7 +66,9 @@ public class JlineOperationReader implements OperationReader {
             String line = reader.readLine();
             if (line.isEmpty()) continue;
 
-            cmd = parser.parse(line);
+            ParsingContext context = new ParsingContext();
+            context.setDebuggeeContext(globalContextManager.getCurrent());
+            cmd = parser.parse(line, context);
         }
 
         return cmd;

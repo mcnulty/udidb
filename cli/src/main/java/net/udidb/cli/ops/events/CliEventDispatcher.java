@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +31,9 @@ import net.libudi.api.event.EventType;
 import net.libudi.api.event.UdiEvent;
 import net.libudi.api.event.UdiEventVisitor;
 import net.libudi.api.exceptions.UdiException;
-import net.udidb.engine.context.GlobalContextManager;
+import net.udidb.cli.driver.GlobalContextManager;
+import net.udidb.engine.context.DebuggeeContext;
+import net.udidb.engine.context.DebuggeeContextManager;
 import net.udidb.engine.events.DbEventData;
 import net.udidb.engine.events.EventDispatcher;
 import net.udidb.engine.events.EventObserver;
@@ -49,20 +52,20 @@ public class CliEventDispatcher implements EventDispatcher {
 
     private final UdiProcessManager processManager;
 
-    private final GlobalContextManager contextManager;
+    private final DebuggeeContextManager debuggeeContextManager;
 
     private final UdiEventVisitor defaultEventVisitor;
 
     private boolean blockForEvent = true;
 
-    private EventThread eventThread = null;
+    private volatile EventThread eventThread = null;
 
     private final Map<UdiProcess, Set<EventObserver>> eventObservers = new HashMap<>();
 
     @Inject
-    CliEventDispatcher(UdiProcessManager processManager, GlobalContextManager contextManager, UdiEventVisitor defaultEventVisitor) {
+    CliEventDispatcher(UdiProcessManager processManager, DebuggeeContextManager debuggeeContextManager, UdiEventVisitor defaultEventVisitor) {
         this.processManager = processManager;
-        this.contextManager = contextManager;
+        this.debuggeeContextManager = debuggeeContextManager;
         this.defaultEventVisitor = defaultEventVisitor;
     }
 
@@ -78,7 +81,7 @@ public class CliEventDispatcher implements EventDispatcher {
         if (eventThread == null) {
             synchronized (this) {
                 if (eventThread == null) {
-                    eventThread = new EventThread(processManager, contextManager);
+                    eventThread = new EventThread(processManager, debuggeeContextManager);
                     eventThread.start();
                 }
             }
@@ -162,7 +165,7 @@ public class CliEventDispatcher implements EventDispatcher {
     }
 
     private void handleTermination(UdiProcess process) throws OperationException {
-        contextManager.deleteContext(process);
+        debuggeeContextManager.deleteContext(process);
 
         try {
             process.close();
@@ -232,15 +235,15 @@ public class CliEventDispatcher implements EventDispatcher {
 
         private final LinkedBlockingQueue<UdiEvent> events = new LinkedBlockingQueue<>();
 
-        private final GlobalContextManager contextManager;
+        private final DebuggeeContextManager debuggeeContextManager;
 
         private final UdiProcessManager processManager;
 
         private volatile boolean terminate = false;
 
-        public EventThread(UdiProcessManager processManager, GlobalContextManager contextManager) {
-            this.contextManager = contextManager;
+        public EventThread(UdiProcessManager processManager, DebuggeeContextManager debuggeeContextManager) {
             this.processManager = processManager;
+            this.debuggeeContextManager = debuggeeContextManager;
             setDaemon(true);
             setName(EventThread.class.getSimpleName());
         }
@@ -271,13 +274,17 @@ public class CliEventDispatcher implements EventDispatcher {
         public void run() {
             while (!terminate) {
                 try {
-                    List<UdiProcess> processes = contextManager.getEventProcesses();
+                    List<UdiProcess> processes = debuggeeContextManager.getEventContexts().stream()
+                            .map(DebuggeeContext::getProcess)
+                            .collect(Collectors.toList());
 
                     // Wait for processes in which events are expected
                     synchronized (this) {
                         while (processes.size() == 0) {
                             wait();
-                            processes = contextManager.getEventProcesses();
+                            processes = debuggeeContextManager.getEventContexts().stream()
+                                    .map(DebuggeeContext::getProcess)
+                                    .collect(Collectors.toList());
                         }
                     }
 

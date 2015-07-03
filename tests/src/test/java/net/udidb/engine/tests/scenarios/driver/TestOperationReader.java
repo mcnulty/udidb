@@ -13,11 +13,13 @@ import java.io.IOException;
 
 import com.google.inject.Inject;
 
+import net.udidb.cli.driver.GlobalContextManager;
 import net.udidb.engine.ops.Operation;
 import net.udidb.engine.ops.OperationParseException;
-import net.udidb.engine.ops.OperationReader;
+import net.udidb.cli.ops.OperationReader;
 import net.udidb.engine.ops.UnknownOperationException;
 import net.udidb.engine.ops.parser.OperationParser;
+import net.udidb.engine.ops.parser.ParsingContext;
 
 /**
  * @author mcnulty
@@ -25,6 +27,7 @@ import net.udidb.engine.ops.parser.OperationParser;
 public class TestOperationReader implements OperationReader
 {
     private final OperationParser operationParser;
+    private final GlobalContextManager globalContextManager;
 
     private String currentCommandString = null;
 
@@ -39,14 +42,17 @@ public class TestOperationReader implements OperationReader
     }
 
     @Inject
-    TestOperationReader(OperationParser operationParser)
+    TestOperationReader(OperationParser operationParser, GlobalContextManager globalContextManager)
     {
         this.operationParser = operationParser;
+        this.globalContextManager = globalContextManager;
     }
 
     @Override
     public Operation read() throws IOException, UnknownOperationException, OperationParseException
     {
-        return operationParser.parse(currentCommandString);
+        ParsingContext parsingContext = new ParsingContext();
+        parsingContext.setDebuggeeContext(globalContextManager.getCurrent());
+        return operationParser.parse(currentCommandString, parsingContext);
     }
 }

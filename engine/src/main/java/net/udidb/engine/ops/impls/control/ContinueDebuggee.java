@@ -9,12 +9,11 @@
 
 package net.udidb.engine.ops.impls.control;
 
-import javax.annotation.Nullable;
-
 import com.google.inject.Inject;
 
 import net.libudi.api.exceptions.UdiException;
 import net.udidb.engine.context.DebuggeeContext;
+import net.udidb.engine.context.DebuggeeContextAware;
 import net.udidb.engine.ops.NoDebuggeeContextException;
 import net.udidb.engine.ops.impls.DisplayNameOperation;
 import net.udidb.engine.ops.OperationException;
@@ -35,13 +34,12 @@ import net.udidb.engine.ops.results.VoidResult;
         "Continue a debuggee"
 )
 @DisplayName("continue")
-public class ContinueDebuggee extends DisplayNameOperation {
+public class ContinueDebuggee extends DisplayNameOperation implements DebuggeeContextAware {
 
-    private final DebuggeeContext context;
+    private DebuggeeContext context;
 
     @Inject
-    public ContinueDebuggee(@Nullable DebuggeeContext context) {
-        this.context = context;
+    ContinueDebuggee() {
     }
 
     @Override
@@ -58,5 +56,11 @@ public class ContinueDebuggee extends DisplayNameOperation {
 
         // The process runs until an event occurs
         return new VoidResult(true);
+    }
+
+    @Override
+    public void setDebuggeeContext(DebuggeeContext debuggeeContext)
+    {
+        this.context = debuggeeContext;
     }
 }

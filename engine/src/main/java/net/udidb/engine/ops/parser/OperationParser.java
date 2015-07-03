@@ -34,8 +34,10 @@ import com.google.inject.ProvisionException;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 
+import net.udidb.engine.context.DebuggeeContextAware;
 import net.udidb.engine.ops.Operation;
 import net.udidb.engine.ops.OperationParseException;
+import net.udidb.engine.ops.OperationProvider;
 import net.udidb.engine.ops.UnknownOperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.Operand;
@@ -50,48 +52,31 @@ import static org.reflections.ReflectionUtils.withAnnotation;
  * @author mcnulty
  */
 @Singleton
-public class OperationParser {
+public final class OperationParser {
 
-    private final Map<String, Class<? extends Operation>> operations = new HashMap<>();
+    private final Map<String, Class<? extends Operation>> operations;
 
     private final Injector injector;
 
     private final BeanUtilsBean beanUtils;
 
     @Inject
-    OperationParser(Injector injector, @Named("OP_PACKAGES") String[] opPackages) {
+    OperationParser(Injector injector, OperationProvider operationProvider) {
         this.injector = injector;
-        addSupportedOperations(opPackages);
-        beanUtils = BeanUtilsBean.getInstance();
-    }
-
-    private void addSupportedOperations(String[] opPackages) {
-        Set<URL> packages = new HashSet<>();
-        for (String opPackage : opPackages) {
-            packages.addAll(ClasspathHelper.forPackage(opPackage));
-        }
-
-        Reflections reflections = new Reflections(packages, new SubTypesScanner());
-        for (Class<? extends Operation> opClass : reflections.getSubTypesOf(Operation.class)) {
-            if (Modifier.isAbstract(opClass.getModifiers())) continue;
-
-            DisplayName displayName = opClass.getAnnotation(DisplayName.class);
-            if (displayName != null ) {
-                operations.put(displayName.value(), opClass);
-            }else{
-                throw new RuntimeException(opClass.getSimpleName() + " is an invalid Operation.");
-            }
-        }
+        this.operations = operationProvider.getOperations();
+        this.beanUtils = BeanUtilsBean.getInstance();
     }
 
     /**
      * @param opString the String representing the operation to be performed
+     * @param parsingContext the ParsingContext for constructing the Operation
+     *
      * @return the Operation (never null)
      *
      * @throws UnknownOperationException if the opString references an unknown operation
      * @throws OperationParseException if their is an error parsing a known operation
      */
-    public Operation parse(String opString) throws UnknownOperationException, OperationParseException
+    public Operation parse(String opString, ParsingContext parsingContext) throws UnknownOperationException, OperationParseException
     {
         final String UNQUOTED_INITIAL_DELIMS = " \t\n\r\f\"";
         final String QUOTED_DELIMS = "\"";
@@ -153,6 +138,10 @@ public class OperationParser {
             throw new UnknownOperationException(String.format("Failed to configure operation '%s'", opName), e);
         }
 
+        if (cmd instanceof DebuggeeContextAware) {
+            ((DebuggeeContextAware) cmd).setDebuggeeContext(parsingContext.getDebuggeeContext());
+        }
+
         int requiredOperands = 0;
         int restOfLineIndex = -1;
         Map<Integer, Field> operands = new HashMap<>();
@@ -197,6 +186,11 @@ public class OperationParser {
             Field field = operands.get(i);
 
             OperandParser operandParser = injector.getInstance(field.getAnnotation(Operand.class).operandParser());
+
+            if (operandParser instanceof DebuggeeContextAware) {
+                ((DebuggeeContextAware) operandParser).setDebuggeeContext(parsingContext.getDebuggeeContext());
+            }
+
             try {
                 if (i == restOfLineIndex) {
                     beanUtils.copyProperty(cmd, field.getName(),

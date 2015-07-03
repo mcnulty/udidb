@@ -29,6 +29,7 @@ import net.sourcecrumbs.api.machinecode.MachineCodeMapping;
 import net.sourcecrumbs.api.machinecode.SourceLineRange;
 import net.sourcecrumbs.api.transunit.NoSuchLineException;
 import net.udidb.engine.context.DebuggeeContext;
+import net.udidb.engine.context.DebuggeeContextAware;
 import net.udidb.engine.events.DbEventData;
 import net.udidb.engine.events.EventObserver;
 import net.udidb.engine.ops.MissingDebugInfoException;
@@ -56,20 +57,20 @@ import net.udidb.engine.source.SourceLineRowFactory;
         "Execute the next statement of source for the current debuggee, stepping over method calls"
 )
 @DisplayName("next")
-public class StepOverDebuggee extends DisplayNameOperation implements EventObserver {
+public class StepOverDebuggee extends DisplayNameOperation implements EventObserver, DebuggeeContextAware
+{
 
     private static final Logger logger = LoggerFactory.getLogger(StepOverDebuggee.class);
 
-    private final DebuggeeContext context;
+    private DebuggeeContext context;
     private final OperationResultVisitor resultVisitor;
     private final MachineCodeMapping machineCodeMapping;
     private final SourceLineRowFactory sourceLineRowFactory;
 
     @Inject
-    public StepOverDebuggee(@Nullable DebuggeeContext context, OperationResultVisitor resultVisitor,
+    public StepOverDebuggee(OperationResultVisitor resultVisitor,
             SourceLineRowFactory sourceLineRowFactory)
     {
-        this.context = context;
         this.resultVisitor = resultVisitor;
         this.machineCodeMapping = (context != null) ? context.getExecutable().getMachineCodeMapping() : null;
         this.sourceLineRowFactory = sourceLineRowFactory;
@@ -163,5 +164,11 @@ public class StepOverDebuggee extends DisplayNameOperation implements EventObser
         }catch (UdiException e) {
             throw new OperationException("Failed to handle next statement completion breakpoint", e);
         }
+    }
+
+    @Override
+    public void setDebuggeeContext(DebuggeeContext debuggeeContext)
+    {
+        this.context = debuggeeContext;
     }
 }

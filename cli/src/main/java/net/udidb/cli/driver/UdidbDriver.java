@@ -15,9 +15,8 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 
 import net.udidb.engine.Config;
-import net.udidb.engine.UdidbEngine;
 import net.udidb.engine.events.EventDispatcher;
-import net.udidb.engine.ops.OperationReader;
+import net.udidb.cli.ops.OperationReader;
 import net.udidb.engine.ops.results.OperationResultVisitor;
 
 /**
@@ -55,7 +54,7 @@ public class UdidbDriver {
             return false;
         }
 
-        UdidbEngine engine = new UdidbEngine(config,
+        CliEngine engine = new CliEngine(config,
                 injector.getInstance(OperationReader.class),
                 injector.getInstance(OperationResultVisitor.class),
                 injector.getInstance(EventDispatcher.class));

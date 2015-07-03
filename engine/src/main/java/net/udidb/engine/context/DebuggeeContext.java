@@ -27,6 +27,8 @@ import net.udidb.expr.ExecutionContext;
  */
 public interface DebuggeeContext extends TableRow, RegisterContext, ExecutionContext
 {
+    int getId();
+
     Path getRootDir();
 
     Map<String, String> getEnv();
@@ -36,10 +38,6 @@ public interface DebuggeeContext extends TableRow, RegisterContext, ExecutionCon
     String[] getArgs();
 
     UdiProcess getProcess();
-
-    boolean isActive();
-
-    void setActive(boolean active);
 
     Executable getExecutable();
 }

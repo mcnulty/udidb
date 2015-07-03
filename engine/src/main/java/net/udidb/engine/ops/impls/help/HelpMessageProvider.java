@@ -66,20 +66,12 @@ public class HelpMessageProvider {
                 throw new RuntimeException(opClass.getSimpleName() + " is an invalid Operation");
             }
 
-            String name;
-            if (displayName == null) {
-                name = "invalid<" + opClass.getSimpleName() + ">";
-            }else{
-                name = displayName.value();
-            }
+            String name = displayName.value();
 
             HelpMessages messages = new HelpMessages();
-            if (helpMessageAnnotation == null) {
-                messages.shortMessage = "unspecified help message";
-            }else{
-                // TODO select message based on locale
-                messages.shortMessage = helpMessageAnnotation.enMessage();
-            }
+
+            // TODO select message based on locale
+            messages.shortMessage = helpMessageAnnotation.enMessage();
 
             if (longHelpMessageAnnotation == null) {
                 messages.longMessage = "unspecified detailed help message";

@@ -44,9 +44,20 @@ public class DebuggeeContextImpl implements DebuggeeContext
 
     private UdiThread currentThread;
 
-    private boolean active;
-
     private Executable executable;
+
+    private final int id;
+
+    public DebuggeeContextImpl(int id) {
+
+        this.id = id;
+    }
+
+    @Override
+    public int getId()
+    {
+        return id;
+    }
 
     @Override
     public Path getRootDir() {
@@ -93,16 +104,6 @@ public class DebuggeeContextImpl implements DebuggeeContext
         this.process = process;
     }
 
-    @Override
-    public boolean isActive() {
-        return active;
-    }
-
-    @Override
-    public void setActive(boolean active) {
-        this.active = active;
-    }
-
     public UdiThread getCurrentThread() {
         return currentThread;
     }
@@ -146,7 +147,6 @@ public class DebuggeeContextImpl implements DebuggeeContext
     @Override
     public List<String> getColumnHeaders() {
         return Arrays.asList(
-                "Active",
                 "PID",
                 "Executable",
                 "Arguments"
@@ -156,7 +156,6 @@ public class DebuggeeContextImpl implements DebuggeeContext
     @Override
     public List<String> getColumnValues() {
         return Arrays.asList(
-                (active ? "*" : ""),
                 Integer.toString(process.getPid()),
                 execPath.toString(),
                 (args != null ? StringUtils.join(args, ' ') : "")

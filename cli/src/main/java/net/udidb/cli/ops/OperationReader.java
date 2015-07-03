@@ -7,10 +7,14 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package net.udidb.engine.ops;
+package net.udidb.cli.ops;
 
 import java.io.IOException;
 import java.util.Map;
+
+import net.udidb.engine.ops.Operation;
+import net.udidb.engine.ops.OperationParseException;
+import net.udidb.engine.ops.UnknownOperationException;
 
 /**
  * Provides a mechanism to wait for operations to be specified to the debugger

@@ -21,7 +21,7 @@ import net.libudi.api.exceptions.UdiException;
 import net.sourcecrumbs.api.files.BinaryReader;
 import net.sourcecrumbs.api.files.Executable;
 import net.sourcecrumbs.api.files.UnknownFormatException;
-import net.udidb.engine.context.DebuggeeContextFactory;
+import net.udidb.engine.context.DebuggeeContextManager;
 import net.udidb.engine.ops.impls.DisplayNameOperation;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
@@ -46,7 +46,7 @@ public class CreateDebuggee extends DisplayNameOperation {
 
     private final UdiProcessManager procManager;
 
-    private final DebuggeeContextFactory contextFactory;
+    private final DebuggeeContextManager contextFactory;
 
     private final BinaryReader reader;
 
@@ -57,7 +57,7 @@ public class CreateDebuggee extends DisplayNameOperation {
     private String[] args;
 
     @Inject
-    public CreateDebuggee(UdiProcessManager procManager, DebuggeeContextFactory contextFactory, BinaryReader reader) {
+    public CreateDebuggee(UdiProcessManager procManager, DebuggeeContextManager contextFactory, BinaryReader reader) {
         this.procManager = procManager;
         this.contextFactory = contextFactory;
         this.reader = reader;

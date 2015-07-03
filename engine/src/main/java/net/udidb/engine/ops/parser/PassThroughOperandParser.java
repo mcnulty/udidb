@@ -22,7 +22,7 @@ import net.udidb.engine.ops.OperationParseException;
  * @author mcnulty
  */
 @Singleton
-public class PassThroughOperationParser implements OperandParser
+public class PassThroughOperandParser implements OperandParser
 {
 
     @Override

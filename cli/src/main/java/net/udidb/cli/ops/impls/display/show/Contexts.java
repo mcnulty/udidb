@@ -11,7 +11,8 @@ package net.udidb.cli.ops.impls.display.show;
 
 import com.google.inject.Inject;
 
-import net.udidb.engine.context.GlobalContextManager;
+import net.udidb.cli.driver.GlobalContextManager;
+import net.udidb.engine.context.DebuggeeContextManager;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.HelpMessage;
@@ -42,6 +43,6 @@ public class Contexts extends DisplayNameOperation {
 
     @Override
     public Result execute() throws OperationException {
-        return new TableResult(contextManager.getContexts());
+        return new TableResult(contextManager.getContextRows());
     }
 }

@@ -19,6 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.google.inject.Inject;
 
 import net.udidb.engine.context.DebuggeeContext;
+import net.udidb.engine.context.DebuggeeContextAware;
 import net.udidb.engine.ops.OperationParseException;
 import net.udidb.engine.ops.annotations.ExpressionConstraint;
 import net.udidb.expr.Expression;
@@ -31,16 +32,15 @@ import net.udidb.expr.values.ExpressionValue;
  *
  * @author mcnulty
  */
-public class ExpressionParser implements OperandParser
+public class ExpressionParser implements OperandParser, DebuggeeContextAware
 {
     private final ExpressionCompiler expressionCompiler;
-    private final DebuggeeContext debuggeeContext;
+    private DebuggeeContext debuggeeContext;
 
     @Inject
-    public ExpressionParser(ExpressionCompiler expressionCompiler, @Nullable DebuggeeContext debuggeeContext)
+    public ExpressionParser(ExpressionCompiler expressionCompiler)
     {
         this.expressionCompiler = expressionCompiler;
-        this.debuggeeContext = debuggeeContext;
     }
 
     @Override
@@ -81,5 +81,11 @@ public class ExpressionParser implements OperandParser
     public Object parse(List<String> restOfLineTokens, Field field) throws OperationParseException
     {
         return parse(StringUtils.join(restOfLineTokens, " "), field);
+    }
+
+    @Override
+    public void setDebuggeeContext(DebuggeeContext debuggeeContext)
+    {
+        this.debuggeeContext = debuggeeContext;
     }
 }
