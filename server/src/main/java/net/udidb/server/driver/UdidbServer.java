@@ -9,12 +9,13 @@
 
 package net.udidb.server.driver;
 
-import java.io.IOException;
-import java.net.URI;
-
-import org.glassfish.grizzly.http.server.HttpServer;
-import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
-import org.glassfish.jersey.server.ResourceConfig;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Slf4jLog;
+import org.jboss.resteasy.plugins.guice.GuiceResteasyBootstrapServletContextListener;
+import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
@@ -28,49 +29,54 @@ public final class UdidbServer
 {
     private static final Logger logger = LoggerFactory.getLogger(UdidbServer.class);
 
-    private static final String DEFAULT_BASE_URI = "http://localhost:8888/udidb/";
-    private static final String API_RSRCS_PACKAGE = "net.udidb.server.api.resources";
-
-    private final HttpServer httpServer;
-
-    static
-    {
-        SLF4JBridgeHandler.removeHandlersForRootLogger();
-
-        SLF4JBridgeHandler.install();
-    }
+    private final Server server;
 
     public UdidbServer(String[] args)
     {
         // TODO process args to configure the server
 
-        this.httpServer = GrizzlyHttpServerFactory.createHttpServer(
-                URI.create(DEFAULT_BASE_URI),
-                new ResourceConfig().packages(API_RSRCS_PACKAGE));
+        server = new Server();
+        ServerConnector httpConnector = new ServerConnector(server);
+        httpConnector.setPort(8888);
+        server.addConnector(httpConnector);
+
+        ServletContextHandler contextHandler = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
+        contextHandler.setContextPath("/");
+        contextHandler.setInitParameter("resteasy.guice.modules", ServerModule.class.getCanonicalName());
+        contextHandler.addEventListener(new GuiceResteasyBootstrapServletContextListener());
+        contextHandler.addServlet(HttpServletDispatcher.class, "/*");
+
+        server.setHandler(contextHandler);
 
         logger.debug("Started udidb server");
     }
 
-    public void start() throws IOException
+    public void start() throws Exception
     {
-        httpServer.start();
+        server.start();
     }
 
-    public void stop()
+    public void join() throws Exception
     {
-        httpServer.shutdownNow();
+        server.join();
     }
 
-    public static void main(String[] args) throws InterruptedException, IOException
+    private static void initializeLogging() throws Exception
     {
+        Log.setLog(new Slf4jLog());
+
+        SLF4JBridgeHandler.removeHandlersForRootLogger();
+
+        SLF4JBridgeHandler.install();
+    }
+
+    public static void main(String[] args) throws Exception
+    {
+        initializeLogging();
+
         UdidbServer server = new UdidbServer(args);
 
         server.start();
-        try {
-            // Wait indefinitely
-            Thread.sleep(Long.MAX_VALUE);
-        }finally{
-            server.stop();
-        }
+        server.join();
     }
 }

@@ -44,8 +44,6 @@ import net.udidb.engine.ops.results.VoidResult;
 @DisplayName("create")
 public class CreateDebuggee extends DisplayNameOperation {
 
-    private final UdiProcessManager procManager;
-
     private final DebuggeeContextManager contextFactory;
 
     private final BinaryReader reader;
@@ -57,8 +55,7 @@ public class CreateDebuggee extends DisplayNameOperation {
     private String[] args;
 
     @Inject
-    public CreateDebuggee(UdiProcessManager procManager, DebuggeeContextManager contextFactory, BinaryReader reader) {
-        this.procManager = procManager;
+    public CreateDebuggee(DebuggeeContextManager contextFactory, BinaryReader reader) {
         this.contextFactory = contextFactory;
         this.reader = reader;
     }

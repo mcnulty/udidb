@@ -9,10 +9,18 @@
 
 package net.udidb.server.api.models;
 
+import net.udidb.engine.context.DebuggeeContext;
+
 /**
  * @author mcnulty
  */
 public final class DebuggeeContextModel
 {
+    public DebuggeeContextModel()
+    {
+    }
 
+    public DebuggeeContextModel(DebuggeeContext debuggeeContext)
+    {
+    }
 }

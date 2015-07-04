@@ -21,6 +21,15 @@ public final class ModelContainer<T>
 {
     private List<T> elements = new LinkedList<>();
 
+    public ModelContainer()
+    {
+    }
+
+    public ModelContainer(List<T> elements)
+    {
+        this.elements.addAll(elements);
+    }
+
     public List<T> getElements()
     {
         return elements;

@@ -13,7 +13,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
-import org.glassfish.grizzly.utils.Exceptions;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +31,7 @@ public class ExceptionHandler implements ExceptionMapper<Exception>
     public Response toResponse(Exception e)
     {
         logger.debug("API request failed", e);
-        return Response.status(500).entity(Exceptions.getStackTraceAsString(e)).type("text/plain")
+        return Response.status(500).entity(ExceptionUtils.getStackTrace(e)).type("text/plain")
                 .build();
     }
 }
