@@ -11,6 +11,7 @@ package net.udidb.engine.ops.results;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 import net.udidb.engine.ops.Operation;
@@ -71,5 +72,35 @@ public class TableResult extends BaseResult {
     @Override
     public boolean accept(Operation op, OperationResultVisitor visitor) {
         return visitor.visit(op, this);
+    }
+
+    public String toCSV(String indent)
+    {
+        StringBuilder builder = new StringBuilder();
+
+        // headers
+        Iterator<String> columnHeaderIter = columnHeaders.iterator();
+        builder.append(indent);
+        while (columnHeaderIter.hasNext()) {
+            builder.append(columnHeaderIter.next());
+            if (columnHeaderIter.hasNext()) {
+                builder.append(",");
+            }
+        }
+        builder.append("\n");
+
+        for (TableRow row : rows) {
+            builder.append(indent);
+            Iterator<String> valueIter = row.getColumnValues().iterator();
+            while(valueIter.hasNext()) {
+                builder.append(valueIter.next());
+                if (valueIter.hasNext()) {
+                    builder.append(",");
+                }
+            }
+            builder.append("\n");
+        }
+
+        return builder.toString();
     }
 }

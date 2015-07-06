@@ -13,6 +13,7 @@ import java.lang.reflect.Field;
 import java.util.List;
 
 import net.udidb.engine.ops.OperationParseException;
+import net.udidb.engine.ops.annotations.Operand;
 
 /**
  * Provides methods to parse an Operand
@@ -23,7 +24,7 @@ public interface OperandParser
 {
     /**
      * @param token the token for the Operand
-     * @param type the field for the Operand
+     * @param field the field for the Operand
      *
      * @return a value compatible with the type
      *

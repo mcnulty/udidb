@@ -27,7 +27,7 @@ import net.udidb.expr.ExecutionContext;
  */
 public interface DebuggeeContext extends TableRow, RegisterContext, ExecutionContext
 {
-    int getId();
+    String getId();
 
     Path getRootDir();
 

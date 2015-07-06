@@ -9,10 +9,20 @@
 
 package net.udidb.server.api.models;
 
+import net.libudi.api.UdiThread;
+
 /**
  * @author mcnulty
  */
 public final class ThreadModel
 {
+    public ThreadModel()
+    {
+    }
+
+    public ThreadModel(UdiThread udiThread)
+    {
+
+    }
 
 }

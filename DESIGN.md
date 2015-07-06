@@ -7,10 +7,19 @@ for a physical processor.
 
 ## High Level ##
 
-The core of udidb is a read-eval loop that is responsible for consuming
-a representation of an operation and its arguments, executing this operation,
-processing the result of this operation and handling any events that occur
-in response to this operation.
+The core of udidb is an extensible, event-driven engine upon which 
+debugging front-ends can be built. The engine provides representations
+of processes being debugged, _debuggees_, interfaces and support code
+to drop in operations to be performed on debuggees and a basic set of
+operations that can be performed on debuggees, agnostic of these
+operations are invoked by a user.
+
+The front-ends are responsible for controlling how operations are
+invoked and determining the data for these operations. The front-ends
+are also responsible for handling events that the engine produces as
+well as feeding these events back into the engine. This approach allows
+the front-ends to control in what contexts they are event-driven, if at
+all.
 
 ## Design Goals ##
 
@@ -27,7 +36,7 @@ The following is an incomplete list of design goals for udidb:
 The udidb cli is meant to provide a similar experience to existing command line
 based debuggers such as gdb, cdb, or dbx.
 
-## REST API for udidb engine ##
+## REST API engine for udidb ##
 
 The REST API for the udidb engine is meant to facilitate the implementation of
 GUI front-ends and scenarios where the debuggee exists on a remote host. The
@@ -38,6 +47,10 @@ The following resources exist in the REST API:
 
 - GET /debuggeeContexts
   - a list of debuggee contexts
+- POST /debuggeeContexts
+  - create a new debuggee
+- GET /debuggeeContexts/operations
+  - get all descriptions of all available operations
 - GET /debuggeeContexts/{id}
   - information for a specific debuggee context
 - GET /debuggeeContexts/{id}/process
@@ -46,8 +59,10 @@ The following resources exist in the REST API:
   - information about the threads of a debuggee context
 - GET /debuggeeContexts/{id}/process/threads/{threadId}
   - information about a specific thread
-- GET/POST /debugeeContexts/{id}/process/operation
+- POST /debugeeContexts/{id}/process/operation
   - execute an operation against the specified process
+- GET /debuggeeContexts/{id}/process/operation
+  - get the results of the previous operation for the specified process
 - GET /debuggeeContexts/{id}/process/operations
   - metadata describing the operations available for the specified process
 - /events

@@ -20,6 +20,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.Response.Status.Family;
 import javax.ws.rs.core.Response.StatusType;
 
@@ -131,7 +132,7 @@ public class DebuggeeContexts
         }
     }
 
-    @PUT
+    @POST
     @Path("/{id}/process/operation")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
@@ -147,7 +148,7 @@ public class DebuggeeContexts
         }
 
         try {
-            return success(serverEngine.createOperation(id, operation));
+            return success(serverEngine.executeOperation(id, operation));
         }catch (OperationException e) {
             return generalFailure(e);
         }
@@ -169,7 +170,18 @@ public class DebuggeeContexts
     public Response getOperationDescriptions(@PathParam("id") String id) throws JsonProcessingException
     {
         try {
-            return success(serverEngine.getOperationDescriptions(id));
+            return success(new ModelContainer<>(serverEngine.getOperationDescriptions(id)));
+        }catch (OperationException e) {
+            return generalFailure(e);
+        }
+    }
+
+    @GET @Path("/operations")
+    @Produces(MediaType. APPLICATION_JSON)
+    public Response getOperationDescriptions() throws JsonProcessingException
+    {
+        try {
+            return success(new ModelContainer<>(serverEngine.getOperationDescriptions()));
         }catch (OperationException e) {
             return generalFailure(e);
         }
@@ -177,7 +189,11 @@ public class DebuggeeContexts
 
     private Response success(Object o) {
         try {
-            return Response.ok(objectMapper.writeValueAsString(o)).build();
+            if (o != null) {
+                return Response.ok(objectMapper.writeValueAsString(o)).build();
+            }else{
+                return Response.status(Status.NOT_FOUND).build();
+            }
         }catch (JsonProcessingException e) {
             return generalFailure(e);
         }

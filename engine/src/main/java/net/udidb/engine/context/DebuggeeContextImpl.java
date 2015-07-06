@@ -54,9 +54,9 @@ public class DebuggeeContextImpl implements DebuggeeContext
     }
 
     @Override
-    public int getId()
+    public String getId()
     {
-        return id;
+        return Integer.toString(id);
     }
 
     @Override

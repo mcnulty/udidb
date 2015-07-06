@@ -16,11 +16,11 @@ import java.nio.file.Paths;
 
 import com.google.inject.Inject;
 
-import net.libudi.api.UdiProcessManager;
 import net.libudi.api.exceptions.UdiException;
 import net.sourcecrumbs.api.files.BinaryReader;
 import net.sourcecrumbs.api.files.Executable;
 import net.sourcecrumbs.api.files.UnknownFormatException;
+import net.udidb.engine.context.DebuggeeContext;
 import net.udidb.engine.context.DebuggeeContextManager;
 import net.udidb.engine.ops.impls.DisplayNameOperation;
 import net.udidb.engine.ops.OperationException;
@@ -29,7 +29,7 @@ import net.udidb.engine.ops.annotations.HelpMessage;
 import net.udidb.engine.ops.annotations.LongHelpMessage;
 import net.udidb.engine.ops.annotations.Operand;
 import net.udidb.engine.ops.results.Result;
-import net.udidb.engine.ops.results.VoidResult;
+import net.udidb.engine.ops.results.ValueResult;
 
 /**
  * Operation to create a process
@@ -44,7 +44,7 @@ import net.udidb.engine.ops.results.VoidResult;
 @DisplayName("create")
 public class CreateDebuggee extends DisplayNameOperation {
 
-    private final DebuggeeContextManager contextFactory;
+    private final DebuggeeContextManager contextManager;
 
     private final BinaryReader reader;
 
@@ -55,8 +55,8 @@ public class CreateDebuggee extends DisplayNameOperation {
     private String[] args;
 
     @Inject
-    public CreateDebuggee(DebuggeeContextManager contextFactory, BinaryReader reader) {
-        this.contextFactory = contextFactory;
+    public CreateDebuggee(DebuggeeContextManager contextManager, BinaryReader reader) {
+        this.contextManager = contextManager;
         this.reader = reader;
     }
 
@@ -93,12 +93,10 @@ public class CreateDebuggee extends DisplayNameOperation {
         }
 
         try {
-            contextFactory.createContext(path, args, executable);
+            DebuggeeContext context = contextManager.createContext(path, args, executable);
+            return new ValueResult("Debuggee created for " + execPath, context.getId());
         }catch (UdiException e) {
             throw new OperationException("Failed to create process", e);
         }
-
-
-        return new VoidResult();
     }
 }

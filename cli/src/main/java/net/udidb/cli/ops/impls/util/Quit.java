@@ -7,7 +7,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package net.udidb.engine.ops.impls.util;
+package net.udidb.cli.ops.impls.util;
 
 import com.google.inject.Inject;
 

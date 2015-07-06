@@ -9,10 +9,19 @@
 
 package net.udidb.server.api.models;
 
+import net.libudi.api.UdiProcess;
+
 /**
  * @author mcnulty
  */
 public final class ProcessModel
 {
+    public ProcessModel()
+    {
+    }
+
+    public ProcessModel(UdiProcess udiProcess)
+    {
+    }
 
 }

@@ -14,7 +14,7 @@ import java.util.List;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.server.api.models.DebuggeeConfigModel;
 import net.udidb.server.api.models.DebuggeeContextModel;
-import net.udidb.server.api.models.OperationDescriptionModel;
+import net.udidb.server.api.models.OperationDescription;
 import net.udidb.server.api.models.OperationModel;
 import net.udidb.server.api.models.ProcessModel;
 import net.udidb.server.api.models.ThreadModel;
@@ -37,9 +37,11 @@ public interface ServerEngine
 
     ThreadModel getThread(String id, String threadId) throws OperationException;
 
-    OperationModel createOperation(String id, OperationModel operation) throws OperationException;
+    OperationModel executeOperation(String id, OperationModel operation) throws OperationException;
 
     OperationModel getOperation(String id) throws OperationException;
 
-    List<OperationDescriptionModel> getOperationDescriptions(String id) throws OperationException;
+    List<OperationDescription> getOperationDescriptions(String id) throws OperationException;
+
+    List<OperationDescription> getOperationDescriptions() throws OperationException;
 }

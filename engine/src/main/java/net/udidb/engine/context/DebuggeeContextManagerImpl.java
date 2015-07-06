@@ -37,7 +37,7 @@ import net.sourcecrumbs.api.files.Executable;
 @Singleton
 public class DebuggeeContextManagerImpl implements DebuggeeContextManager
 {
-    private final Map<Integer, DebuggeeContext> contexts = Collections.synchronizedMap(new HashMap<Integer, DebuggeeContext>());
+    private final Map<String, DebuggeeContext> contexts = Collections.synchronizedMap(new HashMap<String, DebuggeeContext>());
 
     private Path rootDir = Files.createTempDir().toPath();
 
@@ -140,7 +140,7 @@ public class DebuggeeContextManagerImpl implements DebuggeeContextManager
     {
         DebuggeeContext deleted = null;
         synchronized (contexts) {
-            Iterator<Entry<Integer, DebuggeeContext>> i = contexts.entrySet().iterator();
+            Iterator<Entry<String, DebuggeeContext>> i = contexts.entrySet().iterator();
             while(i.hasNext()) {
                 DebuggeeContext context = i.next().getValue();
                 if (context.getProcess().equals(process)) {
@@ -157,7 +157,7 @@ public class DebuggeeContextManagerImpl implements DebuggeeContextManager
     }
 
     @Override
-    public Map<Integer, DebuggeeContext> getContexts()
+    public Map<String, DebuggeeContext> getContexts()
     {
         synchronized (contexts) {
             return new HashMap<>(contexts);

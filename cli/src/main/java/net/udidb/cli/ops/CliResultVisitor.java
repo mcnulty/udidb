@@ -16,17 +16,10 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 
-import net.libudi.api.event.UdiEventBreakpoint;
-import net.libudi.api.event.UdiEventError;
-import net.libudi.api.event.UdiEventProcessExit;
-import net.libudi.api.event.UdiEventThreadCreate;
-import net.libudi.api.event.UdiEventVisitor;
-import net.libudi.api.exceptions.UdiException;
-import net.udidb.engine.events.EventDispatcher;
 import net.udidb.engine.ops.Operation;
 import net.udidb.engine.ops.results.DeferredResult;
 import net.udidb.engine.ops.results.OperationResultVisitor;
-import net.udidb.engine.ops.impls.util.Quit;
+import net.udidb.cli.ops.impls.util.Quit;
 import net.udidb.engine.ops.results.TableResult;
 import net.udidb.engine.ops.results.TableRow;
 import net.udidb.engine.ops.results.ValueResult;

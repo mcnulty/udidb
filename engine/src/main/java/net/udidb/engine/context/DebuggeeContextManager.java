@@ -71,7 +71,7 @@ public interface DebuggeeContextManager
     /**
      * @return the contexts managed by this factory
      */
-    Map<Integer, DebuggeeContext> getContexts();
+    Map<String, DebuggeeContext> getContexts();
 
     /**
      * @return a list of contexts that could possibly return events

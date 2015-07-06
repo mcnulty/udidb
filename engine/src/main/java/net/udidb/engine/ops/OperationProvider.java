@@ -58,7 +58,7 @@ public final class OperationProvider
 
     public Map<String, Class<? extends Operation>> getOperations() {
 
-        return operations;
+        return new HashMap<>(operations);
     }
 
 }

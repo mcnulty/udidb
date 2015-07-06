@@ -9,6 +9,8 @@
 
 package net.udidb.server.api.models;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -18,16 +20,16 @@ public class DebuggeeConfigModel
 {
     private String execPath;
 
-    private String[] args;
+    private List<String> args;
 
     private Map<String, String> env;
 
-    public String[] getArgs()
+    public List<String> getArgs()
     {
         return args;
     }
 
-    public void setArgs(String[] args)
+    public void setArgs(List<String> args)
     {
         this.args = args;
     }
@@ -50,5 +52,20 @@ public class DebuggeeConfigModel
     public void setExecPath(String execPath)
     {
         this.execPath = execPath;
+    }
+
+    public OperationModel createOperationModel()
+    {
+        OperationModel operationModel = new OperationModel();
+        operationModel.setName("create");
+
+        Map<String, Object> operands = new HashMap<>();
+        operands.put("execPath", execPath);
+        if (args != null) {
+            operands.put("args", args);
+        }
+        operationModel.setOperands(operands);
+
+        return operationModel;
     }
 }

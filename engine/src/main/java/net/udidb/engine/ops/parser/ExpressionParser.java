@@ -22,6 +22,7 @@ import net.udidb.engine.context.DebuggeeContext;
 import net.udidb.engine.context.DebuggeeContextAware;
 import net.udidb.engine.ops.OperationParseException;
 import net.udidb.engine.ops.annotations.ExpressionConstraint;
+import net.udidb.engine.ops.annotations.Operand;
 import net.udidb.expr.Expression;
 import net.udidb.expr.ExpressionCompiler;
 import net.udidb.expr.ExpressionException;

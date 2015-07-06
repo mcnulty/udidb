@@ -20,7 +20,7 @@ import com.google.inject.Injector;
 import net.udidb.cli.driver.CliEngine;
 import net.udidb.engine.events.EventDispatcher;
 import net.udidb.engine.ops.Operation;
-import net.udidb.engine.ops.impls.util.Quit;
+import net.udidb.cli.ops.impls.util.Quit;
 import net.udidb.engine.ops.results.DeferredResult;
 import net.udidb.engine.ops.results.OperationResultVisitor;
 import net.udidb.engine.ops.results.TableResult;

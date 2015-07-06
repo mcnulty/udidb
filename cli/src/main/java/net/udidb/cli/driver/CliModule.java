@@ -65,7 +65,7 @@ public class CliModule extends AbstractModule
         bind(String[].class).annotatedWith(Names.named("OP_PACKAGES")).toInstance(
                 new String[] {
                         "net.udidb.engine.ops.impls",
-                        "net.udidb.cli.ops.impl"
+                        "net.udidb.cli.ops.impls"
                 });
 
         bind(DebuggeeContextManager.class).to(DebuggeeContextManagerImpl.class);

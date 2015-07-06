@@ -34,7 +34,7 @@ public class BreakpointsTest extends BaseScenarioTest
     public void createBreakpointAtMain()
     {
         TestCommand create = new TestCommandBuilder()
-                .setResultExpectation(ResultExpectation.expectVoid())
+                .setResultExpectation(ResultExpectation.value())
                 .createDebuggee(getBinaryPath().toAbsolutePath().toString());
         TestCommand getAddress = new TestCommandBuilder()
                 .setResultExpectation(ResultExpectation.value())
