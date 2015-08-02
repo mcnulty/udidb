@@ -9,6 +9,7 @@
 
 package net.udidb.server.api.models;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,6 +64,8 @@ public class DebuggeeConfigModel
         operands.put("execPath", execPath);
         if (args != null) {
             operands.put("args", args);
+        }else{
+            operands.put("args", Collections.emptyList());
         }
         operationModel.setOperands(operands);
 

@@ -11,6 +11,8 @@ package net.udidb.server.api.models;
 
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import net.udidb.engine.ops.results.Result;
 
 /**

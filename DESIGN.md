@@ -11,7 +11,7 @@ The core of udidb is an extensible, event-driven engine upon which
 debugging front-ends can be built. The engine provides representations
 of processes being debugged, _debuggees_, interfaces and support code
 to drop in operations to be performed on debuggees and a basic set of
-operations that can be performed on debuggees, agnostic of these
+operations that can be performed on debuggees, agnostic of how these
 operations are invoked by a user.
 
 The front-ends are responsible for controlling how operations are

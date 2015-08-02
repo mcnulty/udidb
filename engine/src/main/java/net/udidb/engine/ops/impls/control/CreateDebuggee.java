@@ -85,6 +85,10 @@ public class CreateDebuggee extends DisplayNameOperation {
             throw new OperationException(String.format("%s is not a valid path", execPath), e);
         }
 
+        if (args == null) {
+            throw new OperationException("Arguments cannot be null");
+        }
+
         Executable executable;
         try {
             executable = reader.openExecutable(path);

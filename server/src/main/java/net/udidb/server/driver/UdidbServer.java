@@ -12,6 +12,7 @@ package net.udidb.server.driver;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Slf4jLog;
 import org.jboss.resteasy.plugins.guice.GuiceResteasyBootstrapServletContextListener;
@@ -19,6 +20,9 @@ import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
+
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 
 /**
  * Entry point for the udidb server
@@ -40,10 +44,15 @@ public final class UdidbServer
         httpConnector.setPort(8888);
         server.addConnector(httpConnector);
 
+        Injector injector = Guice.createInjector(new ServerModule());
+        GuiceResteasyBootstrapServletContextListener resteasyListener = injector.getInstance(GuiceResteasyBootstrapServletContextListener.class);
+
+        ServletHolder websocketEventsHolder = new ServletHolder(injector.getInstance(EventsServlet.class));
+
         ServletContextHandler contextHandler = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
         contextHandler.setContextPath("/");
-        contextHandler.setInitParameter("resteasy.guice.modules", ServerModule.class.getCanonicalName());
-        contextHandler.addEventListener(new GuiceResteasyBootstrapServletContextListener());
+        contextHandler.addEventListener(resteasyListener);
+        contextHandler.addServlet(websocketEventsHolder, "/events");
         contextHandler.addServlet(HttpServletDispatcher.class, "/*");
 
         server.setHandler(contextHandler);
@@ -59,6 +68,11 @@ public final class UdidbServer
     public void join() throws Exception
     {
         server.join();
+    }
+
+    public void stop() throws Exception
+    {
+        server.stop();
     }
 
     private static void initializeLogging() throws Exception

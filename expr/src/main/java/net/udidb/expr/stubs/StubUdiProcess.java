@@ -128,6 +128,18 @@ public class StubUdiProcess implements UdiProcess
     }
 
     @Override
+    public Object getUserData()
+    {
+        return null;
+    }
+
+    @Override
+    public void setUserData(Object object)
+    {
+
+    }
+
+    @Override
     public void close() throws Exception
     {
 

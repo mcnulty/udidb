@@ -23,10 +23,12 @@ import net.udidb.engine.events.EventDispatcher;
 import net.udidb.engine.expr.ExpressionCompilerDelegate;
 import net.udidb.engine.ops.impls.help.HelpMessageProvider;
 import net.udidb.engine.ops.results.OperationResultVisitor;
+import net.udidb.engine.ops.results.VoidResult;
 import net.udidb.engine.source.InMemorySourceLineRowFactory;
 import net.udidb.engine.source.SourceLineRowFactory;
 import net.udidb.expr.ExpressionCompiler;
 import net.udidb.server.api.resources.DebuggeeContexts;
+import net.udidb.server.api.results.VoidResultMixIn;
 import net.udidb.server.engine.OperationEngine;
 import net.udidb.server.engine.ServerEngine;
 import net.udidb.server.engine.ServerEngineImpl;
@@ -43,6 +45,9 @@ public class ServerModule extends AbstractModule
     @Override
     protected void configure()
     {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.addMixInAnnotations(VoidResult.class, VoidResultMixIn.class);
+
         // REST API configuration
         bind(DebuggeeContexts.class);
 
@@ -66,7 +71,7 @@ public class ServerModule extends AbstractModule
 
         bind(ServerEngine.class).to(ServerEngineImpl.class);
 
-        bind(ObjectMapper.class).toInstance(new ObjectMapper());
+        bind(ObjectMapper.class).toInstance(objectMapper);
 
         bind(OperationResultVisitor.class).to(OperationEngine.class);
 

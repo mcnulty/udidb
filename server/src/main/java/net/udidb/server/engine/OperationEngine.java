@@ -25,8 +25,11 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
 
+import net.libudi.api.event.UdiEvent;
 import net.udidb.engine.context.DebuggeeContext;
 import net.udidb.engine.context.DebuggeeContextAware;
+import net.udidb.engine.context.DebuggeeContextManager;
+import net.udidb.engine.events.EventObserver;
 import net.udidb.engine.ops.Operation;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.OperationParseException;
@@ -57,19 +60,24 @@ public final class OperationEngine implements OperationResultVisitor
 
     private final Injector injector;
     private final ServerEventDispatcher eventDispatcher;
+    private final DebuggeeContextManager debuggeeContextManager;
     private final Map<String, Class<? extends Operation>> operations;
     private final BeanUtilsBean beanUtils;
 
     @Inject
-    public OperationEngine(Injector injector, OperationProvider operationProvider, ServerEventDispatcher eventDispatcher)
+    public OperationEngine(Injector injector,
+                           OperationProvider operationProvider,
+                           ServerEventDispatcher eventDispatcher,
+                           DebuggeeContextManager debuggeeContextManager)
     {
         this.injector = injector;
         this.eventDispatcher = eventDispatcher;
+        this.debuggeeContextManager = debuggeeContextManager;
         this.operations = operationProvider.getOperations();
         this.beanUtils = BeanUtilsBean.getInstance();
     }
 
-    public synchronized OperationModel execute(OperationModel operationModel, DebuggeeContext debuggeeContext)
+    public synchronized OperationModel execute(OperationModel operationModel, final DebuggeeContext debuggeeContext)
             throws UnknownOperationException, OperationException
     {
         if (debuggeeContext != null) {
@@ -84,18 +92,41 @@ public final class OperationEngine implements OperationResultVisitor
         Operation operation = configureOperation(operationModel, debuggeeContext);
 
         try {
+            OperationModel resultModel = new OperationModel(operationModel);
+            if (debuggeeContext != null) {
+                contextsToModels.put(debuggeeContext.getId(), resultModel);
+                operationsToContexts.put(System.identityHashCode(operation), debuggeeContext.getId());
+            }
+
             Result result = operation.execute();
 
-            OperationModel resultModel = new OperationModel(operationModel);
             if (result.isEventPending()) {
                 resultModel.setPending(true);
+
+                if (debuggeeContext != null) {
+                    eventDispatcher.registerEventObserver(new EventObserver()
+                    {
+                        @Override
+                        public DebuggeeContext getDebuggeeContext()
+                        {
+                            return debuggeeContext;
+                        }
+
+                        @Override
+                        public boolean publish(UdiEvent event) throws OperationException
+                        {
+                            completeOperation(debuggeeContext);
+                            return false;
+                        }
+                    });
+                }
+
+                eventDispatcher.notifyOfEvents();
             }else{
                 resultModel.setResult(result);
             }
 
             if (debuggeeContext != null) {
-                contextsToModels.put(debuggeeContext.getId(), resultModel);
-                operationsToContexts.put(System.identityHashCode(operation), debuggeeContext.getId());
                 result.accept(operation, this);
             }
 
@@ -106,6 +137,14 @@ public final class OperationEngine implements OperationResultVisitor
         }catch (Exception e) {
             visit(operation, e);
             throw new OperationException(e);
+        }
+    }
+
+    public synchronized void completeOperation(DebuggeeContext debuggeeContext)
+    {
+        OperationModel operationModel = contextsToModels.get(debuggeeContext.getId());
+        if (operationModel != null) {
+            operationModel.setPending(false);
         }
     }
 
@@ -207,7 +246,7 @@ public final class OperationEngine implements OperationResultVisitor
     @Override
     public synchronized boolean visit(Operation op, DeferredResult result)
     {
-        String contextId = operationsToContexts.get(op);
+        String contextId = operationsToContexts.get(System.identityHashCode(op));
         if (contextId == null) {
             logUnknownOperation(op, result);
         }else{
@@ -230,7 +269,7 @@ public final class OperationEngine implements OperationResultVisitor
 
     private void updateModel(Operation op, Result result, String description)
     {
-        String contextId = operationsToContexts.get(op);
+        String contextId = operationsToContexts.get(System.identityHashCode(op));
         OperationModel model;
         if (contextId != null) {
             model = contextsToModels.get(contextId);

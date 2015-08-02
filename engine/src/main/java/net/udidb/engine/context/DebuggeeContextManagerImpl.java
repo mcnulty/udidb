@@ -99,6 +99,7 @@ public class DebuggeeContextManagerImpl implements DebuggeeContextManager
                 context.getEnv(),
                 context.createProcessConfig());
 
+        process.setUserData(context);
         context.setProcess(process);
         context.setCurrentThread(process.getInitialThread());
 
@@ -139,14 +140,19 @@ public class DebuggeeContextManagerImpl implements DebuggeeContextManager
     public DebuggeeContext deleteContext(UdiProcess process)
     {
         DebuggeeContext deleted = null;
-        synchronized (contexts) {
-            Iterator<Entry<String, DebuggeeContext>> i = contexts.entrySet().iterator();
-            while(i.hasNext()) {
-                DebuggeeContext context = i.next().getValue();
-                if (context.getProcess().equals(process)) {
-                    i.remove();
-                    deleted = context;
-                    break;
+        if (process.getUserData() instanceof DebuggeeContext) {
+            deleted = (DebuggeeContext)process.getUserData();
+            deleteContext(deleted);
+        }else{
+            synchronized (contexts) {
+                Iterator<Entry<String, DebuggeeContext>> i = contexts.entrySet().iterator();
+                while (i.hasNext()) {
+                    DebuggeeContext context = i.next().getValue();
+                    if (context.getProcess().equals(process)) {
+                        i.remove();
+                        deleted = context;
+                        break;
+                    }
                 }
             }
         }
