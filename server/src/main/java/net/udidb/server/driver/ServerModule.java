@@ -19,7 +19,6 @@ import net.sourcecrumbs.api.files.BinaryReader;
 import net.sourcecrumbs.refimpl.CrossPlatformBinaryReader;
 import net.udidb.engine.context.DebuggeeContextManager;
 import net.udidb.engine.context.DebuggeeContextManagerImpl;
-import net.udidb.engine.events.EventDispatcher;
 import net.udidb.engine.expr.ExpressionCompilerDelegate;
 import net.udidb.engine.ops.impls.help.HelpMessageProvider;
 import net.udidb.engine.ops.results.OperationResultVisitor;
@@ -33,6 +32,12 @@ import net.udidb.server.engine.OperationEngine;
 import net.udidb.server.engine.ServerEngine;
 import net.udidb.server.engine.ServerEngineImpl;
 import net.udidb.server.engine.ServerEventDispatcher;
+import net.udidb.server.wamp.InMemoryConnectorProvider;
+import ws.wamp.jawampa.ApplicationError;
+import ws.wamp.jawampa.WampClient;
+import ws.wamp.jawampa.WampClientBuilder;
+import ws.wamp.jawampa.WampRouter;
+import ws.wamp.jawampa.WampRouterBuilder;
 
 /**
  * A Guice module defining dependencies for running the debugger within a server
@@ -41,6 +46,7 @@ import net.udidb.server.engine.ServerEventDispatcher;
  */
 public class ServerModule extends AbstractModule
 {
+    private static final String WAMP_REALM = "udidb";
 
     @Override
     protected void configure()
@@ -76,5 +82,35 @@ public class ServerModule extends AbstractModule
         bind(OperationResultVisitor.class).to(OperationEngine.class);
 
         bind(ServerEventDispatcher.class).asEagerSingleton();
+
+        WampRouter wampRouter = configureWampRouter();
+        bind(WampRouter.class).toInstance(wampRouter);
+
+        bind(WampClient.class).toInstance(configureWampClient(wampRouter));
+
+    }
+
+    private WampRouter configureWampRouter()
+    {
+        try {
+            return new WampRouterBuilder()
+                    .addRealm(WAMP_REALM)
+                    .build();
+        }catch (ApplicationError e) {
+            // TODO there might be a better way to communicate this error
+            throw new RuntimeException(e);
+        }
+    }
+
+    private WampClient configureWampClient(WampRouter wampRouter)
+    {
+        try {
+            return new WampClientBuilder()
+                    .withRealm(WAMP_REALM)
+                    .withConnectorProvider(new InMemoryConnectorProvider(wampRouter))
+                    .build();
+        }catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

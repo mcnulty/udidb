@@ -63,5 +63,8 @@ public class CreateDebuggeeTest extends BaseServerTest
         response.then()
                 .body("name", equalTo("continue"));
         response.prettyPrint();
+
+        // Wait for the exit event
+        System.out.println(waitForEvent());
     }
 }

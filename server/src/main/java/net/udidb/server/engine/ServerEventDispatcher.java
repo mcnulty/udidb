@@ -32,6 +32,7 @@ import net.udidb.engine.context.DebuggeeContextManager;
 import net.udidb.engine.events.DbEventData;
 import net.udidb.engine.events.EventObserver;
 import net.udidb.engine.ops.OperationException;
+import ws.wamp.jawampa.WampClient;
 
 /**
  * @author mcnulty
@@ -39,24 +40,30 @@ import net.udidb.engine.ops.OperationException;
 @Singleton
 public class ServerEventDispatcher extends Thread
 {
+    private static final String GLOBAL_TOPIC = "com.udidb.events";
+
     private static final Logger logger = LoggerFactory.getLogger(ServerEventDispatcher.class);
 
     private final Map<UdiProcess, Set<EventObserver>> eventObservers = new HashMap<>();
 
     private final UdiProcessManager processManager;
     private final DebuggeeContextManager debuggeeContextManager;
+    private final WampClient wampClient;
 
     @Inject
     public ServerEventDispatcher(DebuggeeContextManager debuggeeContextManager,
-                                 UdiProcessManager processManager)
+                                 UdiProcessManager processManager,
+                                 WampClient wampClient)
     {
         this.processManager = processManager;
         this.debuggeeContextManager = debuggeeContextManager;
+        this.wampClient = wampClient;
         this.setDaemon(true);
         this.start();
     }
 
-    public void registerEventObserver(EventObserver eventObserver) {
+    public void registerEventObserver(EventObserver eventObserver)
+    {
         Set<EventObserver> procEventObs;
         synchronized (eventObservers) {
             procEventObs = eventObservers.get(eventObserver.getDebuggeeContext().getProcess());
@@ -107,20 +114,22 @@ public class ServerEventDispatcher extends Thread
                     DbEventData dbEventData = new DbEventData();
                     udiEvent.setUserData(dbEventData);
 
-                    Set<EventObserver> observers = eventObservers.get(udiEvent.getProcess());
-                    if (observers != null) {
-                        synchronized (observers) {
-                            Iterator<EventObserver> i = observers.iterator();
-                            while (i.hasNext()) {
-                                EventObserver eventObserver = i.next();
-                                if (!eventObserver.publish(udiEvent)) {
-                                    i.remove();
+                    synchronized (eventObservers) {
+                        Set<EventObserver> observers = eventObservers.get(udiEvent.getProcess());
+                        if (observers != null) {
+                            synchronized (observers) {
+                                Iterator<EventObserver> i = observers.iterator();
+                                while (i.hasNext()) {
+                                    EventObserver eventObserver = i.next();
+                                    if (!eventObserver.publish(udiEvent)) {
+                                        i.remove();
+                                    }
                                 }
                             }
                         }
                     }
 
-                    publishWebSocketEvent(udiEvent);
+                    publishEvent(udiEvent);
 
                     handleTermination(udiEvent);
                 }catch (OperationException e) {
@@ -132,8 +141,12 @@ public class ServerEventDispatcher extends Thread
         }
     }
 
-    private void publishWebSocketEvent(UdiEvent udiEvent)
+    private void publishEvent(UdiEvent udiEvent)
     {
+        wampClient.publish(GLOBAL_TOPIC, udiEvent).subscribe(
+                publicationId -> logger.debug("{} successfully published with id {}", udiEvent, publicationId),
+                error -> logger.error("Failed to publish event", error)
+        );
     }
 
     private void handleTermination(UdiEvent udiEvent) throws OperationException {
