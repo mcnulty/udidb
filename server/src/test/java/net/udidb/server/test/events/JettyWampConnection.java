@@ -9,7 +9,6 @@
 
 package net.udidb.server.test.events;
 
-import java.io.IOException;
 
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.WebSocketListener;
@@ -18,13 +17,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 
 import net.udidb.server.driver.EventsSocket;
 import ws.wamp.jawampa.WampError;
-import ws.wamp.jawampa.WampMessages;
 import ws.wamp.jawampa.WampMessages.WampMessage;
 import ws.wamp.jawampa.WampSerialization;
 import ws.wamp.jawampa.connection.IWampConnection;
@@ -64,7 +60,9 @@ public class JettyWampConnection implements IWampConnection, WebSocketListener
     public void sendMessage(WampMessage message, IWampConnectionPromise<Void> promise)
     {
         try {
-            session.getRemote().sendString(objectMapper.writeValueAsString(message.toObjectArray(objectMapper)),
+            String rawMessage = objectMapper.writeValueAsString(message.toObjectArray(objectMapper));
+            logger.debug("[CLIENT] Sending WAMP message {}", rawMessage);
+            session.getRemote().sendString(rawMessage,
                     new WriteCallback()
                     {
 
@@ -101,6 +99,7 @@ public class JettyWampConnection implements IWampConnection, WebSocketListener
     @Override
     public void onWebSocketText(String message)
     {
+        logger.debug("[CLIENT] Received WAMP message {}", message);
         EventsSocket.passMessageToWampListener(message, objectMapper, connectionListener);
     }
 

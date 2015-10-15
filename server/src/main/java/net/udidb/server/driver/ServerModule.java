@@ -47,6 +47,7 @@ import ws.wamp.jawampa.WampRouterBuilder;
 public class ServerModule extends AbstractModule
 {
     private static final String WAMP_REALM = "udidb";
+    private static final String INTERNAL_CLIENT_URI = "udidb://wamp";
 
     @Override
     protected void configure()
@@ -105,10 +106,13 @@ public class ServerModule extends AbstractModule
     private WampClient configureWampClient(WampRouter wampRouter)
     {
         try {
-            return new WampClientBuilder()
+            WampClient wampClient = new WampClientBuilder()
                     .withRealm(WAMP_REALM)
+                    .withUri(INTERNAL_CLIENT_URI)
                     .withConnectorProvider(new InMemoryConnectorProvider(wampRouter))
                     .build();
+            wampClient.open();
+            return wampClient;
         }catch (Exception e) {
             throw new RuntimeException(e);
         }

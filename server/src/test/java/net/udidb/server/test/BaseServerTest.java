@@ -11,16 +11,20 @@ package net.udidb.server.test;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
+import net.udidb.server.api.models.UdiEventModel;
 import net.udidb.server.driver.UdidbServer;
 import net.udidb.server.test.events.JettyWampConnectorProvider;
-import rx.functions.Action1;
+import rx.Observable;
 import ws.wamp.jawampa.WampClient;
+import ws.wamp.jawampa.WampClient.State;
 import ws.wamp.jawampa.WampClientBuilder;
 
 /**
@@ -29,13 +33,14 @@ import ws.wamp.jawampa.WampClientBuilder;
 public abstract class BaseServerTest
 {
     private static final String basePath = System.getProperty("native.file.tests.basePath");
+    private static final long EVENT_TIMEOUT_SECONDS = Long.getLong("udidb.server.tests.eventTimeout", 5);
 
     private static final UdidbServer udidbServer = new UdidbServer(new String[]{});
 
     private final Path binaryPath;
     private final String baseUri;
     private final String baseWsUri;
-    private final LinkedBlockingQueue<String> eventQueue = new LinkedBlockingQueue<>();
+    private final LinkedBlockingQueue<UdiEventModel> eventQueue = new LinkedBlockingQueue<>();
 
     private WampClient eventsClient;
 
@@ -77,19 +82,27 @@ public abstract class BaseServerTest
                 .withRealm("udidb")
                 .withUri(baseWsUri + "/events")
                 .withConnectorProvider(new JettyWampConnectorProvider()).build();
+
+        CompletableFuture<Void> connectFuture = new CompletableFuture<>();
         eventsClient.statusChanged().subscribe((WampClient.State newState) -> {
             if (newState instanceof WampClient.ConnectedState) {
-                eventsClient.makeSubscription("com.udidb.events", String.class)
+                eventsClient.makeSubscription("com.udidb.events", UdiEventModel.class)
                         .subscribe(
                                 eventQueue::add,
-                                (e) -> { throw new AssertionError(e); });
+                                (e) -> {
+                                    throw new AssertionError(e);
+                                });
+                connectFuture.complete(null);
             }
         });
         eventsClient.open();
+
+        // Wait for the connection to be initialized
+        connectFuture.get(EVENT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
 
-    protected String waitForEvent() throws InterruptedException
+    protected UdiEventModel waitForEvent() throws InterruptedException
     {
-        return eventQueue.take();
+        return eventQueue.poll(EVENT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
 }

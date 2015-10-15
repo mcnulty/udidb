@@ -59,6 +59,7 @@ public class EventsSocket extends WebSocketAdapter implements IWampConnection
     @Override
     public void onWebSocketText(String message)
     {
+        logger.debug("[SERVER] Received WAMP message {}", message);
         passMessageToWampListener(message, objectMapper, connectionListener);
     }
 
@@ -85,6 +86,8 @@ public class EventsSocket extends WebSocketAdapter implements IWampConnection
     @Override
     public void onWebSocketClose(int statusCode, String reason)
     {
+        super.onWebSocketClose(statusCode, reason);
+
         connectionListener.transportClosed();
         logger.debug("Closing WebSocket for session {}", getSession());
     }
@@ -92,6 +95,8 @@ public class EventsSocket extends WebSocketAdapter implements IWampConnection
     @Override
     public void onWebSocketConnect(Session sess)
     {
+        super.onWebSocketConnect(sess);
+
         connectionListener = wampRouter.connectionAcceptor().createNewConnectionListener();
         wampRouter.connectionAcceptor().acceptNewConnection(this, connectionListener);
         logger.debug("Opened WebSocket for session {}", sess);
@@ -100,6 +105,8 @@ public class EventsSocket extends WebSocketAdapter implements IWampConnection
     @Override
     public void onWebSocketError(Throwable cause)
     {
+        super.onWebSocketError(cause);
+
         connectionListener.transportError(cause);
         logger.debug("WebSocket error for session {}", getSession(), cause);
     }
@@ -119,28 +126,39 @@ public class EventsSocket extends WebSocketAdapter implements IWampConnection
     @Override
     public void sendMessage(WampMessage message, IWampConnectionPromise<Void> promise)
     {
-        if (getSession().isOpen()) {
-            try {
-                getRemote().sendString(message.toObjectArray(objectMapper).toString(),
-                        new WriteCallback()
-                        {
-                            @Override
-                            public void writeFailed(Throwable x)
+        try {
+            if (getSession().isOpen()) {
+                try {
+                    String rawMessage = objectMapper.writeValueAsString(message.toObjectArray(objectMapper));
+                    logger.debug("[SERVER] Sending WAMP message {}", rawMessage);
+                    getRemote().sendString(rawMessage,
+                            new WriteCallback()
                             {
-                                promise.reject(x);
-                            }
 
-                            @Override
-                            public void writeSuccess()
-                            {
-                                promise.fulfill(null);
-                            }
-                        });
-            }catch (WampError e) {
-                promise.reject(e);
+                                @Override
+                                public void writeFailed(Throwable x)
+                                {
+                                    promise.reject(x);
+                                }
+
+                                @Override
+                                public void writeSuccess()
+                                {
+                                    promise.fulfill(null);
+                                }
+                            });
+                } catch (IOException | WampError e) {
+                    logger.error("Recieved exception while sending message", e);
+                    promise.reject(e);
+                }
+            } else {
+                promise.reject(new IllegalStateException("Connection is not open"));
             }
-        }else{
-            promise.reject(new IllegalStateException("Connection is not open"));
+        }
+        catch (RuntimeException e)
+        {
+            logger.error("Received exception while sending message", e);
+            promise.reject(e);
         }
     }
 

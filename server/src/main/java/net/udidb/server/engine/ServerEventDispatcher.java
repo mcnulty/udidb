@@ -32,6 +32,7 @@ import net.udidb.engine.context.DebuggeeContextManager;
 import net.udidb.engine.events.DbEventData;
 import net.udidb.engine.events.EventObserver;
 import net.udidb.engine.ops.OperationException;
+import net.udidb.server.api.models.UdiEventModel;
 import ws.wamp.jawampa.WampClient;
 
 /**
@@ -143,7 +144,7 @@ public class ServerEventDispatcher extends Thread
 
     private void publishEvent(UdiEvent udiEvent)
     {
-        wampClient.publish(GLOBAL_TOPIC, udiEvent).subscribe(
+        wampClient.publish(GLOBAL_TOPIC, new UdiEventModel(udiEvent)).subscribe(
                 publicationId -> logger.debug("{} successfully published with id {}", udiEvent, publicationId),
                 error -> logger.error("Failed to publish event", error)
         );

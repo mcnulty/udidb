@@ -10,10 +10,8 @@
 package net.udidb.server.test.events;
 
 import java.net.URI;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 
-import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.UpgradeRequest;
 import org.eclipse.jetty.websocket.api.UpgradeResponse;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
