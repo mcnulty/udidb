@@ -2,6 +2,8 @@ target/
 *.iml
 *.class
 dependency-reduced-pom.xml
+server/src/main/webui/node_modules
+server/src/main/webui/dist
 
 # Package Files #
 *.jar

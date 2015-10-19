@@ -1,0 +1,31 @@
+html, body {
+    height: 100%;
+}
+
+#udidb-app-container {
+    height: 100%;
+}
+
+.b-udidb {
+    height: 100%;
+}
+
+.b-udidb-contextSelector {
+    float: left;
+    width: 19%;
+    outline: solid;
+    height: auto;
+    min-height: 100%;
+}
+.b-udidb-sourcePane {
+    float: right;
+    width: 80%;
+    padding-left: 5px;
+    min-height: 100%;
+}
+
+.b-udidb:after {
+    content:"";
+    display: table;
+    clear: both;
+}
