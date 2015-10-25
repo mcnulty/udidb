@@ -7,8 +7,8 @@ export default React.createClass({
     render: function() {
         return (
             <Nav bsStyle="pills" stacked activeKey={1}>
-                <ContextItem eventKey={1} content="Context 1"/>
-                <ContextItem eventKey={2} content="Context 2"/>
+                <ContextItem eventKey={1} title="Process 5665"/>
+                <ContextItem eventKey={2} title="Process 5666"/>
             </Nav>
         )
     }
