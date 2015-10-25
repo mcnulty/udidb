@@ -2,30 +2,20 @@ html, body {
     height: 100%;
 }
 
+body {
+    background-color: rgb(220, 220, 220);
+}
+
 #udidb-app-container {
     height: 100%;
+    margin-top: 10px;
 }
 
-.b-udidb {
-    height: 100%;
+.statusLine {
+    margin-top: 2px;
+    margin-bottom: 2px;
 }
 
-.b-udidb-contextSelector {
-    float: left;
-    width: 19%;
-    outline: solid;
-    height: auto;
-    min-height: 100%;
-}
-.b-udidb-sourcePane {
-    float: right;
-    width: 80%;
-    padding-left: 5px;
-    min-height: 100%;
-}
-
-.b-udidb:after {
-    content:"";
-    display: table;
-    clear: both;
+.footer {
+    text-align: center;
 }
