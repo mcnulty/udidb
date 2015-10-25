@@ -1,7 +1,8 @@
+
 import React from "react"
+import hljs from "highlight.js"
 
 var topLevelStyle = {
-    backgroundColor : 'rgb(245, 245, 245)',
     fontFamily: 'monospace',
     fontSize: '11',
     whiteSpace: 'pre',
@@ -12,16 +13,20 @@ var topLevelStyle = {
 var testSource = ""
 
 export default React.createClass({
+
     render: function() {
+        var highlightedSourceObj = hljs.highlightAuto(testSource, [ "C" ]);
+        console.log("Source Language " + highlightedSourceObj["language"]);
         return (
-            <div style={topLevelStyle}>
-                {testSource}
-            </div>
+            <div className="hljs" dangerouslySetInnerHTML={ { __html: highlightedSourceObj["value"] } } style={topLevelStyle}/>
         )
     }
 });
 
-testSource = 
+testSource =
+"#include <stdlib.h>\n" +
+"#define MACRO 1\n" +
+"\n" +
 "udi_process *create_process(const char *executable, char * const argv[],\n" +
 "        char * const envp[], const udi_proc_config *config,\n" +
 "        udi_error_e *error_code, char **errmsg)\n" +

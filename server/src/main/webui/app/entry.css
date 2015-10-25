@@ -1,13 +1,8 @@
-html, body {
-    height: 100%;
-}
-
 body {
     background-color: rgb(220, 220, 220);
 }
 
 #udidb-app-container {
-    height: 100%;
     margin-top: 10px;
 }
 

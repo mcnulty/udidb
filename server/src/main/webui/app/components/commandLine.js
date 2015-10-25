@@ -2,7 +2,6 @@ import React from "react"
 import { Panel } from "react-bootstrap"
 
 var topLevelStyle = {
-    backgroundColor : 'rgb(245, 245, 245)',
     fontFamily: 'monospace',
     fontSize: '11',
     whiteSpace: 'pre',
@@ -16,7 +15,7 @@ var testText = ""
 export default React.createClass({
     render: function() {
         return (
-            <div style={topLevelStyle}>
+            <div className="hljs" style={topLevelStyle}>
                 {testText}
             </div>
         )

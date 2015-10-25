@@ -6,6 +6,8 @@ module.exports = {
     },
     context: __dirname + "/app",
 
+    devtool: "source-map",
+
     output: {
         filename: "entry.bundle.js",
         path: __dirname + "/dist"
