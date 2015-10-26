@@ -1,10 +1,5 @@
 import React from "react"
-import { Nav, NavItem, Collapse } from "react-bootstrap"
-
-var threadNavStyle = {
-    backgroundColor: 'rgb(220, 220, 220)',
-    color: 'black'
-};
+import { Button, ButtonGroup, NavItem, Collapse } from "react-bootstrap"
 
 export default React.createClass({
     getInitialState: function() {
@@ -20,14 +15,14 @@ export default React.createClass({
                 </span>
                 <Collapse in={this.props.active}>
                     <div>
-                        <Nav bsStyle="link" activeKey={1} style={threadNavStyle}>
-                            <NavItem eventKey={1}>
+                        <ButtonGroup vertical block>
+                            <Button bsStyle="info">
                                 Thread 1 - src/main.c:1234
-                            </NavItem>
-                            <NavItem eventKey={2}>
+                            </Button>
+                            <Button>
                                 Thread 2 - src/events.c:120
-                            </NavItem>
-                        </Nav>
+                            </Button>
+                        </ButtonGroup>
                     </div>
                 </Collapse>
             </NavItem>
