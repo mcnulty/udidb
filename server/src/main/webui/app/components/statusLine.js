@@ -11,10 +11,29 @@ var statusLineStyle = {
 }
 
 export default React.createClass({
+
     render: function() {
+
+        var lineContent;
+        if (this.props.currentContext.id === "-1") {
+            lineContent = "<no process selected>";
+        }else{
+            var threadComponent;
+            if (this.props.currentContext.activeThreadIndex >= 0) {
+                var currentThread = this.props.currentContext.threads[this.props.currentContext.activeThreadIndex];
+
+                threadComponent = ", Thread " + currentThread.id +
+                    " - " + currentThread.source.file + ":" + currentThread.source.line;
+            }else{
+                threadComponent = "";
+            }
+
+            lineContent = "Process " + this.props.currentContext.processId + threadComponent;
+        }
+
         return (
             <div style={statusLineStyle}>
-                Process 5665, Thread 1 - src/main.c:1234
+                {lineContent}
             </div>
         )
     }

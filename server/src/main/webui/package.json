@@ -29,6 +29,7 @@
     "webpack-dev-server": "^1.12.1"
   },
   "dependencies": {
+    "babel-polyfill": "^6.0.14",
     "bootstrap": "^3.3.5",
     "highlight.js": "^8.9.1",
     "jquery": "^2.1.4",

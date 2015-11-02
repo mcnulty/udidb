@@ -16,7 +16,6 @@ export default React.createClass({
 
     render: function() {
         var highlightedSourceObj = hljs.highlightAuto(testSource, [ "C" ]);
-        console.log("Source Language " + highlightedSourceObj["language"]);
         return (
             <div className="hljs" dangerouslySetInnerHTML={ { __html: highlightedSourceObj["value"] } } style={topLevelStyle}/>
         )
