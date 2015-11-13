@@ -1,6 +1,8 @@
 import React from "react"
 
-var topLevelStyle = {
+import {UdidbRequest, POST_METHOD} from "./requests.js"
+
+let topLevelStyle = {
     fontFamily: 'monospace',
     fontSize: '11',
     whiteSpace: 'pre',
@@ -9,7 +11,7 @@ var topLevelStyle = {
     padding: '5px 5px 5px 5px'
 };
 
-var inputStyle = {
+let inputStyle = {
     backgroundColor: 'rgb(0, 43, 54)',
     border: '0px',
     outline: '0px'
@@ -19,44 +21,36 @@ const PROMPT = "(udidb)";
 
 export default React.createClass({
 
-    getInitialState: function() {
-        return {
-            results: [
-                {
-                    index: 20,
-                    value: "3"
-                },
-                {
-                    index: 21,
-                    value: "main = 0xe7f890"
-                }
-            ]
-        };
-    },
-
-    handleNewOperation: function(e) {
+    _handleNewOperation: function(e) {
         e.preventDefault();
-        console.log(this.refs.operation.value.trim());
+        this.props.process(new UdidbRequest(POST_METHOD, "currentContext.operation",
+                                            this.refs.operation.value.trim()));
     },
 
     render: function() {
-        var history = this.props.history;
+        let history = this.props.history;
 
-        var output = [];
+        let output = [];
 
-        var startIndex = history.operations.length - history.numDisplayedOps;
+        let startIndex = history.operations.length - history.numDisplayedOps;
         if (startIndex < 0) {
             startIndex = 0;
         }
 
-        for (var i = startIndex; i < history.operations.length; i++)
+        let pendingOperation = false;
+        for (let i = startIndex; i < history.operations.length; i++)
         {
-            var operation = history.operations[i];
-            var result = this.state.results.find(function(e, searchIndex, a) {
-                return e.index === (i + history.baseIndex);
-            });
+            let operation = history.operations[i];
 
-            var operationValue = operation.operands.reduce(function(p, c, i, a) {
+            let operationResultValue;
+            if (!operation.result) {
+                operationResultValue = "";
+                pendingOperation = true;
+            }else{
+                operationResultValue = operation.result;
+            }
+
+            let operationValue = operation.operands.reduce(function(p, c, i, a) {
                 if (c.type === "list") {
                     return p + " " + c.value.join(" ");
                 }else{
@@ -65,7 +59,22 @@ export default React.createClass({
             }, operation.name);
 
             output.push(PROMPT + " " + operationValue);
-            output.push(result.value);
+            output.push(operationResultValue);
+        }
+
+        let inputElement;
+        if (pendingOperation) {
+            inputElement = 
+            <strong>
+                Result pending...
+            </strong>
+        }else{
+            inputElement = 
+                <form onSubmit={this._handleNewOperation}>
+                    <label>{PROMPT + " "}
+                        <input style={inputStyle} type="text" ref="operation"/>
+                    </label>
+                </form>
         }
 
         return (
@@ -73,11 +82,7 @@ export default React.createClass({
                 <div>
                     {output.join("\n")}
                 </div>
-                <form onSubmit={this.handleNewOperation}>
-                    <label>{PROMPT + " "}
-                        <input style={inputStyle} type="text" ref="operation"/>
-                    </label>
-                </form>
+                {inputElement}
             </div>
         )
     }

@@ -1,133 +1,97 @@
 import React from "react"
+import update from "react-addons-update"
 
 import Udidb from "./udidb.js"
-
-var staticProps = {};
+import { UdidbRequest, PUT_METHOD, POST_METHOD } from "./requests.js"
+import staticProps from "./staticData.js"
 
 export default React.createClass({
 
+    getInitialState: function() {
+        return staticProps;
+    },
+
     render: function() {
         return (
-            <Udidb {...staticProps} process={this.process}/>
+            <Udidb {...this.state} process={this.process}/>
         );
     },
 
     process: function(request) {
-
-    }
-});
-
-staticProps = {
-    contexts: [
-        {
-            id: "1234",
-            processId: "5665",
-            activeThreadIndex: 0,
-            threads: [
-                {
-                    id: "1",
-                    pc: "0xeff0f0",
-                    source: {
-                        line: 1234,
-                        file: "src/main.c"
-                    }
-                },
-                {
-                    id: "2",
-                    pc: "0xeff0f0",
-                    source: {
-                        line: 120,
-                        file: "src/events.c"
-                    }
-                },
-            ]
-        },
-        {
-            id: "1235",
-            processId: "60001",
-            activeThreadIndex: 0,
-            threads: [
-                {
-                    id: "1",
-                    pc: "0xeff0f7",
-                    source: {
-                        line: 20,
-                        file: "main.cxx"
-                    }
-                },
-            ]
+        switch (request.getMethod()) {
+            case POST_METHOD:
+                this._processPost(request);
+                break;
+            case PUT_METHOD:
+                this._processPut(request);
+                break;
+            default:
+                console.log("Request with unknown method: " + request);
+                break;
         }
-    ],
-
-    currentContextIndex: 0,
-
-    history: {
-        numDisplayedOps: 2,
-        baseIndex: 20,
-        operations: [
-            {
-                name: "eval",
-                operands: [
-                    { 
-                        name: "value", 
-                        type: "list",
-                        value: [
-                            "1",
-                            "+",
-                            "2"
-                        ]
-                    }
-                ]
-            },
-            {
-                name: "print",
-                operands: [
-                    {
-                        name: "value",
-                        type: "list",
-                        value: [
-                            "main"
-                        ]
-                    }
-                ]
-            }
-        ]
     },
 
-    sourceMap: {
-        startLineNo: 30,
-        lines: [
-            "#include <stdlib.h>",
-            "#define MACRO 1",
-            "",
-            "udi_process *create_process(const char *executable, char * const argv[],",
-            "        char * const envp[], const udi_proc_config *config,",
-            "        udi_error_e *error_code, char **errmsg)",
-            "{",
-            "    // Validate arguments",
-            "    if (argv == NULL || executable == NULL) {",
-            "        allocate_error(UDI_ERROR_REQUEST, \"invalid arguments\", error_code, errmsg);",
-            "        return NULL;",
-            "    }",
-            "",
-            "    udi_error_e local_error = UDI_ERROR_NONE;",
-            "    char *local_errmsg = NULL;",
-            "    udi_process *proc = (udi_process *)malloc(sizeof(udi_process));",
-            "    do{",
-            "        if ( proc == NULL ) {",
-            "            local_errmsg = \"malloc failed\";",
-            "            local_error = UDI_ERROR_LIBRARY;",
-            "            break;",
-            "        }",
-            "",
-            "        memset(proc, 0, sizeof(udi_process));",
-            "        proc->error_code = UDI_ERROR_NONE;",
-            "        proc->errmsg.size = ERRMSG_SIZE;",
-            "        proc->errmsg.msg[ERRMSG_SIZE-1] = '\0';",
-            "        proc->running = 0;",
-            "        proc->terminated = 0;",
-            "",
-            "        if ( config->root_dir != NULL ) {"
-        ]
-    }
-};
+    _processPost: function(request) {
+        switch (request.getPath()) {
+            case "currentContext.operation":
+                this._newOperation(request.getValue());
+                break;
+            default:
+                console.log("POST with unknown path: " + request);
+                break;
+        }
+    },
+
+    _processPut: function(request) {
+        switch (request.getPath()) {
+            case "currentContextIndex":
+                this._selectContext(request.getValue());
+                break;
+            case "currentContext.activeThreadIndex":
+                this._selectActiveThread(request.getValue());
+                break;
+            default:
+                console.log("PUT with unknown path: " + request);
+                break;
+        }
+    },
+
+    _newOperation: function(value) {
+        let fields = value.split(" ");
+        let newState = update(this.state, {
+            history: { 
+                operations: {
+                    $push: [{ 
+                        name: fields[0], 
+                        operands: [ {
+                            name: "value",
+                            type: "list",
+                            value: fields.slice(1),
+                        }],
+                        result: null
+                    }]
+                }
+            }
+        });
+        this.setState(newState);
+    },
+
+    _selectContext: function(index) {
+        let newState = update(this.state, {
+            currentContextIndex: { $set: index }
+        });
+        this.setState(newState);
+    },
+
+    _selectActiveThread: function(index) {
+        let currentContextIndex = this.state.currentContextIndex;
+        let contextUpdate = { };
+        contextUpdate[currentContextIndex] = { activeThreadIndex: { $set: index } };
+        let newState = update(this.state, {
+            contexts: contextUpdate
+        });
+        console.log(JSON.stringify(newState.contexts));
+        this.setState(newState);
+        console.log(JSON.stringify(this.state.contexts));
+    },
+});

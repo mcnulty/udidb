@@ -68,7 +68,7 @@ export default React.createClass({
     },
 
     render: function() {
-        var currentContext;
+        let currentContext;
         if (this.props.contexts.length > 0) {
             if (this.props.currentContextIndex >= this.props.contexts.length ||
                 this.props.currentContextIndex < 0) 
@@ -94,20 +94,20 @@ export default React.createClass({
                         <Col xs={3} className="contextSelector">
                             <ContextSelector contexts={this.props.contexts} 
                                 currentContextIndex={this.props.currentContextIndex}
-                                publish={this.props.process}/>
+                                process={this.props.process}/>
                         </Col>
                         <Col xs={8} className="contextPane">
                             <Row className="sourceViewerRow">
                                 <SourceViewer currentContext={currentContext}
                                     sourceMap={this.props.sourceMap}
-                                    publish={this.props.process}/>
+                                    process={this.props.process}/>
                             </Row>
                             <Row className="statusLine">
                                 <StatusLine currentContext={currentContext}/>
                             </Row>
                             <Row className="commandLineRow">
                                 <CommandLine history={this.props.history}
-                                    publish={this.props.process}/>
+                                    process={this.props.process}/>
                             </Row>
                         </Col>
                     </Row>
