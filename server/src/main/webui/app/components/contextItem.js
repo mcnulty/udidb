@@ -13,7 +13,7 @@ export default React.createClass({
     render: function() {
         let { context, process, ...other } = this.props;
         let threadItems = context.threads.map(function(currentValue, index, array) {
-            let buttonStyle = (index == context.activeThreadIndex ? "info" : "default");
+            let buttonStyle = (index === context.activeThreadIndex ? "info" : "default");
             return (
                 <Button onClick={this._handleThreadSelect.bind(this, index)} 
                     key={currentValue.id}

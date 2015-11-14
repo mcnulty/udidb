@@ -85,13 +85,15 @@ export default React.createClass({
 
     _selectActiveThread: function(index) {
         let currentContextIndex = this.state.currentContextIndex;
-        let contextUpdate = { };
-        contextUpdate[currentContextIndex] = { activeThreadIndex: { $set: index } };
         let newState = update(this.state, {
-            contexts: contextUpdate
+            contexts: {
+                [currentContextIndex]: {
+                    activeThreadIndex: {
+                        $set: index
+                    }
+                }
+            }
         });
-        console.log(JSON.stringify(newState.contexts));
         this.setState(newState);
-        console.log(JSON.stringify(this.state.contexts));
     },
 });

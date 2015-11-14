@@ -6,14 +6,18 @@ import { UdidbRequest, POST_METHOD, PUT_METHOD } from "./requests.js"
 
 export default React.createClass({
 
-    _handleContextSelect: function(index, e) {
+    _handleContextSelect: function(currentContextIndex, index, e) {
         e.preventDefault();
-        this.props.process(new UdidbRequest(PUT_METHOD, "currentContextIndex", index));
+        if (currentContextIndex != index) {
+            this.props.process(new UdidbRequest(PUT_METHOD, "currentContextIndex", index));
+        }
     },
 
     render: function() {
         let items = this.props.contexts.map(function (currentValue, index, array) {
-            return <ContextItem onClick={this._handleContextSelect.bind(this, index)}
+            return <ContextItem onClick={this._handleContextSelect.bind(this, 
+                                                                        this.props.currentContextIndex, 
+                                                                        index)}
                                 key={currentValue.id} 
                                 eventKey={index} 
                                 context={currentValue}
