@@ -28,11 +28,12 @@ export default React.createClass({
     },
 
     render: function() {
-        let history = this.props.history;
+        let history = this.props.currentContext.history;
+        let numDisplayedOps = this.props.historyPrefs.numDisplayedOps;
 
         let output = [];
 
-        let startIndex = history.operations.length - history.numDisplayedOps;
+        let startIndex = history.operations.length - numDisplayedOps;
         if (startIndex < 0) {
             startIndex = 0;
         }
@@ -72,7 +73,7 @@ export default React.createClass({
             inputElement = 
                 <form onSubmit={this._handleNewOperation}>
                     <label>{PROMPT + " "}
-                        <input style={inputStyle} type="text" ref="operation"/>
+                        <input key={this.props.currentContext.id} style={inputStyle} type="text" ref="operation"/>
                     </label>
                 </form>
         }

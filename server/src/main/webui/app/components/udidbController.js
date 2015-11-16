@@ -58,18 +58,23 @@ export default React.createClass({
 
     _newOperation: function(value) {
         let fields = value.split(" ");
+        let currentContextIndex = this.state.currentContextIndex;
         let newState = update(this.state, {
-            history: { 
-                operations: {
-                    $push: [{ 
-                        name: fields[0], 
-                        operands: [ {
-                            name: "value",
-                            type: "list",
-                            value: fields.slice(1),
-                        }],
-                        result: null
-                    }]
+            contexts: {
+                [currentContextIndex] : {
+                    history: { 
+                        operations: {
+                            $push: [{ 
+                                name: fields[0], 
+                                operands: [ {
+                                    name: "value",
+                                    type: "list",
+                                    value: fields.slice(1),
+                                }],
+                                result: null
+                            }]
+                        }
+                    }
                 }
             }
         });

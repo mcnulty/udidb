@@ -23,27 +23,32 @@ export default React.createClass({
                     file: React.PropTypes.string
                 })
             })),
+
+            /** The operation history for this context */
+            history: React.PropTypes.shape({
+                baseIndex: React.PropTypes.number,
+                operations: React.PropTypes.arrayOf(React.PropTypes.shape({
+                    name: React.PropTypes.string,
+                    operands: React.PropTypes.arrayOf(React.PropTypes.shape({
+                        name: React.PropTypes.string,
+                        type: React.PropTypes.string,
+                        value: React.PropTypes.any
+                    }))
+                }))
+            }),
+
+            /** the source map for the context */
+            sourceMap: React.PropTypes.any
         })).isRequired,
 
         /** The selected context, as indicated by the user */
         currentContextIndex: React.PropTypes.number.isRequired,
 
-        /** The operation history */
-        history: React.PropTypes.shape({
-            baseIndex: React.PropTypes.number,
-            operations: React.PropTypes.arrayOf(React.PropTypes.shape({
-                name: React.PropTypes.string,
-                operands: React.PropTypes.arrayOf(React.PropTypes.shape({
-                    name: React.PropTypes.string,
-                    type: React.PropTypes.string,
-                    value: React.PropTypes.any
-                }))
-            }))
-        }),
-
-        sourceMap: React.PropTypes.shape({
-            startLineNo: React.PropTypes.number,
-            lines: React.PropTypes.arrayOf(React.PropTypes.string)
+        /** user preferences */
+        prefs: React.PropTypes.shape({
+            history: React.PropTypes.shape({
+                numDisplayedOps: React.PropTypes.number
+            }).isRequired
         }).isRequired,
 
         /** The request processing function wired up to the event processor */
@@ -54,14 +59,10 @@ export default React.createClass({
         return {
             contexts: [],
             currentContextIndex: -1,
-            history: {
-                numDisplayedOps: 0,
-                baseIndex: -1,
-                operations: []
-            },
-            sourceMap: {
-                startLineNo: 0,
-                lines: []
+            prefs: {
+                history: {
+                    numDisplayedOps: 1
+                }
             },
             process: function() {}
         }
@@ -99,14 +100,14 @@ export default React.createClass({
                         <Col xs={8} className="contextPane">
                             <Row className="sourceViewerRow">
                                 <SourceViewer currentContext={currentContext}
-                                    sourceMap={this.props.sourceMap}
                                     process={this.props.process}/>
                             </Row>
                             <Row className="statusLine">
                                 <StatusLine currentContext={currentContext}/>
                             </Row>
                             <Row className="commandLineRow">
-                                <CommandLine history={this.props.history}
+                                <CommandLine currentContext={currentContext}
+                                    historyPrefs={this.props.prefs.history}
                                     process={this.props.process}/>
                             </Row>
                         </Col>
