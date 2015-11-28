@@ -12,7 +12,7 @@ let topLevelStyle = {
     whiteSpace: 'pre',
     border: '1px solid rgb(204, 204, 204)',
     borderRadius: '4px',
-    padding: '5px 5px 5px 0px',
+    padding: '5px 0px 5px 0px',
 };
 
 export default React.createClass({
@@ -27,32 +27,36 @@ export default React.createClass({
 
         let highlightedSourceObj = hljs.highlightAuto(source, [ "C" ]);
 
-        let numberedSource = highlightedSourceObj.value.split("\n").map(function(line, index, array) {
+        let numberedSourceRows = highlightedSourceObj.value.split("\n").map(function(line, index, array) {
             let currentLineNo = index + lineStart;
 
             let markedUpLine;
             let markedUpLineNo;
             if (activeLineNo == currentLineNo) {
-                markedUpLine = '<span style="background-color: rgb(10,81,99);">' +
+                markedUpLine = '<td style="background-color: rgb(10,81,99); width: 100%;">' +
                     line +
-                        '</span>';
+                        '</td>';
                 
                 markedUpLineNo = ' ' + currentLineNo + ' >';
             }else{
-                markedUpLine = line;
+                markedUpLine = '<td style="width: 100%;">' + line + '</td>';
                 markedUpLineNo = ' ' + currentLineNo + '  ';
             }
 
-            return '<span style="' + 
+            let lineNoCell = '<td style="' + 
                         'background-color: rgb(7,54,66);' + 
                         'border:1px solid rgb(7,54,66);' +
-                        'margin-right: 5px;' +
                         'color: rgb(131, 148, 150);' +
                    '">'
-                + markedUpLineNo + '</span>' + markedUpLine;
-        }).join("\n");
+                   + markedUpLineNo + '</td>';
+                   
+            return '<tr>' + lineNoCell + markedUpLine + "</tr>";
+        }).join("");
+
         return (
-            <div className="hljs" dangerouslySetInnerHTML={ { __html: numberedSource } } style={topLevelStyle}/>
+            <div className="hljs" style={topLevelStyle}>
+                <table style={ { width: "100%" } } dangerouslySetInnerHTML={ { __html: numberedSourceRows } }/>
+            </div>
         )
     }
 });

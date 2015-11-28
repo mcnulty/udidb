@@ -17,7 +17,7 @@ var staticProps = {
                     id: "2",
                     pc: "0xeff0f0",
                     source: {
-                        line: 120,
+                        line: 110,
                         file: "events.c"
                     }
                 },
@@ -60,7 +60,7 @@ var staticProps = {
                     ]
                 },
                 "events.c" : {
-                    startLineNo: 110,
+                    startLineNo: 90,
                     lines: [
                         "void free_event_list(udi_event *event_list) {",
                         "    if (event_list == NULL) return;",
