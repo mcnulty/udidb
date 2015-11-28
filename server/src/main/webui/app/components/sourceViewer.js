@@ -15,9 +15,36 @@ let topLevelStyle = {
     padding: '5px 0px 5px 0px',
 };
 
+let defaultSourceStyle = Object.assign({
+    textAlign: "center"
+}, topLevelStyle);
+
 export default React.createClass({
 
     render: function() {
+        if (this.props.currentContext.id === "-1") {
+            return this._renderDefaultContent();
+        }else{
+            return this._renderContent();
+        }
+    },
+
+    _renderDefaultContent: function() {
+        let defaultSourceContent = this.props.defaultSourceContent;
+        let rows = defaultSourceContent.map(function(line, index, array) {
+            return <tr key={"defaultSourceContent-" + index}><td>{line}</td></tr>;
+        });
+
+        return (
+            <div className="hljs" style={defaultSourceStyle}>
+                <table style={ { width: "100%" } }>
+                    <tbody>{rows}</tbody>
+                </table>
+            </div>
+        );
+    },
+
+    _renderContent: function() {
         let currentContext = this.props.currentContext;
         let sourceContext = currentContext.threads[currentContext.activeThreadIndex].source;
         let source = currentContext.sourceMap[sourceContext.file].lines.join("\n");
@@ -55,8 +82,10 @@ export default React.createClass({
 
         return (
             <div className="hljs" style={topLevelStyle}>
-                <table style={ { width: "100%" } } dangerouslySetInnerHTML={ { __html: numberedSourceRows } }/>
+                <table style={ { width: "100%" } }>
+                    <tbody dangerouslySetInnerHTML={ { __html: numberedSourceRows } }/>
+                </table>
             </div>
-        )
+        );
     }
 });

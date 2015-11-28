@@ -8,6 +8,78 @@ import StatusLine from "./statusLine.js"
 
 export default React.createClass({
 
+    getDefaultProps: function() {
+        return {
+            contexts: [],
+            currentContextIndex: -1,
+            prefs: {
+                history: {
+                    numDisplayedOps: 1
+                }
+            },
+            process: function() {}
+        }
+    },
+
+    render: function() {
+        let currentContext;
+        if (this.props.contexts.length > 0) {
+            if (this.props.currentContextIndex >= this.props.contexts.length ||
+                this.props.currentContextIndex < 0) 
+            {
+                console.log("Invalid context index: " + this.props.currentContextIndex);
+                currentContext = this.props.contexts[0];
+            }else{
+                currentContext = this.props.contexts[this.props.currentContextIndex];
+            }
+        }else{
+            currentContext = {
+                id: "-1",
+                processId: "-1",
+                activeThreadIndex: -1,
+                threads: [],
+                sourceMap: {},
+                history: {
+                    baseIndex: -1,
+                    operations: []
+                }
+            };
+        }
+
+        return (
+            <Grid fluid={true}>
+                <Panel>
+                    <Row className="contentRow">
+                        <Col xs={3} className="contextSelector">
+                            <ContextSelector contexts={this.props.contexts} 
+                                currentContextIndex={this.props.currentContextIndex}
+                                process={this.props.process}/>
+                        </Col>
+                        <Col xs={8} className="contextPane">
+                            <Row className="sourceViewerRow">
+                                <SourceViewer currentContext={currentContext}
+                                    defaultSourceContent={this.props.defaultSourceContent}
+                                    process={this.props.process}/>
+                            </Row>
+                            <Row className="statusLine">
+                                <StatusLine currentContext={currentContext}/>
+                            </Row>
+                            <Row className="commandLineRow">
+                                <CommandLine currentContext={currentContext}
+                                    historyPrefs={this.props.prefs.history}
+                                    process={this.props.process}/>
+                            </Row>
+                        </Col>
+                    </Row>
+                    <Row className="footer">
+                        <a target="_blank" 
+                           href="https://github.com/mcnulty/udidb">udidb</a>
+                    </Row>
+                </Panel>
+            </Grid>
+        )
+    },
+
     propTypes: {
 
         /** Representation of all the available contexts */
@@ -55,69 +127,4 @@ export default React.createClass({
         process: React.PropTypes.func.isRequired,
     },
 
-    getDefaultProps: function() {
-        return {
-            contexts: [],
-            currentContextIndex: -1,
-            prefs: {
-                history: {
-                    numDisplayedOps: 1
-                }
-            },
-            process: function() {}
-        }
-    },
-
-    render: function() {
-        let currentContext;
-        if (this.props.contexts.length > 0) {
-            if (this.props.currentContextIndex >= this.props.contexts.length ||
-                this.props.currentContextIndex < 0) 
-            {
-                console.log("Invalid context index: " + this.props.currentContextIndex);
-                currentContext = this.props.contexts[0];
-            }else{
-                currentContext = this.props.contexts[this.props.currentContextIndex];
-            }
-        }else{
-            currentContext = {
-                id: "-1",
-                processId: "-1",
-                activeThreadIndex: -1,
-                threads: []
-            };
-        }
-
-        return (
-            <Grid fluid={true}>
-                <Panel>
-                    <Row className="contentRow">
-                        <Col xs={3} className="contextSelector">
-                            <ContextSelector contexts={this.props.contexts} 
-                                currentContextIndex={this.props.currentContextIndex}
-                                process={this.props.process}/>
-                        </Col>
-                        <Col xs={8} className="contextPane">
-                            <Row className="sourceViewerRow">
-                                <SourceViewer currentContext={currentContext}
-                                    process={this.props.process}/>
-                            </Row>
-                            <Row className="statusLine">
-                                <StatusLine currentContext={currentContext}/>
-                            </Row>
-                            <Row className="commandLineRow">
-                                <CommandLine currentContext={currentContext}
-                                    historyPrefs={this.props.prefs.history}
-                                    process={this.props.process}/>
-                            </Row>
-                        </Col>
-                    </Row>
-                    <Row className="footer">
-                        <a target="_blank" 
-                           href="https://github.com/mcnulty/udidb">udidb</a>
-                    </Row>
-                </Panel>
-            </Grid>
-        )
-    }
 });

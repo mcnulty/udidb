@@ -3,12 +3,12 @@ import update from "react-addons-update"
 
 import Udidb from "./udidb.js"
 import { UdidbRequest, PUT_METHOD, POST_METHOD } from "./requests.js"
-import staticProps from "./staticData.js"
+import initialState from "./initialState.js"
 
 export default React.createClass({
 
     getInitialState: function() {
-        return staticProps;
+        return initialState;
     },
 
     render: function() {

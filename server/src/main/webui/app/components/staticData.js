@@ -1,3 +1,5 @@
+/** test data used by udidb */
+
 var staticProps = {
     contexts: [
         {
