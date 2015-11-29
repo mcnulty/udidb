@@ -187,6 +187,28 @@ public class DebuggeeContexts
         }
     }
 
+    @POST
+    @Path("/globalOperation")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response createGlobalOperation(String body)
+    {
+        OperationModel operation;
+        try {
+            operation = objectMapper.readValue(body, OperationModel.class);
+        }catch (JsonProcessingException e) {
+            return invalidJsonResponse(e);
+        }catch (IOException e) {
+            return generalFailure(e);
+        }
+
+        try {
+            return success(serverEngine.executeGlobalOperation(operation));
+        }catch (OperationException e) {
+            return generalFailure(e);
+        }
+    }
+
     private Response success(Object o) {
         try {
             if (o != null) {

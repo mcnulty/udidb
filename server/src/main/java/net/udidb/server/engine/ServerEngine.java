@@ -11,6 +11,7 @@ package net.udidb.server.engine;
 
 import java.util.List;
 
+import net.udidb.engine.ops.Operation;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.server.api.models.DebuggeeConfigModel;
 import net.udidb.server.api.models.DebuggeeContextModel;
@@ -39,9 +40,12 @@ public interface ServerEngine
 
     OperationModel executeOperation(String id, OperationModel operation) throws OperationException;
 
+    OperationModel executeGlobalOperation(OperationModel operationModel) throws OperationException;
+
     OperationModel getOperation(String id) throws OperationException;
 
     List<OperationDescription> getOperationDescriptions(String id) throws OperationException;
 
     List<OperationDescription> getOperationDescriptions() throws OperationException;
+
 }

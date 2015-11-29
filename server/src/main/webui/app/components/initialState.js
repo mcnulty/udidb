@@ -30,6 +30,12 @@ var initialState = {
         " ",
         " ",
     ],
+
+    globalHistory: {
+        baseIndex: 0,
+        operations: [
+        ]
+    },
 };
 
 export default initialState;

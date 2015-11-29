@@ -66,6 +66,7 @@ export default React.createClass({
                             </Row>
                             <Row className="commandLineRow">
                                 <CommandLine currentContext={currentContext}
+                                    globalHistory={this.props.globalHistory}
                                     historyPrefs={this.props.prefs.history}
                                     process={this.props.process}/>
                             </Row>
@@ -113,6 +114,19 @@ export default React.createClass({
             sourceMap: React.PropTypes.any
         })).isRequired,
 
+        /** The global operation history */
+        globalHistory: React.PropTypes.shape({
+            baseIndex: React.PropTypes.number,
+            operations: React.PropTypes.arrayOf(React.PropTypes.shape({
+                name: React.PropTypes.string,
+                operands: React.PropTypes.arrayOf(React.PropTypes.shape({
+                    name: React.PropTypes.string,
+                    type: React.PropTypes.string,
+                    value: React.PropTypes.any
+                }))
+            }))
+        }).isRequired,
+
         /** The selected context, as indicated by the user */
         currentContextIndex: React.PropTypes.number.isRequired,
 
@@ -122,6 +136,8 @@ export default React.createClass({
                 numDisplayedOps: React.PropTypes.number
             }).isRequired
         }).isRequired,
+
+        defaultSourceContent: React.PropTypes.arrayOf(React.PropTypes.string),
 
         /** The request processing function wired up to the event processor */
         process: React.PropTypes.func.isRequired,

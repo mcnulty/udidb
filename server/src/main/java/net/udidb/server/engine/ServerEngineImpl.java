@@ -170,6 +170,18 @@ public class ServerEngineImpl implements ServerEngine
     }
 
     @Override
+    public OperationModel executeGlobalOperation(OperationModel operationModel) throws OperationException
+    {
+        switch (operationModel.getName()) {
+            case "help":
+                return operationEngine.execute(operationModel, null);
+            default:
+                logger.error("The operation {} cannot be executed without a context", operationModel.getName());
+                return null;
+        }
+    }
+
+    @Override
     public OperationModel getOperation(String id) throws OperationException
     {
         DebuggeeContext debuggeeContext = debuggeeContextManager.getContexts().get(id);

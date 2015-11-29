@@ -28,7 +28,12 @@ export default React.createClass({
     },
 
     render: function() {
-        let history = this.props.currentContext.history;
+        let history;
+        if (this.props.currentContext.id === "-1") {
+            history = this.props.globalHistory;
+        }else{
+            history = this.props.currentContext.history;
+        }
         let numDisplayedOps = this.props.historyPrefs.numDisplayedOps;
 
         let output = [];

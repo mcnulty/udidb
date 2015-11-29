@@ -10,6 +10,10 @@
 package net.udidb.server.driver;
 
 import java.nio.file.Paths;
+import java.util.EnumSet;
+
+import javax.servlet.DispatcherType;
+import javax.servlet.FilterConfig;
 
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
@@ -17,8 +21,10 @@ import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.ResourceHandler;
+import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Slf4jLog;
 import org.eclipse.jetty.util.resource.Resource;
@@ -47,6 +53,7 @@ public final class UdidbServer
         // TODO process args to configure the server
 
         String uiPath = System.getProperty("udidb.ui.path");
+        boolean cors = Boolean.getBoolean("udidb.cors");
 
         server = new Server();
         ServerConnector httpConnector = new ServerConnector(server);
@@ -63,6 +70,11 @@ public final class UdidbServer
         contextHandler.addEventListener(resteasyListener);
         contextHandler.addServlet(websocketEventsHolder, "/events");
         contextHandler.addServlet(HttpServletDispatcher.class, "/*");
+
+        if (cors) {
+            FilterHolder crossOriginFilterHolder = contextHandler.addFilter(CrossOriginFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
+            crossOriginFilterHolder.setInitParameter("allowedOrigins", "*");
+        }
 
         ResourceHandler resourceHandler = new ResourceHandler();
         if (uiPath != null) {
