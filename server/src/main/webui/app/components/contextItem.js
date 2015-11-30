@@ -14,12 +14,13 @@ export default React.createClass({
         let { context, process, ...other } = this.props;
         let threadItems = context.threads.map(function(currentValue, index, array) {
             let buttonStyle = (index === context.activeThreadIndex ? "info" : "default");
+            let sourceInfo = ( currentValue.source ? ( currentValue.source.file + ":" +
+                              currentValue.source.line ) : "No source info" );
             return (
                 <Button onClick={this._handleThreadSelect.bind(this, index)} 
                     key={currentValue.id}
                     bsStyle={buttonStyle}>
-                    {"Thread " + currentValue.id + " - " + currentValue.source.file + ":" +
-                        currentValue.source.line}
+                    {"Thread " + currentValue.id + " - " + sourceInfo}
                 </Button>
             );
         }, this);

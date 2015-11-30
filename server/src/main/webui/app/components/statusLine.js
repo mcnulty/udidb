@@ -14,16 +14,17 @@ export default React.createClass({
 
     render: function() {
 
-        var lineContent;
+        let lineContent;
         if (this.props.currentContext.id === "-1") {
             lineContent = "<no process selected>";
         }else{
-            var threadComponent;
+            let threadComponent;
             if (this.props.currentContext.activeThreadIndex >= 0) {
-                var currentThread = this.props.currentContext.threads[this.props.currentContext.activeThreadIndex];
+                let currentThread = this.props.currentContext.threads[this.props.currentContext.activeThreadIndex];
+                let sourceInfo = ( currentThread.source ? ( currentThread.source.file + ":" +
+                                                          currentThread.source.line ) : "No source info" );
 
-                threadComponent = ", Thread " + currentThread.id +
-                    " - " + currentThread.source.file + ":" + currentThread.source.line;
+                threadComponent = ", Thread " + currentThread.id + " - " + sourceInfo;
             }else{
                 threadComponent = "";
             }

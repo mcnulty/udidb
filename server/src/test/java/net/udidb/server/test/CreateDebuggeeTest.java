@@ -25,6 +25,7 @@ import net.libudi.api.event.EventType;
 import net.udidb.server.api.models.DebuggeeConfigModel;
 import net.udidb.server.api.models.DebuggeeContextModel;
 import net.udidb.server.api.models.OperationModel;
+import net.udidb.server.api.models.ProcessModel;
 import net.udidb.server.api.models.UdiEventModel;
 
 /**
@@ -51,8 +52,13 @@ public class CreateDebuggeeTest extends BaseServerTest
                 .as(DebuggeeContextModel.class);
 
         assertFalse(StringUtils.isEmpty(contextModel.getId()));
-        assertTrue(contextModel.getPid() > 0);
         assertEquals(configModel.getExecPath(), contextModel.getExecPath());
+
+        ProcessModel processModel = given()
+                .when()
+                .get(getUri(String.format("/debuggeeContexts/%s/process", contextModel.getId())))
+                .as(ProcessModel.class);
+        assertTrue(processModel.getPid() != null);
 
         continueContext(contextModel);
 
@@ -60,7 +66,7 @@ public class CreateDebuggeeTest extends BaseServerTest
         UdiEventModel event = waitForEvent();
         assertNotNull(event);
         assertEquals(contextModel.getId(), event.getContextId());
-        assertEquals(contextModel.getPid(), event.getPid());
+        assertEquals(processModel.getPid(), event.getPid());
         assertEquals(EventType.PROCESS_EXIT, event.getEventType());
         assertEquals(event.getEventData(), ImmutableMap.of("exitCode", 0));
 

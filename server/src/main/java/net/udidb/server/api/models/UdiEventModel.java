@@ -29,9 +29,9 @@ public class UdiEventModel
 {
     private String contextId;
 
-    private int pid;
+    private String pid;
 
-    private long tid;
+    private String tid;
 
     private EventType eventType;
 
@@ -43,9 +43,9 @@ public class UdiEventModel
 
     public UdiEventModel(UdiEvent udiEvent)
     {
-        pid = udiEvent.getProcess().getPid();
+        pid = Integer.toString(udiEvent.getProcess().getPid());
 
-        tid = udiEvent.getThread() != null ? udiEvent.getThread().getTid() : 0L;
+        tid = Long.toString(udiEvent.getThread() != null ? udiEvent.getThread().getTid() : 0L);
 
         eventType = udiEvent.getEventType();
 
@@ -124,22 +124,22 @@ public class UdiEventModel
         this.eventType = eventType;
     }
 
-    public int getPid()
+    public String getPid()
     {
         return pid;
     }
 
-    public void setPid(int pid)
+    public void setPid(String pid)
     {
         this.pid = pid;
     }
 
-    public long getTid()
+    public String getTid()
     {
         return tid;
     }
 
-    public void setTid(long tid)
+    public void setTid(String tid)
     {
         this.tid = tid;
     }

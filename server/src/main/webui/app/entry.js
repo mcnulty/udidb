@@ -9,6 +9,6 @@ import ReactDOM from "react-dom";
 import UdidbController from "./components/udidbController.js";
 
 ReactDOM.render(
-    <UdidbController/>,
+    <UdidbController baseApiUri="http://localhost:8888"/>,
     document.getElementById("udidb-app-container")
 );

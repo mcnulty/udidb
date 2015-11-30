@@ -22,6 +22,7 @@ import net.sourcecrumbs.api.files.Executable;
 import net.sourcecrumbs.api.files.UnknownFormatException;
 import net.udidb.engine.context.DebuggeeContext;
 import net.udidb.engine.context.DebuggeeContextManager;
+import net.udidb.engine.ops.annotations.GlobalOperation;
 import net.udidb.engine.ops.impls.DisplayNameOperation;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
@@ -42,6 +43,7 @@ import net.udidb.engine.ops.results.ValueResult;
         "Create a new debuggee"
 )
 @DisplayName("create")
+@GlobalOperation
 public class CreateDebuggee extends DisplayNameOperation {
 
     private final DebuggeeContextManager contextManager;

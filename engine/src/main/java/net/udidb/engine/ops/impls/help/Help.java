@@ -15,6 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.google.inject.Inject;
 
+import net.udidb.engine.ops.annotations.GlobalOperation;
 import net.udidb.engine.ops.impls.DisplayNameOperation;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
@@ -35,6 +36,7 @@ import net.udidb.engine.ops.results.ValueResult;
         "Display detailed help for a specific operation or short help for all operations"
 )
 @DisplayName("help")
+@GlobalOperation
 public class Help extends DisplayNameOperation {
 
     private final HelpMessageProvider provider;

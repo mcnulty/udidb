@@ -12,6 +12,7 @@ package net.udidb.server.engine;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -22,6 +23,7 @@ import com.google.inject.Injector;
 import com.google.inject.Singleton;
 
 import net.libudi.api.UdiThread;
+import net.libudi.api.exceptions.UdiException;
 import net.udidb.engine.context.DebuggeeContext;
 import net.udidb.engine.context.DebuggeeContextManager;
 import net.udidb.engine.ops.Operation;
@@ -102,35 +104,43 @@ public class ServerEngineImpl implements ServerEngine
     @Override
     public List<ThreadModel> getThreads(String id) throws OperationException
     {
-        DebuggeeContext debuggeeContext = debuggeeContextManager.getContexts().get(id);
-        if (debuggeeContext != null) {
-            synchronized (debuggeeContext) {
-                UdiThread t = debuggeeContext.getProcess().getInitialThread();
-                List<ThreadModel> results = new LinkedList<>();
-                while (t != null) {
-                    results.add(new ThreadModel(t));
-                    t = t.getNextThread();
+        try {
+            DebuggeeContext debuggeeContext = debuggeeContextManager.getContexts().get(id);
+            if (debuggeeContext != null) {
+                synchronized (debuggeeContext) {
+                    UdiThread t = debuggeeContext.getProcess().getInitialThread();
+                    List<ThreadModel> results = new LinkedList<>();
+                    while (t != null) {
+                        results.add(new ThreadModel(t));
+                        t = t.getNextThread();
+                    }
                 }
             }
+            return Collections.<ThreadModel>emptyList();
+        }catch (UdiException e) {
+            throw new OperationException(e);
         }
-        return Collections.<ThreadModel>emptyList();
     }
 
     @Override
     public ThreadModel getThread(String id, String threadId) throws OperationException
     {
-        DebuggeeContext debuggeeContext = debuggeeContextManager.getContexts().get(id);
-        if (debuggeeContext != null) {
-            synchronized (debuggeeContext) {
-                UdiThread t = debuggeeContext.getProcess().getInitialThread();
-                while (t != null) {
-                    if (Long.valueOf(t.getTid()).equals(threadId)) {
-                        return new ThreadModel(t);
+        try {
+            DebuggeeContext debuggeeContext = debuggeeContextManager.getContexts().get(id);
+            if (debuggeeContext != null) {
+                synchronized (debuggeeContext) {
+                    UdiThread t = debuggeeContext.getProcess().getInitialThread();
+                    while (t != null) {
+                        if (Long.valueOf(t.getTid()).equals(threadId)) {
+                            return new ThreadModel(t);
+                        }
                     }
                 }
             }
+            return null;
+        }catch (UdiException e) {
+            throw new OperationException(e);
         }
-        return null;
     }
 
     @Override
@@ -199,14 +209,19 @@ public class ServerEngineImpl implements ServerEngine
     {
         // Currently, all Operations are available for all debuggees. This could change as language support is added.
         // Therefore, id is currently unused but that might change.
-        return getOperationDescriptions();
+        return getOperationDescriptions(operationProvider.getOperations());
     }
 
     @Override
     public List<OperationDescription> getOperationDescriptions() throws OperationException
     {
+        return getOperationDescriptions(operationProvider.getGlobalOperations());
+    }
+
+    private List<OperationDescription> getOperationDescriptions(Map<String, Class<? extends Operation>> operations)
+    {
         List<OperationDescription> results = new LinkedList<>();
-        for (Class<? extends Operation> opClass : operationProvider.getOperations().values()) {
+        for (Class<? extends Operation> opClass : operations.values()) {
             try {
                 results.add(OperationDescription.create(injector, opClass));
             }catch (OperationParseException e) {

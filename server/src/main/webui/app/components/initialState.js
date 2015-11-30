@@ -36,6 +36,12 @@ var initialState = {
         operations: [
         ]
     },
+
+    modal: {
+        show: false,
+        text: "",
+        body: ""
+    },
 };
 
 export default initialState;

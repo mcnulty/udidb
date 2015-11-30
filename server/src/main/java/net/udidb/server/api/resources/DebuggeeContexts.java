@@ -33,6 +33,7 @@ import com.google.inject.Inject;
 
 import net.udidb.engine.ops.OperationException;
 import net.udidb.server.api.models.DebuggeeConfigModel;
+import net.udidb.server.api.models.ErrorModel;
 import net.udidb.server.api.models.ModelContainer;
 import net.udidb.server.api.models.OperationModel;
 import net.udidb.server.engine.ServerEngine;
@@ -90,7 +91,7 @@ public class DebuggeeContexts
 
     @GET @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response get(@PathParam("{id}") String id)
+    public Response get(@PathParam("id") String id)
     {
         try {
             return success(serverEngine.getDebuggeeContext(id));
@@ -101,7 +102,7 @@ public class DebuggeeContexts
 
     @GET @Path("/{id}/process")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getProcess(@PathParam("{id}") String id)
+    public Response getProcess(@PathParam("id") String id)
     {
         try {
             return success(serverEngine.getProcess(id));
@@ -112,7 +113,7 @@ public class DebuggeeContexts
 
     @GET @Path("/{id}/process/threads")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getThreads(@PathParam("{id}") String id)
+    public Response getThreads(@PathParam("id") String id)
     {
         try {
             return success(new ModelContainer<>(serverEngine.getThreads(id)));
@@ -123,7 +124,7 @@ public class DebuggeeContexts
 
     @GET @Path("/{id}/process/threads/{threadId}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getThread(@PathParam("{id}") String id, @PathParam("{threadId}") String threadId)
+    public Response getThread(@PathParam("id") String id, @PathParam("threadId") String threadId)
     {
         try {
             return success(serverEngine.getThread(id, threadId));
@@ -217,12 +218,23 @@ public class DebuggeeContexts
                 return Response.status(Status.NOT_FOUND).build();
             }
         }catch (JsonProcessingException e) {
-            return generalFailure(e);
+            return generalFailureNoBody(e);
         }
     }
 
     private Response generalFailure(Exception e) {
         logger.debug("Failed to produce valid response", e);
+        try {
+            return Response.status(Status.INTERNAL_SERVER_ERROR)
+                           .entity(objectMapper.writeValueAsString(new ErrorModel(e)))
+                           .build();
+        }catch (JsonProcessingException jsonException) {
+            return generalFailureNoBody(jsonException);
+        }
+    }
+
+    private Response generalFailureNoBody(Exception e) {
+        logger.error("Failed to produce valid response", e);
         return Response.serverError().build();
     }
 

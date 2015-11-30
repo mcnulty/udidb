@@ -26,8 +26,6 @@ public final class DebuggeeContextModel
 
     private List<String> args;
 
-    private int pid;
-
     public DebuggeeContextModel()
     {
     }
@@ -37,7 +35,6 @@ public final class DebuggeeContextModel
         this.id = debuggeeContext.getId();
         this.execPath = debuggeeContext.getExecPath().toAbsolutePath().toString();
         this.args = new ArrayList<>(Arrays.asList(debuggeeContext.getArgs()));
-        this.pid = debuggeeContext.getProcess().getPid();
     }
 
     public List<String> getArgs()
@@ -68,15 +65,5 @@ public final class DebuggeeContextModel
     public void setId(String id)
     {
         this.id = id;
-    }
-
-    public int getPid()
-    {
-        return pid;
-    }
-
-    public void setPid(int pid)
-    {
-        this.pid = pid;
     }
 }

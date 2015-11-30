@@ -1,4 +1,5 @@
-import React from "react"
+import React from "react";
+import { Input } from "react-bootstrap";
 
 import {UdidbRequest, POST_METHOD} from "./requests.js"
 
@@ -11,10 +12,17 @@ let topLevelStyle = {
     padding: '5px 5px 5px 5px'
 };
 
+let formStyle = {
+    display: "flex"
+};
+
 let inputStyle = {
     backgroundColor: 'rgb(0, 43, 54)',
     border: '0px',
-    outline: '0px'
+    outline: '0px',
+    width: 'auto',
+    flex: 2,
+    padding: '0px 0px 0px 0px'
 };
 
 const PROMPT = "(udidb)";
@@ -23,8 +31,14 @@ export default React.createClass({
 
     _handleNewOperation: function(e) {
         e.preventDefault();
-        this.props.process(new UdidbRequest(POST_METHOD, "currentContext.operation",
-                                            this.refs.operation.value.trim()));
+        let value = this.refs.operation.value.trim();
+        this.refs.operation.value = '';
+        this.props.process(new UdidbRequest(POST_METHOD, "currentContext.operation", value));
+    },
+
+    focus: function(e) {
+        e.preventDefault();
+        this.refs.operation.focus();
     },
 
     render: function() {
@@ -71,21 +85,27 @@ export default React.createClass({
         let inputElement;
         if (pendingOperation) {
             inputElement = 
-            <strong>
+            <strong id="commandLineInput">
                 Result pending...
             </strong>
         }else{
             inputElement = 
-                <form onSubmit={this._handleNewOperation}>
-                    <label>{PROMPT + " "}
-                        <input key={this.props.currentContext.id} style={inputStyle} type="text" ref="operation"/>
+                <form style={formStyle} onSubmit={this._handleNewOperation}>
+                    <label htmlFor="commandLineInput" style={ { flex: '2', display: 'flex' } }>
+                        {PROMPT + " "}
+                        <input id="commandLineInput"
+                            key={this.props.currentContext.id}
+                            style={inputStyle}
+                            type="text"
+                            autoFocus="true"
+                            ref="operation"/>
                     </label>
                 </form>
         }
 
         return (
             <div className="hljs" style={topLevelStyle}>
-                <div>
+                <div onClick={this.focus}>
                     {output.join("\n")}
                 </div>
                 {inputElement}

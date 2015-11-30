@@ -15,28 +15,29 @@ let topLevelStyle = {
     padding: '5px 0px 5px 0px',
 };
 
-let defaultSourceStyle = Object.assign({
+let placeholderStyle = Object.assign({
     textAlign: "center"
 }, topLevelStyle);
+
+let noSourceContent;
 
 export default React.createClass({
 
     render: function() {
         if (this.props.currentContext.id === "-1") {
-            return this._renderDefaultContent();
+            return this._renderPlaceholderContent(this.props.defaultSourceContent);
         }else{
             return this._renderContent();
         }
     },
 
-    _renderDefaultContent: function() {
-        let defaultSourceContent = this.props.defaultSourceContent;
-        let rows = defaultSourceContent.map(function(line, index, array) {
+    _renderPlaceholderContent: function(content) {
+        let rows = content.map(function(line, index, array) {
             return <tr key={"defaultSourceContent-" + index}><td>{line}</td></tr>;
         });
 
         return (
-            <div className="hljs" style={defaultSourceStyle}>
+            <div className="hljs" style={placeholderStyle}>
                 <table style={ { width: "100%" } }>
                     <tbody>{rows}</tbody>
                 </table>
@@ -47,6 +48,11 @@ export default React.createClass({
     _renderContent: function() {
         let currentContext = this.props.currentContext;
         let sourceContext = currentContext.threads[currentContext.activeThreadIndex].source;
+
+        if (!sourceContext || !currentContext.sourceMap || !(sourceContext.file in currentContext.sourceMap) ) {
+            return this._renderPlaceholderContent(noSourceContent);
+        }
+
         let source = currentContext.sourceMap[sourceContext.file].lines.join("\n");
 
         let lineStart = currentContext.sourceMap[sourceContext.file].startLineNo;
@@ -89,3 +95,25 @@ export default React.createClass({
         );
     }
 });
+
+noSourceContent = [
+        " ",
+        "udidb - UDI debugger",
+        " ",
+        " ",
+        " ",
+        " ",
+        "No source information available",
+        " ",
+        " ",
+        " ",
+        " ",
+        " ",
+        " ",
+        " ",
+        " ",
+        " ",
+        " ",
+        " ",
+        " ",
+];

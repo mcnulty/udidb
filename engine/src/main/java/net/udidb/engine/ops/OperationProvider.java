@@ -14,7 +14,10 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
@@ -24,6 +27,7 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
 import net.udidb.engine.ops.annotations.DisplayName;
+import net.udidb.engine.ops.annotations.GlobalOperation;
 
 /**
  * @author mcnulty
@@ -59,6 +63,13 @@ public final class OperationProvider
     public Map<String, Class<? extends Operation>> getOperations() {
 
         return new HashMap<>(operations);
+    }
+
+    public Map<String, Class<? extends Operation>> getGlobalOperations() {
+
+        return operations.entrySet().stream()
+                .filter((entry) -> entry.getValue().isAnnotationPresent(GlobalOperation.class))
+                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
     }
 
 }

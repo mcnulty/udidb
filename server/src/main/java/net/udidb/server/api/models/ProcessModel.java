@@ -16,12 +16,37 @@ import net.libudi.api.UdiProcess;
  */
 public final class ProcessModel
 {
+    private String pid;
+
+    private boolean running;
+
     public ProcessModel()
     {
     }
 
     public ProcessModel(UdiProcess udiProcess)
     {
+        this.pid = Integer.toString(udiProcess.getPid());
+        this.running = udiProcess.isRunning();
     }
 
+    public String getPid()
+    {
+        return pid;
+    }
+
+    public void setPid(String pid)
+    {
+        this.pid = pid;
+    }
+
+    public boolean isRunning()
+    {
+        return running;
+    }
+
+    public void setRunning(boolean running)
+    {
+        this.running = running;
+    }
 }

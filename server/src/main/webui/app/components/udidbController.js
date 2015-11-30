@@ -1,4 +1,5 @@
 import React from "react";
+import { Modal, Button } from "react-bootstrap";
 import update from "react-addons-update";
 import request from "superagent/lib/client";
 
@@ -6,18 +7,67 @@ import Udidb from "./udidb.js";
 import { UdidbRequest, PUT_METHOD, POST_METHOD } from "./requests.js";
 import initialState from "./initialState.js";
 
-const baseApiUri = "http://localhost:8888";
-
 export default React.createClass({
 
     getInitialState: function() {
         return initialState;
     },
 
+    componentDidMount: function() {
+        request.get(this.props.baseApiUri + "/debuggeeContexts/operations")
+               .end(function(err, resp) {
+
+                   let operationDescriptors;
+                   if (err) {
+                       operationDescriptors = [];
+                   }else{
+                       operationDescriptors = resp.body.elements;
+                   }
+
+                   let newState = update(this.state, {
+                       operationDescriptors: { $set: operationDescriptors }
+                   });
+                   this.setState(newState);
+               }.bind(this));
+    },
+
     render: function() {
         return (
-            <Udidb {...this.state} process={this.process}/>
+            <div>
+                <Udidb {...this.state} process={this.process}/>
+                <Modal show={this.state.modal.show} onHide={this._closeModal}>
+                    <Modal.Header>
+                        <h4>{this.state.modal.header}</h4>
+                    </Modal.Header>
+                    <Modal.Body>
+                        {this.state.modal.body}
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button onClick={this._closeModal}>Dismiss</Button>
+                    </Modal.Footer>
+                </Modal>
+            </div>
         );
+    },
+
+    _closeModal: function() {
+        this.setState(update(this.state, {
+            modal: {
+                show: { $set: false },
+                header: { $set: "" },
+                body: { $set: "" }
+            }
+        }));
+    },
+
+    _openModal: function(header, body) {
+        this.setState(update(this.state, {
+            modal: {
+                show: { $set: true },
+                header: { $set: header },
+                body: { $set: body },
+            }
+        }));
     },
 
     process: function(request) {
@@ -37,7 +87,7 @@ export default React.createClass({
     _processPost: function(request) {
         switch (request.getPath()) {
             case "currentContext.operation":
-                this._newOperation(request.getValue());
+                this._submitOperation(request.getValue());
                 break;
             default:
                 console.log("POST with unknown path: " + request);
@@ -59,16 +109,100 @@ export default React.createClass({
         }
     },
 
-    _newOperation: function(value) {
-        let fields = value.split(" ");
-        let currentContextIndex = this.state.currentContextIndex;
-
-        let pendingResult;
-        if (fields[0] === 'create') {
-            pendingResult = 'Debuggee created';
+    _createOperation: function(value) {
+        let fields = value.split(' ');
+        let name;
+        if (fields.length > 0) {
+            name = fields[0];
         }else{
-            pendingResult = null;
+            name = "<unspecified>";
         }
+
+        let foundOperation = false;
+        let operation = null;
+        if (this.state.operationDescriptors) {
+            this.state.operationDescriptors.forEach(function(d, index, array) {
+                if (d.name === name) {
+                    foundOperation = true;
+
+                    operation = {};
+                    operation["name"] = d.name;
+
+                    let operands = [];
+                    for (let i = 1; i < fields.length; i++) {
+                        let operandIndex = i-1;
+                        if (operandIndex >= d.operandDescriptions.length) {
+                            // The specified arguments are invalid
+                            operation = null;
+                            break;
+                        }
+
+                        let operandDescription = d.operandDescriptions[operandIndex];
+                        if (operandDescription.type === 'list') {
+                            operands.push({ 
+                                name: operandDescription.name,
+                                type: operandDescription.type,
+                                value: fields.splice(i)
+                            });
+                            break;
+                        }else{
+                            operands.push({
+                                name: operandDescription.name,
+                                type: operandDescription.type,
+                                value: fields[i]
+                            });
+                        }
+                    }
+                    operation["operands"] = operands;
+
+                    if (operation.name === 'create') {
+                        operation["result"] = 'Creating debuggee...';
+                    }else{
+                        operation["result"] = null;
+                    }
+                }
+            });
+        }
+
+        if (operation === null) {
+            let resultMsg;
+            if (!foundOperation) {
+                resultMsg = "Operation not found, cannot execute";
+            }else{
+                resultMsg = "Invalid arguments for operation '" + name + "'";
+            }
+
+            operation = {
+                name: name,
+                operands: [],
+                result: resultMsg
+            };
+        }
+
+        return operation;
+    },
+
+    _createOperationApiModel: function(operation) {
+        let apiModel = JSON.parse(JSON.stringify(operation));
+        let newOperands = {};
+        apiModel.operands.forEach(function(operand, index, array) {
+            newOperands[operand.name] = operand.value;
+        });
+        apiModel.operands = newOperands;
+        return apiModel;
+    },
+
+    _createDebuggeeConfigModel: function(operation) {
+        let config = {};
+        operation.operands.forEach(function(operand, index, array) {
+            config[operand.name] = operand.value;
+        });
+        return config;
+    },
+
+    _submitOperation: function(value) {
+        let operation = this._createOperation(value);
+        let currentContextIndex = this.state.currentContextIndex;
 
         let newState;
         if (currentContextIndex >= 0) {
@@ -77,15 +211,7 @@ export default React.createClass({
                     [currentContextIndex] : {
                         history: { 
                             operations: {
-                                $push: [{ 
-                                    name: fields[0], 
-                                    operands: [ {
-                                        name: "value",
-                                        type: "list",
-                                        value: fields.slice(1),
-                                    }],
-                                    result: pendingResult
-                                }]
+                                $push: [ operation ]
                             }
                         }
                     }
@@ -95,15 +221,7 @@ export default React.createClass({
             newState = update(this.state, {
                 globalHistory: {
                     operations: {
-                        $push: [{
-                            name: fields[0],
-                            operands: [ {
-                                name: "value",
-                                type: "list",
-                                value: fields.slice(1),
-                            }],
-                            result: pendingResult
-                        }]
+                        $push: [ operation ]
                     }
                 }
             });
@@ -111,109 +229,122 @@ export default React.createClass({
         }
         this.setState(newState);
 
-        this._sendOperation(currentContextIndex, fields);
+        if (operation.result === null || operation.name === 'create') {
+            this._sendOperation(currentContextIndex, operation);
+        }
     },
 
-    _sendOperation: function(contextIndex, fields) {
-        if (contextIndex >= 0) {
-            let contextId = this.state.contexts[contextIndex].id;
-            request.post(baseApiUri + "/debuggeeContexts/" + contextId + "/process/operation")
-                   .send(this._createOperationModel(fields))
-                   .end(this._generateOperationResultHandler(contextIndex, fields));
-        }else{
-            switch (fields[0]) {
-                case "create":
-                    request.post(baseApiUri + "/debuggeeContexts")
-                           .send(this._createDebuggeeConfigModel(fields))
-                           .end(this._generateCreateResultHandler(fields));
-                    break;
-                default:
-                    request.post(baseApiUri + "/debuggeeContexts/globalOperation")
-                           .send(this._createOperationModel(fields))
-                           .end(this._generateOperationResultHandler(contextIndex, fields));
+    _sendOperation: function(contextIndex, operation) {
+
+        switch (operation.name) {
+            case "create":
+                request.post(this.props.baseApiUri + "/debuggeeContexts")
+                       .send(this._createDebuggeeConfigModel(operation))
+                       .end(this._generateCreateResultHandler(operation));
                 break;
-            }
+            default:
+                if (contextIndex >= 0) {
+                    let contextId = this.state.contexts[contextIndex].id;
+                    request.post(this.props.baseApiUri + "/debuggeeContexts/" + contextId + "/process/operation")
+                           .send(this._createOperationApiModel(operation))
+                           .end(this._generateOperationResultHandler(contextIndex));
+                }else{
+                    request.post(this.props.baseApiUri + "/debuggeeContexts/globalOperation")
+                           .send(this._createOperationApiModel(operation))
+                           .end(this._generateOperationResultHandler(contextIndex));
+                }
+            break;
         }
     },
 
-    _createDebuggeeConfigModel: function(fields) {
-        let config = {};
-        if (fields.length > 1) {
-            config["execPath"] = fields[1];
-        }else{
-            config["execPath"] = null;
-        }
-
-        if (fields.length > 2) {
-            config["args"] = fields.splice(2);
-        }else{
-            config["args"] = [];
-        }
-
-        return config;
-    },
-
-    _generateCreateResultHandler: function(fields) {
+    _generateCreateResultHandler: function(operation) {
         return function(err, resp) {
-            // TODO
-        }
+            if (err) {
+                this._openModal("Failed to create debuggee",
+                                resp.body.exceptionName + ": " + resp.body.message);
+            }else{
+                // TODO retrieve this info from the endpoints 
+                let newContext = resp.body;
+                newContext["processId"] = "12345";
+                newContext["activeThreadIndex"] = 0;
+                newContext["threads"] = [
+                    {
+                        id: "1",
+                        pc: "0xc0ffee"
+                    }
+                ]
+                newContext["history"] = {
+                    baseIndex: 0,
+                    operations: []
+                }
+                let newState = update(this.state, {
+                    contexts: {
+                        $push: [ resp.body ]
+                    },
+                    currentContextIndex: { $apply: function(x) {
+                        if (x === -1) {
+                            return 0;
+                        }
+                        return x + 1;
+                    }}
+                });
+                this.setState(newState);
+            }
+        }.bind(this);
     },
 
-    _createOperationModel: function(fields) {
-        // TODO match name of the operation to its descriptor to constructor the operand model
-        return {
-            "name": fields[0],
-            "operands": {}
-        }
-    },
-
-    _generateOperationResultHandler: function(contextIndex, fields) {
+    _generateOperationResultHandler: function(contextIndex) {
         return function(err, resp) {
             let result;
             if (err) {
-                result = JSON.stringify(err);
+                result = resp.body.exceptionName + ": " + resp.body.message;
             }else{
+                // TODO this needs to handle other kinds of results besides value results
                 result = resp.body.result.value;
             }
 
-            let newOperation = {
-                name: fields[0],
-                operands: [ {
-                    name: "value",
-                    type: "list",
-                    value: fields.slice(1),
-                } ],
-                result: result
-            };
+            this._updateLastResult(contextIndex, result);
+        }.bind(this);
+    },
 
+    _updateLastResult: function(contextIndex, result) {
 
-            let newState;
-            if (contextIndex < 0) {
-                let operationIndex = this.state.globalHistory.operations.length-1;
-                newState = update(this.state, {
-                    globalHistory: {
-                        operations: {
-                            [operationIndex] : { $set: newOperation }
-                        }
+        let newState;
+        if (contextIndex < 0) {
+            let operationIndex = this.state.globalHistory.operations.length-1;
+
+            let newOperation = JSON.parse(JSON.stringify(this.state.globalHistory.operations[operationIndex]));
+            newOperation.result = result;
+
+            newState = update(this.state, {
+                globalHistory: {
+                    operations: {
+                        [operationIndex] : { $set: newOperation }
                     }
-                });
-            }else{
-                let currentContextIndex = this.state.currentContextIndex;
-                let operationIndex = this.state.contexts[currentContextIndex].history.operations.length-1;
-                newState = update(this.state, {
-                    contexts: {
-                        [currentContextIndex] : {
-                            history: {
-                                operations: {
-                                    [operationIndex] : { $set: newOperation }
-                                }
+                }
+            });
+        }else{
+            let currentContextIndex = this.state.currentContextIndex;
+            let operationIndex = this.state.contexts[currentContextIndex].history.operations.length-1;
+
+            let newOperation = JSON.parse(JSON.stringify(
+                this.state.contexts[currentContextIndex].history.operations[operationIndex]));
+
+            newOperation.result = result;
+
+            newState = update(this.state, {
+                contexts: {
+                    [currentContextIndex] : {
+                        history: {
+                            operations: {
+                                [operationIndex] : { $set: newOperation }
                             }
                         }
                     }
-                });
-            }
-            this.setState(newState);
-        }.bind(this);
+                }
+            });
+        }
+        this.setState(newState);
     },
 
     _selectContext: function(index) {
