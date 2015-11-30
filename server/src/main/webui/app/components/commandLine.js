@@ -44,7 +44,7 @@ export default React.createClass({
     render: function() {
         let history;
         if (this.props.currentContext.id === "-1") {
-            history = this.props.globalHistory;
+            history = this.props.globalContext.history;
         }else{
             history = this.props.currentContext.history;
         }

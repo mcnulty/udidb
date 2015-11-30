@@ -15,7 +15,7 @@ export default React.createClass({
 
     componentDidMount: function() {
         request.get(this.props.baseApiUri + "/debuggeeContexts/operations")
-               .end(function(err, resp) {
+               .end((function(err, resp) {
 
                    let operationDescriptors;
                    if (err) {
@@ -25,10 +25,29 @@ export default React.createClass({
                    }
 
                    let newState = update(this.state, {
-                       operationDescriptors: { $set: operationDescriptors }
+                       globalContext: {
+                           operationDescriptors: { $set: operationDescriptors }
+                       }
                    });
                    this.setState(newState);
-               }.bind(this));
+               }).bind(this));
+
+        request.get(this.props.baseApiUri + "/debuggeeContexts")
+               .end((function(err, resp) {
+
+                   // TODO better error handling for this case
+                   if (err) {
+                       console.log("Failed to retrieve debuggee contexts: " + err);
+                   }else{
+                       resp.body.elements.forEach((function(context, index, array) {
+                           this._addContextFromApiModel(context,
+                                                        function(resp) {
+                                                            console.log("Failed retrieve data for context with id "
+                                                                        + context.id + ": " + resp);
+                                                        });
+                       }).bind(this));
+                   }
+               }).bind(this));
     },
 
     render: function() {
@@ -109,7 +128,7 @@ export default React.createClass({
         }
     },
 
-    _createOperation: function(value) {
+    _createOperation: function(value, operationDescriptors) {
         let fields = value.split(' ');
         let name;
         if (fields.length > 0) {
@@ -120,8 +139,8 @@ export default React.createClass({
 
         let foundOperation = false;
         let operation = null;
-        if (this.state.operationDescriptors) {
-            this.state.operationDescriptors.forEach(function(d, index, array) {
+        if (operationDescriptors) {
+            operationDescriptors.forEach(function(d, index, array) {
                 if (d.name === name) {
                     foundOperation = true;
 
@@ -201,8 +220,16 @@ export default React.createClass({
     },
 
     _submitOperation: function(value) {
-        let operation = this._createOperation(value);
         let currentContextIndex = this.state.currentContextIndex;
+
+        let operationDescriptors;
+        if (currentContextIndex >= 0) {
+            operationDescriptors = this.state.contexts[currentContextIndex].operationDescriptors;
+        }else{
+            operationDescriptors = this.state.globalContext.operationDescriptors;
+        }
+
+        let operation = this._createOperation(value, operationDescriptors);
 
         let newState;
         if (currentContextIndex >= 0) {
@@ -219,9 +246,11 @@ export default React.createClass({
             });
         }else{
             newState = update(this.state, {
-                globalHistory: {
-                    operations: {
-                        $push: [ operation ]
+                globalContext: {
+                    history: {
+                        operations: {
+                            $push: [ operation ]
+                        }
                     }
                 }
             });
@@ -257,38 +286,89 @@ export default React.createClass({
         }
     },
 
+    _addContextFromApiModel: function(context, errorCallback) {
+        let newContext = {}
+        newContext["id"] = context.id;
+        newContext["history"] = {
+            baseIndex: 0,
+            operations: []
+        };
+        newContext["activeThreadIndex"] = 0;
+
+        let processPromise = new Promise(function(resolve, reject) {
+            request.get(this.props.baseApiUri + "/debuggeeContexts/" + context.id + "/process")
+                   .end(function(err, resp) {
+                       if (err) {
+                           reject(resp);
+                       }else{
+                           resolve(resp);
+                        }
+                   });
+        }.bind(this))
+        .then(function(resp) {
+            newContext["processId"] = resp.body.pid;
+        });
+
+        let threadsPromise = new Promise(function(resolve, reject) {
+            request.get(this.props.baseApiUri + "/debuggeeContexts/" + context.id + "/process/threads")
+            .end(function(err, resp) {
+                if (err) {
+                    // TODO there is a bug requesting thread information for unstarted processes
+                    //reject(resp);
+                    resolve({ body: { elements: [ { id: "1", pc: "0xc0ffee" } ] } });
+                }else{
+                    resolve(resp);
+                }
+            });
+        }.bind(this))
+        .then(function(resp) {
+            newContext["threads"] = resp.body.elements;
+        });
+
+        let descriptorsPromise = new Promise(function(resolve, reject) {
+            request.get(this.props.baseApiUri + "/debuggeeContexts/" + context.id + "/process/operations")
+                   .end(function(err, resp) {
+                       if (err) {
+                           reject(resp);
+                       }else{
+                           resolve(resp);
+                       }
+                   });
+        }.bind(this))
+        .then(function(resp) {
+            newContext["operationDescriptors"] = resp.body.elements;
+        });
+
+        Promise.all([ processPromise, threadsPromise, descriptorsPromise ])
+               .then(function (responses) {
+                   let newState = update(this.state, {
+                       contexts: {
+                           $push: [ newContext ]
+                       },
+                       currentContextIndex: { $apply: function(x) {
+                           if (x === -1) {
+                               return 0;
+                           }
+                           return x + 1;
+                       }}
+                   });
+                   this.setState(newState);
+               }.bind(this))
+               .catch(function(errorResponse) {
+                   errorCallback(errorResponse);
+               });
+    },
+
     _generateCreateResultHandler: function(operation) {
         return function(err, resp) {
             if (err) {
                 this._openModal("Failed to create debuggee",
                                 resp.body.exceptionName + ": " + resp.body.message);
             }else{
-                // TODO retrieve this info from the endpoints 
-                let newContext = resp.body;
-                newContext["processId"] = "12345";
-                newContext["activeThreadIndex"] = 0;
-                newContext["threads"] = [
-                    {
-                        id: "1",
-                        pc: "0xc0ffee"
-                    }
-                ]
-                newContext["history"] = {
-                    baseIndex: 0,
-                    operations: []
-                }
-                let newState = update(this.state, {
-                    contexts: {
-                        $push: [ resp.body ]
-                    },
-                    currentContextIndex: { $apply: function(x) {
-                        if (x === -1) {
-                            return 0;
-                        }
-                        return x + 1;
-                    }}
-                });
-                this.setState(newState);
+                this._addContextFromApiModel(resp.body,
+                                             function(resp) {
+                                                 console.log("Failed to add context: " + resp);
+                                             });
             }
         }.bind(this);
     },
@@ -311,15 +391,18 @@ export default React.createClass({
 
         let newState;
         if (contextIndex < 0) {
-            let operationIndex = this.state.globalHistory.operations.length-1;
+            let globalContext = this.state.globalContext;
+            let operationIndex = globalContext.history.operations.length-1;
 
-            let newOperation = JSON.parse(JSON.stringify(this.state.globalHistory.operations[operationIndex]));
+            let newOperation = JSON.parse(JSON.stringify(globalContext.history.operations[operationIndex]));
             newOperation.result = result;
 
             newState = update(this.state, {
-                globalHistory: {
-                    operations: {
-                        [operationIndex] : { $set: newOperation }
+                globalContext: {
+                    history: {
+                        operations: {
+                            [operationIndex] : { $set: newOperation }
+                        }
                     }
                 }
             });

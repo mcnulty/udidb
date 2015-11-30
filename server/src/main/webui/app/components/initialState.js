@@ -31,10 +31,12 @@ var initialState = {
         " ",
     ],
 
-    globalHistory: {
-        baseIndex: 0,
-        operations: [
-        ]
+    globalContext: {
+        history: {
+            baseIndex: 0,
+            operations: []
+        },
+        operationDescriptors: []
     },
 
     modal: {
