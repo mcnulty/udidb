@@ -26,8 +26,14 @@ public final class ThreadModel
 
     public ThreadModel(UdiThread udiThread) throws UdiException
     {
-        this.id = Long.toString(udiThread.getTid());
-        this.pc = Long.toHexString(udiThread.getPC());
+        this.id = Long.toHexString(udiThread.getTid());
+
+        // Only query for the PC when it is known to be available
+        if (!udiThread.getParentProcess().isWaitingForStart()) {
+            this.pc = Long.toHexString(udiThread.getPC());
+        }else{
+            this.pc = Long.toHexString(0);
+        }
     }
 
     public String getId()

@@ -108,12 +108,13 @@ public class ServerEngineImpl implements ServerEngine
             DebuggeeContext debuggeeContext = debuggeeContextManager.getContexts().get(id);
             if (debuggeeContext != null) {
                 synchronized (debuggeeContext) {
-                    UdiThread t = debuggeeContext.getProcess().getInitialThread();
                     List<ThreadModel> results = new LinkedList<>();
+                    UdiThread t = debuggeeContext.getProcess().getInitialThread();
                     while (t != null) {
                         results.add(new ThreadModel(t));
                         t = t.getNextThread();
                     }
+                    return results;
                 }
             }
             return Collections.<ThreadModel>emptyList();

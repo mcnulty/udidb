@@ -41,9 +41,14 @@ export default React.createClass({
                    }else{
                        resp.body.elements.forEach((function(context, index, array) {
                            this._addContextFromApiModel(context,
-                                                        function(resp) {
+                                                        function(resp) 
+                                                        {
                                                             console.log("Failed retrieve data for context with id "
                                                                         + context.id + ": " + resp);
+
+                                                            if (resp instanceof Error) {
+                                                                console.log(resp.stack);
+                                                            }
                                                         });
                        }).bind(this));
                    }
@@ -313,9 +318,7 @@ export default React.createClass({
             request.get(this.props.baseApiUri + "/debuggeeContexts/" + context.id + "/process/threads")
             .end(function(err, resp) {
                 if (err) {
-                    // TODO there is a bug requesting thread information for unstarted processes
-                    //reject(resp);
-                    resolve({ body: { elements: [ { id: "1", pc: "0xc0ffee" } ] } });
+                    reject(resp);
                 }else{
                     resolve(resp);
                 }
@@ -368,6 +371,10 @@ export default React.createClass({
                 this._addContextFromApiModel(resp.body,
                                              function(resp) {
                                                  console.log("Failed to add context: " + resp);
+
+                                                 if (resp instanceof Error) {
+                                                     console.log(resp.stack);
+                                                 }
                                              });
             }
         }.bind(this);
