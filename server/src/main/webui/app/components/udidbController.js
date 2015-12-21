@@ -386,8 +386,15 @@ export default React.createClass({
             if (err) {
                 result = resp.body.exceptionName + ": " + resp.body.message;
             }else{
-                // TODO this needs to handle other kinds of results besides value results
-                result = resp.body.result.value;
+                if (resp.body.result.description) {
+                    result = resp.body.result.description;
+                }else if (resp.body.result.value) {
+                    result = resp.body.result.value;
+                }else if (resp.body.result.eventPending) {
+                    result = null;
+                }else{
+                    result = "No result";
+                }
             }
 
             this._updateLastResult(contextIndex, result);

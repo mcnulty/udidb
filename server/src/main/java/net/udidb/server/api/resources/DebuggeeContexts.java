@@ -14,7 +14,6 @@ import java.io.IOException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -31,7 +30,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 
+import net.libudi.api.exceptions.RequestException;
 import net.udidb.engine.ops.OperationException;
+import net.udidb.engine.ops.OperationParseException;
 import net.udidb.server.api.models.DebuggeeConfigModel;
 import net.udidb.server.api.models.ErrorModel;
 import net.udidb.server.api.models.ModelContainer;
@@ -150,7 +151,12 @@ public class DebuggeeContexts
 
         try {
             return success(serverEngine.executeOperation(id, operation));
+        }catch (OperationParseException e) {
+            return inputError(e);
         }catch (OperationException e) {
+            if (e.getCause() instanceof RequestException) {
+                return inputError((RequestException)e.getCause());
+            }
             return generalFailure(e);
         }
     }
@@ -205,7 +211,12 @@ public class DebuggeeContexts
 
         try {
             return success(serverEngine.executeGlobalOperation(operation));
+        }catch (OperationParseException e) {
+            return inputError(e);
         }catch (OperationException e) {
+            if (e.getCause() instanceof RequestException) {
+                return inputError((RequestException)e.getCause());
+            }
             return generalFailure(e);
         }
     }
@@ -236,6 +247,17 @@ public class DebuggeeContexts
     private Response generalFailureNoBody(Exception e) {
         logger.error("Failed to produce valid response", e);
         return Response.serverError().build();
+    }
+
+    private Response inputError(Exception e) {
+        logger.error("Invalid input", e);
+        try {
+            return Response.status(Status.BAD_REQUEST)
+                    .entity(objectMapper.writeValueAsString(new ErrorModel(e)))
+                    .build();
+        }catch (JsonProcessingException jsonException) {
+            return generalFailureNoBody(jsonException);
+        }
     }
 
     private Response invalidJsonResponse(JsonProcessingException e) {

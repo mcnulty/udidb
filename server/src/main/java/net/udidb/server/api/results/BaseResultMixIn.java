@@ -16,7 +16,7 @@ import net.udidb.engine.events.EventObserver;
 /**
  * @author mcnulty
  */
-public class VoidResultMixIn
+public class BaseResultMixIn
 {
     private boolean eventPending = false;
 

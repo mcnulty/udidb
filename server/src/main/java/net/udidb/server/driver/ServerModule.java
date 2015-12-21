@@ -10,6 +10,7 @@
 package net.udidb.server.driver;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
 
@@ -21,13 +22,20 @@ import net.udidb.engine.context.DebuggeeContextManager;
 import net.udidb.engine.context.DebuggeeContextManagerImpl;
 import net.udidb.engine.expr.ExpressionCompilerDelegate;
 import net.udidb.engine.ops.impls.help.HelpMessageProvider;
+import net.udidb.engine.ops.results.DeferredResult;
 import net.udidb.engine.ops.results.OperationResultVisitor;
+import net.udidb.engine.ops.results.TableResult;
+import net.udidb.engine.ops.results.ValueResult;
 import net.udidb.engine.ops.results.VoidResult;
 import net.udidb.engine.source.InMemorySourceLineRowFactory;
 import net.udidb.engine.source.SourceLineRowFactory;
 import net.udidb.expr.ExpressionCompiler;
+import net.udidb.expr.values.ExpressionValue;
 import net.udidb.server.api.resources.DebuggeeContexts;
-import net.udidb.server.api.results.VoidResultMixIn;
+import net.udidb.server.api.results.ExpressionValueSerializer;
+import net.udidb.server.api.results.BaseResultMixIn;
+import net.udidb.server.api.results.TableResultMixIn;
+import net.udidb.server.api.results.ValueResultMixIn;
 import net.udidb.server.engine.OperationEngine;
 import net.udidb.server.engine.ServerEngine;
 import net.udidb.server.engine.ServerEngineImpl;
@@ -52,8 +60,15 @@ public class ServerModule extends AbstractModule
     @Override
     protected void configure()
     {
+        SimpleModule simpleModule = new SimpleModule();
+        simpleModule.addSerializer(ExpressionValue.class, new ExpressionValueSerializer());
+
         ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.addMixInAnnotations(VoidResult.class, VoidResultMixIn.class);
+        objectMapper.addMixInAnnotations(VoidResult.class, BaseResultMixIn.class);
+        objectMapper.addMixInAnnotations(DeferredResult.class, BaseResultMixIn.class);
+        objectMapper.addMixInAnnotations(TableResult.class, TableResultMixIn.class);
+        objectMapper.addMixInAnnotations(ValueResult.class, ValueResultMixIn.class);
+        objectMapper.registerModule(simpleModule);
 
         // REST API configuration
         bind(DebuggeeContexts.class);

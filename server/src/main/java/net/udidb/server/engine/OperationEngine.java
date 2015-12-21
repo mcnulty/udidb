@@ -180,6 +180,10 @@ public final class OperationEngine implements OperationResultVisitor
 
                 OperandParser parser = injector.getInstance(operand.operandParser());
 
+                if (parser instanceof DebuggeeContextAware) {
+                    ((DebuggeeContextAware) parser).setDebuggeeContext(debuggeeContext);
+                }
+
                 try {
                     if (operand.restOfLine()) {
                         if (fieldEntry.getValue() instanceof List) {
