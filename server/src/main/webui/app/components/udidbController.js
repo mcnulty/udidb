@@ -14,52 +14,62 @@ export default React.createClass({
     },
 
     componentDidMount: function() {
+        this._getInitialAPIData();
+    },
+
+    _retryInitialData: function() {
+        this._openModal("UDIDB server unavailable",
+                        "Click Retry to connect again",
+                        function() {
+                            this._closeModal();
+                            this._getInitialAPIData();
+                        }.bind(this),
+                        "Retry");
+    },
+
+    _getInitialAPIData: function() {
         request.get(this.props.baseApiUri + "/debuggeeContexts/operations")
-               .end((function(err, resp) {
-
-                   let operationDescriptors;
-                   if (err) {
-                       operationDescriptors = [];
-                   }else{
-                       operationDescriptors = resp.body.elements;
-                   }
-
-                   let newState = update(this.state, {
-                       globalContext: {
-                           operationDescriptors: { $set: operationDescriptors }
-                       }
-                   });
-                   this.setState(newState);
-               }).bind(this));
+        .end((function(err, resp) {
+            if (err) {
+                console.log("Failed to retrieve debuggee context operations: " + err);
+                this._retryInitialData()
+            }else{
+                let newState = update(this.state, {
+                    globalContext: {
+                        operationDescriptors: { $set: resp.body.elements }
+                    }
+                });
+                this.setState(newState);
+            }
+        }).bind(this));
 
         request.get(this.props.baseApiUri + "/debuggeeContexts")
-               .end((function(err, resp) {
+        .end((function(err, resp) {
 
-                   // TODO better error handling for this case
-                   if (err) {
-                       console.log("Failed to retrieve debuggee contexts: " + err);
-                   }else{
-                       resp.body.elements.forEach((function(context, index, array) {
-                           this._addContextFromApiModel(context,
-                                                        function(resp) 
-                                                        {
-                                                            console.log("Failed retrieve data for context with id "
-                                                                        + context.id + ": " + resp);
+            if (err) {
+                console.log("Failed to retrieve debuggee contexts: " + err);
+            }else{
+                resp.body.elements.forEach((function(context, index, array) {
+                    this._addContextFromApiModel(context,
+                                                 function(resp) 
+                                                 {
+                                                     console.log("Failed retrieve data for context with id "
+                                                                 + context.id + ": " + resp);
 
-                                                            if (resp instanceof Error) {
-                                                                console.log(resp.stack);
-                                                            }
-                                                        });
-                       }).bind(this));
-                   }
-               }).bind(this));
+                                                                 if (resp instanceof Error) {
+                                                                     console.log(resp.stack);
+                                                                 }
+                                                 });
+                }).bind(this));
+            }
+        }).bind(this));
     },
 
     render: function() {
         return (
             <div>
                 <Udidb {...this.state} process={this.process}/>
-                <Modal show={this.state.modal.show} onHide={this._closeModal}>
+                <Modal show={this.state.modal.show} onHide={this.state.modal.clickHandler}>
                     <Modal.Header>
                         <h4>{this.state.modal.header}</h4>
                     </Modal.Header>
@@ -67,7 +77,7 @@ export default React.createClass({
                         {this.state.modal.body}
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button onClick={this._closeModal}>Dismiss</Button>
+                        <Button onClick={this.state.modal.clickHandler}>{this.state.modal.buttonLabel}</Button>
                     </Modal.Footer>
                 </Modal>
             </div>
@@ -79,17 +89,21 @@ export default React.createClass({
             modal: {
                 show: { $set: false },
                 header: { $set: "" },
-                body: { $set: "" }
+                body: { $set: "" },
+                clickHandler: { $set: function() { } },
+                buttonLabel: { $set: "" }
             }
         }));
     },
 
-    _openModal: function(header, body) {
+    _openModal: function(header, body, clickHandler, buttonLabel) {
         this.setState(update(this.state, {
             modal: {
                 show: { $set: true },
                 header: { $set: header },
                 body: { $set: body },
+                clickHandler: { $set: clickHandler },
+                buttonLabel: { $set: buttonLabel }
             }
         }));
     },
@@ -366,7 +380,9 @@ export default React.createClass({
         return function(err, resp) {
             if (err) {
                 this._openModal("Failed to create debuggee",
-                                resp.body.exceptionName + ": " + resp.body.message);
+                                resp.body.exceptionName + ": " + resp.body.message,
+                                this._closeModal.bind(this),
+                                "Dismiss");
             }else{
                 this._addContextFromApiModel(resp.body,
                                              function(resp) {

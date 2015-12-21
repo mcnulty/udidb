@@ -42,7 +42,9 @@ var initialState = {
     modal: {
         show: false,
         text: "",
-        body: ""
+        body: "",
+        clickHandler: function() { },
+        buttonLabel: ""
     },
 };
 
