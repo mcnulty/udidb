@@ -138,19 +138,20 @@ public class HelpMessageProvider {
 
     private void getAllShortMessages(StringBuilder builder, Predicate<Map.Entry<String, HelpMessages>> predicate) {
 
-        Iterator<Map.Entry<String, HelpMessages>> iter = helpMessages.entrySet().iterator();
-        while (iter.hasNext()) {
-            Map.Entry<String, HelpMessages> entry = iter.next();
+        boolean first = true;
+        for (Map.Entry<String, HelpMessages> entry : helpMessages.entrySet()) {
 
             if (!predicate.test(entry)) {
                 continue;
             }
 
-            builder.append(entry.getKey()).append(" -- ").append(entry.getValue().shortMessage);
-
-            if (iter.hasNext()) {
+            if (!first) {
                 builder.append(NEWLINE);
+            }else{
+                first = false;
             }
+
+            builder.append(entry.getKey()).append(" -- ").append(entry.getValue().shortMessage);
         }
     }
 
