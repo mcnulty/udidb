@@ -87,12 +87,12 @@ public class ServerEventDispatcher extends Thread
             synchronized (this) {
                 while(processes.size() == 0) {
                     try {
-                        logger.debug("Waiting for processes to exist");
+                        logger.debug("Waiting for event processes");
                         wait();
                         processes = debuggeeContextManager.getEventContexts().stream()
                                 .map(DebuggeeContext::getProcess)
                                 .collect(Collectors.toList());
-                        logger.debug("{} processes exist", processes.size());
+                        logger.debug("{} event processes found", processes.size());
                     }catch (InterruptedException e) {
                         logger.debug("Interrupted", e);
                         Thread.currentThread().interrupt();

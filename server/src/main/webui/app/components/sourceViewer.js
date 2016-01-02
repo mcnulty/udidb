@@ -24,7 +24,7 @@ let noSourceContent;
 export default React.createClass({
 
     render: function() {
-        if (this.props.currentContext.id === "-1") {
+        if (this.props.currentContext === null) {
             return this._renderPlaceholderContent(this.props.defaultSourceContent);
         }else{
             return this._renderContent();

@@ -15,6 +15,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.google.inject.Inject;
 
+import net.udidb.engine.context.DebuggeeContext;
+import net.udidb.engine.context.DebuggeeContextAware;
 import net.udidb.engine.ops.annotations.GlobalOperation;
 import net.udidb.engine.ops.impls.DisplayNameOperation;
 import net.udidb.engine.ops.OperationException;
@@ -37,9 +39,10 @@ import net.udidb.engine.ops.results.ValueResult;
 )
 @DisplayName("help")
 @GlobalOperation
-public class Help extends DisplayNameOperation {
-
+public class Help extends DisplayNameOperation implements DebuggeeContextAware
+{
     private final HelpMessageProvider provider;
+    private DebuggeeContext debuggeeContext;
 
     @Operand(order=0, optional=true, restOfLine=true)
     private List<String> args;
@@ -59,20 +62,45 @@ public class Help extends DisplayNameOperation {
 
     @Override
     public Result execute() throws OperationException {
+
+        if (debuggeeContext != null) {
+            if (args == null) {
+                StringBuilder builder = new StringBuilder();
+                provider.getAllShortMessages(builder);
+
+                return new ValueResult(builder.toString());
+            }
+
+            String opName = StringUtils.join(args, " ");
+
+            String longMessage = provider.getLongMessage(opName);
+            if (longMessage == null) {
+                throw new OperationException(String.format("No help available for operation '%s'", opName));
+            }
+
+            return new ValueResult(longMessage);
+        }
+
         if (args == null) {
             StringBuilder builder = new StringBuilder();
-            provider.getAllShortMessages(builder);
+            provider.getAllGlobalShortMessages(builder);
 
             return new ValueResult(builder.toString());
         }
 
         String opName = StringUtils.join(args, " ");
 
-        String longMessage = provider.getLongMessage(opName);
+        String longMessage = provider.getGlobalLongMessage(opName);
         if (longMessage == null) {
             throw new OperationException(String.format("No help available for operation '%s'", opName));
         }
 
         return new ValueResult(longMessage);
+    }
+
+    @Override
+    public void setDebuggeeContext(DebuggeeContext debuggeeContext)
+    {
+        this.debuggeeContext = debuggeeContext;
     }
 }

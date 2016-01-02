@@ -43,7 +43,7 @@ export default React.createClass({
 
     render: function() {
         let history;
-        if (this.props.currentContext.id === "-1") {
+        if (this.props.currentContext === null) {
             history = this.props.globalContext.history;
         }else{
             history = this.props.currentContext.history;
@@ -94,7 +94,7 @@ export default React.createClass({
                     <label htmlFor="commandLineInput" style={ { flex: '2', display: 'flex' } }>
                         {PROMPT + " "}
                         <input id="commandLineInput"
-                            key={this.props.currentContext.id}
+                            key={this.props.currentContextIndex}
                             style={inputStyle}
                             type="text"
                             autoFocus="true"

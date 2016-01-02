@@ -15,7 +15,7 @@ export default React.createClass({
     render: function() {
 
         let lineContent;
-        if (this.props.currentContext.id === "-1") {
+        if (this.props.currentContext === null) {
             lineContent = "<no process selected>";
         }else{
             let threadComponent;

@@ -14,28 +14,25 @@ export default React.createClass({
     },
 
     render: function() {
-        let selectedContextIndex;
-        let items;
-        if (this.props.currentContextIndex >= 0) {
-            selectedContextIndex = this.props.currentContextIndex;
-            items = this.props.contexts.map(function (currentValue, index, array) {
-                return <ContextItem onClick={this._handleContextSelect.bind(this, 
-                                                                            this.props.currentContextIndex, 
-                                                                            index)}
-                                    key={currentValue.id} 
-                                    eventKey={index} 
-                                    context={currentValue}
-                                    process={this.props.process}/>
-            }, this);
-        }else{
-            selectedContextIndex = 0;
-            items = <NavItem key="defaultContextItem" eventKey={0}>
-                <span>
-                    {"No processes attached."}
-                </span>
-            </NavItem>
-
-        }
+        let selectedContextIndex = this.props.currentContextIndex;
+        let items = this.props.contexts.map(function (currentValue, index, array) {
+            return <ContextItem onClick={this._handleContextSelect.bind(this, 
+                                                                        this.props.currentContextIndex, 
+                                                                        index)}
+                                key={currentValue.id} 
+                                eventKey={index} 
+                                context={currentValue}
+                                process={this.props.process}/>
+        }, this);
+        items.push(
+            <ContextItem onClick={this._handleContextSelect.bind(this,
+                                                                 this.props.currentContextIndex,
+                                                                 -1)}
+                         key={-1}
+                         eventKey={-1}
+                         context={this.props.globalContext}
+                         process={null}/>
+        );
 
         return (
             <Nav bsStyle="pills" stacked activeKey={selectedContextIndex}>

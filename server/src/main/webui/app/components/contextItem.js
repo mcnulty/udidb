@@ -12,31 +12,44 @@ export default React.createClass({
 
     render: function() {
         let { context, process, ...other } = this.props;
-        let threadItems = context.threads.map(function(currentValue, index, array) {
-            let buttonStyle = (index === context.activeThreadIndex ? "info" : "default");
-            let sourceInfo = ( currentValue.source ? ( currentValue.source.file + ":" +
-                              currentValue.source.line ) : "No source info" );
-            return (
-                <Button onClick={this._handleThreadSelect.bind(this, index)} 
-                    key={currentValue.id}
-                    bsStyle={buttonStyle}>
-                    {"Thread " + currentValue.id + " - " + sourceInfo}
-                </Button>
-            );
-        }, this);
 
-        return (
-            <NavItem {...other}>
-                <span>
-                    { "Process " + this.props.context.processId }
-                </span>
+        let title;
+        let threadsContent;
+        if (process !== null) {
+            let threadItems = context.threads.map(function(currentValue, index, array) {
+                let buttonStyle = (index === context.activeThreadIndex ? "info" : "default");
+                let sourceInfo = ( currentValue.source ? ( currentValue.source.file + ":" +
+                                  currentValue.source.line ) : "No source info" );
+                return (
+                    <Button onClick={this._handleThreadSelect.bind(this, index)} 
+                        key={currentValue.id}
+                        bsStyle={buttonStyle}>
+                        {"Thread " + currentValue.id + " - " + sourceInfo}
+                    </Button>
+                );
+            }, this);
+            title = "Process " + this.props.context.processId;
+            threadsContent = (
                 <Collapse in={this.props.active}>
                     <div>
                         <ButtonGroup vertical block>
                             {threadItems}
                         </ButtonGroup>
                     </div>
-                </Collapse>
+                </Collapse>);
+        }else{
+            title = "Global Context";
+            threadsContent = "";
+        }
+
+        return (
+            <NavItem {...other}>
+                <span>
+                    { title }
+                </span>
+                <div>
+                    { threadsContent }
+                </div>
             </NavItem>
         );
     }

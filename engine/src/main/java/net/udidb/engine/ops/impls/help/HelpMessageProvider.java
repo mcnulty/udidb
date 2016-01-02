@@ -16,6 +16,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.Predicate;
 
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
@@ -25,8 +26,10 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 
+import net.udidb.engine.context.DebuggeeContextAware;
 import net.udidb.engine.ops.Operation;
 import net.udidb.engine.ops.annotations.DisplayName;
+import net.udidb.engine.ops.annotations.GlobalOperation;
 import net.udidb.engine.ops.annotations.HelpMessage;
 import net.udidb.engine.ops.annotations.LongHelpMessage;
 
@@ -46,6 +49,8 @@ public class HelpMessageProvider {
         public String shortMessage;
 
         public String longMessage;
+
+        public boolean global;
     }
 
     @Inject
@@ -69,6 +74,7 @@ public class HelpMessageProvider {
             String name = displayName.value();
 
             HelpMessages messages = new HelpMessages();
+            messages.global = opClass.isAnnotationPresent(GlobalOperation.class);
 
             // TODO select message based on locale
             messages.shortMessage = helpMessageAnnotation.enMessage();
@@ -110,15 +116,35 @@ public class HelpMessageProvider {
         return null;
     }
 
+    public String getGlobalLongMessage(String opName) {
+         HelpMessages messages = helpMessages.get(opName);
+        if ( messages != null ) {
+            if (messages.global) {
+                return messages.longMessage;
+            }
+        }
+
+        return null;
+    }
+
     /**
-     * Appends the short message for all register commands, one per line
+     * Appends the short message for all register operations, one per line
      *
      * @param builder the StringBuilder to append to
      */
     public void getAllShortMessages(StringBuilder builder) {
+        getAllShortMessages(builder, e -> true);
+    }
+
+    private void getAllShortMessages(StringBuilder builder, Predicate<Map.Entry<String, HelpMessages>> predicate) {
+
         Iterator<Map.Entry<String, HelpMessages>> iter = helpMessages.entrySet().iterator();
         while (iter.hasNext()) {
             Map.Entry<String, HelpMessages> entry = iter.next();
+
+            if (!predicate.test(entry)) {
+                continue;
+            }
 
             builder.append(entry.getKey()).append(" -- ").append(entry.getValue().shortMessage);
 
@@ -126,5 +152,14 @@ public class HelpMessageProvider {
                 builder.append(NEWLINE);
             }
         }
+    }
+
+    /**
+     * Appends the short message for all registered, global-only operations, one per line
+     *
+     * @param builder the StringBuilder to append to
+     */
+    public void getAllGlobalShortMessages(StringBuilder builder) {
+        getAllShortMessages(builder, e -> e.getValue().global);
     }
 }

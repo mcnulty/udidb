@@ -23,9 +23,8 @@ export default React.createClass({
 
     render: function() {
         let currentContext;
-        if (this.props.contexts.length > 0) {
-            if (this.props.currentContextIndex >= this.props.contexts.length ||
-                this.props.currentContextIndex < 0) 
+        if (this.props.contexts.length > 0 && this.props.currentContextIndex >= 0) {
+            if (this.props.currentContextIndex >= this.props.contexts.length)
             {
                 console.log("Invalid context index: " + this.props.currentContextIndex);
                 currentContext = this.props.contexts[0];
@@ -33,17 +32,7 @@ export default React.createClass({
                 currentContext = this.props.contexts[this.props.currentContextIndex];
             }
         }else{
-            currentContext = {
-                id: "-1",
-                processId: "-1",
-                activeThreadIndex: -1,
-                threads: [],
-                sourceMap: {},
-                history: {
-                    baseIndex: -1,
-                    operations: []
-                }
-            };
+            currentContext = null;
         }
 
         return (
@@ -51,13 +40,15 @@ export default React.createClass({
                 <Panel>
                     <Row className="contentRow">
                         <Col xs={3} className="contextSelector">
-                            <ContextSelector contexts={this.props.contexts} 
+                            <ContextSelector contexts={this.props.contexts}
+                                globalContext={this.globalContext} 
                                 currentContextIndex={this.props.currentContextIndex}
                                 process={this.props.process}/>
                         </Col>
                         <Col xs={8} className="contextPane">
                             <Row className="sourceViewerRow">
                                 <SourceViewer currentContext={currentContext}
+                                    globalContext={this.globalContext}
                                     defaultSourceContent={this.props.defaultSourceContent}
                                     process={this.props.process}/>
                             </Row>
