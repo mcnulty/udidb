@@ -25,6 +25,8 @@ import com.google.inject.Singleton;
 @Singleton
 public class EventsServlet extends WebSocketServlet implements WebSocketCreator
 {
+    private static final long IDLE_TIMEOUT = 60 * 60 * 1000; // 1 hour
+
     private final Injector injector;
 
     @Inject
@@ -37,6 +39,7 @@ public class EventsServlet extends WebSocketServlet implements WebSocketCreator
     public void configure(WebSocketServletFactory webSocketServletFactory)
     {
         webSocketServletFactory.setCreator(this);
+        webSocketServletFactory.getPolicy().setIdleTimeout(IDLE_TIMEOUT);
     }
 
     @Override
