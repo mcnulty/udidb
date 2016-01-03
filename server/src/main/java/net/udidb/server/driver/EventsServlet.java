@@ -42,6 +42,15 @@ public class EventsServlet extends WebSocketServlet implements WebSocketCreator
     @Override
     public Object createWebSocket(ServletUpgradeRequest req, ServletUpgradeResponse resp)
     {
+        for (String subprotocol : req.getSubProtocols()) {
+            // Only allow the wamp.2.json protocol, if specified
+            if (!subprotocol.equals("wamp.2.json")) {
+                return null;
+            }else{
+                resp.setAcceptedSubProtocol("wamp.2.json");
+            }
+        }
+
         return injector.getInstance(EventsSocket.class);
     }
 }

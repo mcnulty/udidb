@@ -17,7 +17,7 @@ module.exports = {
         loaders: [
             {
                 test: /\.js$/,
-                exclude: /node_modules/,
+                exclude: /(node_modules|third_party)/,
                 loaders: ["react-hot", "babel-loader"]
             },
             {
@@ -44,7 +44,8 @@ module.exports = {
                 test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
                 loader: 'url?limit=10000&mimetype=image/svg+xml'
             }
-        ]
+        ],
+        noParse: [/autoit\.js$/]
     },
     plugins: [
         new ExtractTextPlugin("bundle.css", {

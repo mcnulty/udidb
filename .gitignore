@@ -3,8 +3,10 @@ target/
 *.class
 dependency-reduced-pom.xml
 server/src/main/webui/node_modules
+server/src/main/webui/app/third_party/
 server/src/main/webui/dist
 *.swp
+
 
 # Package Files #
 *.jar

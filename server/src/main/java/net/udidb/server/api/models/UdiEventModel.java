@@ -45,7 +45,7 @@ public class UdiEventModel
     {
         pid = Integer.toString(udiEvent.getProcess().getPid());
 
-        tid = Long.toString(udiEvent.getThread() != null ? udiEvent.getThread().getTid() : 0L);
+        tid = Long.toHexString(udiEvent.getThread() != null ? udiEvent.getThread().getTid() : 0L);
 
         eventType = udiEvent.getEventType();
 

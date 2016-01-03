@@ -33,9 +33,10 @@ import net.udidb.expr.ExpressionCompiler;
 import net.udidb.expr.values.ExpressionValue;
 import net.udidb.server.api.resources.DebuggeeContexts;
 import net.udidb.server.api.results.ExpressionValueSerializer;
-import net.udidb.server.api.results.BaseResultMixIn;
+import net.udidb.server.api.results.DeferredResultMixIn;
 import net.udidb.server.api.results.TableResultMixIn;
 import net.udidb.server.api.results.ValueResultMixIn;
+import net.udidb.server.api.results.VoidResultMixIn;
 import net.udidb.server.engine.OperationEngine;
 import net.udidb.server.engine.ServerEngine;
 import net.udidb.server.engine.ServerEngineImpl;
@@ -64,8 +65,8 @@ public class ServerModule extends AbstractModule
         simpleModule.addSerializer(ExpressionValue.class, new ExpressionValueSerializer());
 
         ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.addMixInAnnotations(VoidResult.class, BaseResultMixIn.class);
-        objectMapper.addMixInAnnotations(DeferredResult.class, BaseResultMixIn.class);
+        objectMapper.addMixInAnnotations(VoidResult.class, VoidResultMixIn.class);
+        objectMapper.addMixInAnnotations(DeferredResult.class, DeferredResultMixIn.class);
         objectMapper.addMixInAnnotations(TableResult.class, TableResultMixIn.class);
         objectMapper.addMixInAnnotations(ValueResult.class, ValueResultMixIn.class);
         objectMapper.registerModule(simpleModule);

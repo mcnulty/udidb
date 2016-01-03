@@ -1,3 +1,5 @@
+require('script!../third_party/autobahnjs/autobahn.min.js');
+
 import React from "react";
 import { Modal, Button } from "react-bootstrap";
 import update from "react-addons-update";
@@ -14,7 +16,39 @@ export default React.createClass({
     },
 
     componentDidMount: function() {
-        this._getInitialAPIData();
+        this._getInitialAPIData(this._createUdidbEventListener);
+    },
+
+    _createUdidbEventListener: function() {
+        this.state.eventConnection = new autobahn.Connection({
+            url: 'ws://localhost:8888/events',
+            realm: 'udidb'
+        });
+
+        this.state.eventConnection.onopen = function (session) {
+            if (this.state.eventSession && this.state.eventSession.id !== session) {
+                // Retry has been completed successfully
+                this._closeModal();
+                this._getInitialAPIData(function() { });
+            }
+            session.subscribe('com.udidb.events',
+                              this._udidbEventHandler);
+            this.setState(update(this.state, {
+                eventSession: {
+                    $set: session
+                }
+            }));
+        }.bind(this);
+
+        this.state.eventConnection.onclose = function (reason, details) {
+            console.log("Events connection closed: (" + reason + ", " + details + ")");
+            this._openModal("UDIDB events connection unavailable",
+                            "Waiting for connection to be re-established...",
+                            function () { },
+                            null);
+        }.bind(this);
+
+        this.state.eventConnection.open();
     },
 
     _retryInitialData: function() {
@@ -22,12 +56,29 @@ export default React.createClass({
                         "Click Retry to connect again",
                         function() {
                             this._closeModal();
-                            this._getInitialAPIData();
+                            this._getInitialAPIData(this._createUdidbEventListener);
                         }.bind(this),
                         "Retry");
     },
 
-    _getInitialAPIData: function() {
+    _getInitialAPIData: function(success) {
+        // reset the state that will be retrieved
+        this.setState(update(this.state, {
+            globalContext: {
+                history: { 
+                    baseIndex: { $set: 0 },
+                    operations: { $set: [] }
+                },
+                operationDescriptors: { $set: [] }
+            },
+            contexts: {
+                $set: []
+            },
+            currentContextIndex: {
+                $set: -1
+            }
+        }));
+
         request.get(this.props.baseApiUri + "/debuggeeContexts/operations")
         .end((function(err, resp) {
             if (err) {
@@ -48,6 +99,7 @@ export default React.createClass({
 
             if (err) {
                 console.log("Failed to retrieve debuggee contexts: " + err);
+                this._retryInitialData();
             }else{
                 resp.body.elements.forEach((function(context, index, array) {
                     this._addContextFromApiModel(context,
@@ -61,11 +113,18 @@ export default React.createClass({
                                                                  }
                                                  });
                 }).bind(this));
+                success();
             }
         }).bind(this));
     },
 
     render: function() {
+        let footerContent;
+        if (this.state.modal.buttonLabel) {
+            footerContent = <Button onClick={this.state.modal.clickHandler}>{this.state.modal.buttonLabel}</Button>;
+        }else{
+            footerContent = <div></div>;
+        }
         return (
             <div>
                 <Udidb {...this.state} process={this.process}/>
@@ -77,7 +136,7 @@ export default React.createClass({
                         {this.state.modal.body}
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button onClick={this.state.modal.clickHandler}>{this.state.modal.buttonLabel}</Button>
+                        {footerContent}
                     </Modal.Footer>
                 </Modal>
             </div>
@@ -374,6 +433,74 @@ export default React.createClass({
                .catch(function(errorResponse) {
                    errorCallback(errorResponse);
                });
+    },
+
+    _removeContext: function(contextIndex) {
+        let newState = update(this.state, {
+            contexts: {
+                $splice: [[contextIndex, 1]]
+            },
+            currentContextIndex: {
+                $set: -1
+            }
+        });
+        this.setState(newState);
+    },
+
+    _udidbEventHandler: function(args) {
+        let udidbEvent = args[0];
+        let contextIndex;
+        if (udidbEvent.contextId) {
+            contextIndex = this.state.contexts.findIndex(function (element, index, array) {
+                return element.id === udidbEvent.contextId;
+            });
+            if (contextIndex < 0) {
+                contextIndex = -1;
+            }        
+        }else{
+            contextIndex = null;
+        }
+
+        switch (udidbEvent.eventType) {
+            case "BREAKPOINT":
+                this._handleBreakpointEvent(udidbEvent, contextIndex);
+                break;
+            case "PROCESS_EXIT":
+                this._handleProcessExit(udidbEvent, contextIndex);
+                break;
+            case "PROCESS_CLEANUP":
+                this._handleProcessCleanup(udidbEvent, contextIndex);
+                break;
+            default:
+                console.log("Unhandled event: " + udidbEvent);
+                break;
+        }
+    },
+
+    _handleBreakpointEvent: function(udidbEvent, contextIndex) {
+        if (contextIndex === null) {
+            console.log("Could not determine context for breakpoint event");
+            return;
+        }
+        this._updateLastResult(contextIndex, "Breakpoint hit at 0x" +
+                               udidbEvent.eventData.address.toString(16));
+    },
+
+    _handleProcessExit: function(udidbEvent, contextIndex) {
+        if (contextIndex === null) {
+            console.log("Could not determine context for process exit event");
+            return;
+        }
+        this._updateLastResult(contextIndex, "Process exiting with code = " +
+                               udidbEvent.eventData.exitCode);
+    },
+
+    _handleProcessCleanup: function(udidbEvent, contextIndex) {
+        if (contextIndex === null) {
+            console.log("Could not determine context for process cleanup event");
+            return;
+        }
+        this._removeContext(contextIndex);
     },
 
     _generateCreateResultHandler: function(operation) {
