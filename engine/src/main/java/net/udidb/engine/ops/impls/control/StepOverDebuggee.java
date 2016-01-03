@@ -63,8 +63,8 @@ public class StepOverDebuggee extends DisplayNameOperation implements EventObser
     private static final Logger logger = LoggerFactory.getLogger(StepOverDebuggee.class);
 
     private DebuggeeContext context;
+    private MachineCodeMapping machineCodeMapping;
     private final OperationResultVisitor resultVisitor;
-    private final MachineCodeMapping machineCodeMapping;
     private final SourceLineRowFactory sourceLineRowFactory;
 
     @Inject
@@ -72,7 +72,6 @@ public class StepOverDebuggee extends DisplayNameOperation implements EventObser
             SourceLineRowFactory sourceLineRowFactory)
     {
         this.resultVisitor = resultVisitor;
-        this.machineCodeMapping = (context != null) ? context.getExecutable().getMachineCodeMapping() : null;
         this.sourceLineRowFactory = sourceLineRowFactory;
     }
 
@@ -170,5 +169,6 @@ public class StepOverDebuggee extends DisplayNameOperation implements EventObser
     public void setDebuggeeContext(DebuggeeContext debuggeeContext)
     {
         this.context = debuggeeContext;
+        this.machineCodeMapping = debuggeeContext.getExecutable().getMachineCodeMapping();
     }
 }
