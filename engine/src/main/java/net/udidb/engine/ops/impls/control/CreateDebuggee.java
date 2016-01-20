@@ -87,8 +87,11 @@ public class CreateDebuggee extends DisplayNameOperation {
             throw new OperationException(String.format("%s is not a valid path", execPath), e);
         }
 
+        String[] localArgs;
         if (args == null) {
-            throw new OperationException("Arguments cannot be null");
+            localArgs = new String[0];
+        }else{
+            localArgs = args;
         }
 
         Executable executable;
@@ -99,7 +102,7 @@ public class CreateDebuggee extends DisplayNameOperation {
         }
 
         try {
-            DebuggeeContext context = contextManager.createContext(path, args, executable);
+            DebuggeeContext context = contextManager.createContext(path, localArgs, executable);
             return new ValueResult("Debuggee created for " + execPath, context.getId());
         }catch (UdiException e) {
             throw new OperationException("Failed to create process", e);
