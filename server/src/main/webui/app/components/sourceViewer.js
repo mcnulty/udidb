@@ -8,7 +8,6 @@ import hljs from "highlight.js"
 
 let topLevelStyle = {
     fontFamily: 'monospace',
-    fontSize: '11',
     whiteSpace: 'pre',
     border: '1px solid rgb(204, 204, 204)',
     borderRadius: '4px',

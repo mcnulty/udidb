@@ -552,39 +552,46 @@ export default React.createClass({
             let operationIndex = globalContext.history.operations.length-1;
 
             let newOperation = JSON.parse(JSON.stringify(globalContext.history.operations[operationIndex]));
-            newOperation.result = result;
+            if (newOperation.result === null) {
+                newOperation.result = result;
 
-            newState = update(this.state, {
-                globalContext: {
-                    history: {
-                        operations: {
-                            [operationIndex] : { $set: newOperation }
-                        }
-                    }
-                }
-            });
-        }else{
-            let currentContextIndex = this.state.currentContextIndex;
-            let operationIndex = this.state.contexts[currentContextIndex].history.operations.length-1;
-
-            let newOperation = JSON.parse(JSON.stringify(
-                this.state.contexts[currentContextIndex].history.operations[operationIndex]));
-
-            newOperation.result = result;
-
-            newState = update(this.state, {
-                contexts: {
-                    [currentContextIndex] : {
+                newState = update(this.state, {
+                    globalContext: {
                         history: {
                             operations: {
                                 [operationIndex] : { $set: newOperation }
                             }
                         }
                     }
+                });
+                this.setState(newState);
+            }
+        }else{
+            let currentContextIndex = this.state.currentContextIndex;
+            if (this.state.contexts[currentContextIndex]) {
+                let operationIndex = this.state.contexts[currentContextIndex].history.operations.length-1;
+
+                let newOperation = JSON.parse(JSON.stringify(
+                            this.state.contexts[currentContextIndex].history.operations[operationIndex]));
+
+                if (newOperation.result === null) {
+                    newOperation.result = result;
+
+                    newState = update(this.state, {
+                        contexts: {
+                            [currentContextIndex] : {
+                                history: {
+                                    operations: {
+                                        [operationIndex] : { $set: newOperation }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    this.setState(newState);
                 }
-            });
+            }
         }
-        this.setState(newState);
     },
 
     _selectContext: function(index) {

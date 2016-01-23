@@ -7,7 +7,6 @@ var statusLineStyle = {
     paddingLeft: '5px',
     fontWeight: 'bold',
     fontFamily: 'monospace',
-    fontSize: '12'
 }
 
 export default React.createClass({

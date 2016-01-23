@@ -5,7 +5,6 @@ import {UdidbRequest, POST_METHOD} from "./requests.js"
 
 let topLevelStyle = {
     fontFamily: 'monospace',
-    fontSize: '11',
     whiteSpace: 'pre',
     border: '1px solid rgb(204, 204, 204)',
     borderRadius: '4px',
