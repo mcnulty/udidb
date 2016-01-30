@@ -25,6 +25,7 @@ import net.udidb.engine.ops.impls.help.HelpMessageProvider;
 import net.udidb.engine.ops.results.DeferredResult;
 import net.udidb.engine.ops.results.OperationResultVisitor;
 import net.udidb.engine.ops.results.TableResult;
+import net.udidb.engine.ops.results.TableRow;
 import net.udidb.engine.ops.results.ValueResult;
 import net.udidb.engine.ops.results.VoidResult;
 import net.udidb.engine.source.InMemorySourceLineRowFactory;
@@ -35,6 +36,7 @@ import net.udidb.server.api.resources.DebuggeeContexts;
 import net.udidb.server.api.results.ExpressionValueSerializer;
 import net.udidb.server.api.results.DeferredResultMixIn;
 import net.udidb.server.api.results.TableResultMixIn;
+import net.udidb.server.api.results.TableRowMixIn;
 import net.udidb.server.api.results.ValueResultMixIn;
 import net.udidb.server.api.results.VoidResultMixIn;
 import net.udidb.server.engine.OperationEngine;
@@ -69,6 +71,7 @@ public class ServerModule extends AbstractModule
         objectMapper.addMixInAnnotations(DeferredResult.class, DeferredResultMixIn.class);
         objectMapper.addMixInAnnotations(TableResult.class, TableResultMixIn.class);
         objectMapper.addMixInAnnotations(ValueResult.class, ValueResultMixIn.class);
+        objectMapper.addMixInAnnotations(TableRow.class, TableRowMixIn.class);
         objectMapper.registerModule(simpleModule);
 
         // REST API configuration

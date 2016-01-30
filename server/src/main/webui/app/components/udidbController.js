@@ -207,58 +207,56 @@ export default React.createClass({
     },
 
     _createOperation: function(value, operationDescriptors) {
-        let fields = value.split(' ');
-        let name;
-        if (fields.length > 0) {
-            name = fields[0];
-        }else{
-            name = "<unspecified>";
-        }
 
         let foundOperation = false;
         let operation = null;
         if (operationDescriptors) {
-            operationDescriptors.forEach(function(d, index, array) {
-                if (d.name === name) {
-                    foundOperation = true;
+            let fields = value.split(' ');
+            for (let nameIndex = 0; nameIndex < fields.length; nameIndex++) {
+                let name = fields.slice(0, nameIndex+1).join(' ');
 
-                    operation = {};
-                    operation["name"] = d.name;
+                operationDescriptors.forEach(function(d, index, array) {
+                    if (d.name === name) {
+                        foundOperation = true;
 
-                    let operands = [];
-                    for (let i = 1; i < fields.length; i++) {
-                        let operandIndex = i-1;
-                        if (operandIndex >= d.operandDescriptions.length) {
-                            // The specified arguments are invalid
-                            operation = null;
-                            break;
+                        operation = {};
+                        operation["name"] = d.name;
+
+                        let operands = [];
+                        for (let i = nameIndex+1; i < fields.length; i++) {
+                            let operandIndex = i - (nameIndex + 1);
+                            if (operandIndex >= d.operandDescriptions.length) {
+                                // The specified arguments are invalid
+                                operation = null;
+                                break;
+                            }
+
+                            let operandDescription = d.operandDescriptions[operandIndex];
+                            if (operandDescription.type === 'list') {
+                                operands.push({ 
+                                    name: operandDescription.name,
+                                    type: operandDescription.type,
+                                    value: fields.splice(i)
+                                });
+                                break;
+                            }else{
+                                operands.push({
+                                    name: operandDescription.name,
+                                    type: operandDescription.type,
+                                    value: fields[i]
+                                });
+                            }
                         }
+                        operation["operands"] = operands;
 
-                        let operandDescription = d.operandDescriptions[operandIndex];
-                        if (operandDescription.type === 'list') {
-                            operands.push({ 
-                                name: operandDescription.name,
-                                type: operandDescription.type,
-                                value: fields.splice(i)
-                            });
-                            break;
+                        if (operation.name === 'create') {
+                            operation["result"] = 'Creating debuggee...';
                         }else{
-                            operands.push({
-                                name: operandDescription.name,
-                                type: operandDescription.type,
-                                value: fields[i]
-                            });
+                            operation["result"] = null;
                         }
                     }
-                    operation["operands"] = operands;
-
-                    if (operation.name === 'create') {
-                        operation["result"] = 'Creating debuggee...';
-                    }else{
-                        operation["result"] = null;
-                    }
-                }
-            });
+                });
+            }
         }
 
         if (operation === null) {
@@ -270,7 +268,7 @@ export default React.createClass({
             }
 
             operation = {
-                name: name,
+                name: "<unknown>",
                 operands: [],
                 result: resultMsg
             };
@@ -529,12 +527,22 @@ export default React.createClass({
             if (err) {
                 result = resp.body.exceptionName + ": " + resp.body.message;
             }else{
-                if (resp.body.result.description) {
-                    result = resp.body.result.description;
-                }else if (resp.body.result.value) {
-                    result = resp.body.result.value;
-                }else if (resp.body.result.eventPending) {
+                let resultObj = resp.body.result;
+                if (resultObj.description) {
+                    result = resultObj.description;
+                }else if (resultObj.value) {
+                    result = resultObj.value;
+                }else if (resultObj.eventPending) {
                     result = null;
+                }else if (resultObj.rows) {
+                    if (resultObj.columnHeaders && resultObj.columnHeaders.length > 0) {
+                        result = resultObj.columnHeaders.join(' ') + "\n";
+                    }else{
+                        result = "";
+                    }
+                    resultObj.rows.forEach(function(row, index, array) {
+                        result += row.columnValues.join(' ') + "\n";
+                    });
                 }else{
                     result = "No result";
                 }
