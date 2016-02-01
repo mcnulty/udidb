@@ -14,7 +14,6 @@ import com.google.inject.Inject;
 import net.udidb.engine.ops.impls.DisplayNameOperation;
 import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.HelpMessage;
-import net.udidb.engine.ops.annotations.LongHelpMessage;
 import net.udidb.engine.ops.annotations.Operand;
 import net.udidb.engine.ops.parser.ExpressionParser;
 import net.udidb.engine.ops.results.Result;
@@ -26,34 +25,30 @@ import net.udidb.expr.Expression;
  *
  * @author mcnulty
  */
-@HelpMessage(enMessage="Display the value of an expression")
-@LongHelpMessage(enMessage=
-        "eval <expression>\n\n" +
-        "Display the value of an expression"
-)
+@HelpMessage("Display the value of an expression")
 @DisplayName("eval")
 public class Eval extends DisplayNameOperation {
 
     @Operand(order=0, operandParser = ExpressionParser.class, restOfLine = true)
-    private Expression value;
+    private Expression expression;
 
     @Inject
     public Eval() {
     }
 
-    public Expression getValue() {
-        return value;
+    public Expression getExpression() {
+        return expression;
     }
 
-    public void setValue(Expression value) {
-        this.value = value;
+    public void setExpression(Expression expression) {
+        this.expression = expression;
     }
 
     @Override
     public Result execute()
     {
-        if (value.isExpressionCompleted()) {
-            return new ValueResult(value.getValue().toString(), value.getValue());
+        if (expression.isExpressionCompleted()) {
+            return new ValueResult(expression.getValue().toString(), expression.getValue());
         }
 
         // TODO support execution

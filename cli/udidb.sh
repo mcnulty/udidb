@@ -6,7 +6,7 @@
 #
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 JAR=$DIR/target/udidb-cli-1.0-SNAPSHOT.jar
-DEBUG=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005
+DEBUG=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8000
 
 if [ ! -e $JAR ]; then
     echo "udidb jar does not exist. Run mvn package"

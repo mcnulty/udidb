@@ -18,7 +18,6 @@ import com.google.inject.Inject;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.HelpMessage;
-import net.udidb.engine.ops.annotations.LongHelpMessage;
 import net.udidb.engine.ops.impls.DisplayNameOperation;
 import net.udidb.engine.ops.impls.Setting;
 import net.udidb.engine.ops.results.Result;
@@ -30,11 +29,7 @@ import net.udidb.engine.ops.results.TableRow;
  *
  * @author mcnulty
  */
-@HelpMessage(enMessage = "Display all values of internals settings")
-@LongHelpMessage(enMessage =
-        "internals show\n\n" +
-        "Display all values of internal settings"
-)
+@HelpMessage("Display all values of internals settings")
 @DisplayName("internals show")
 public class ShowInternals extends DisplayNameOperation {
 

@@ -12,11 +12,9 @@ package net.udidb.cli.ops.impls.display.show;
 import com.google.inject.Inject;
 
 import net.udidb.cli.driver.GlobalContextManager;
-import net.udidb.engine.context.DebuggeeContextManager;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.HelpMessage;
-import net.udidb.engine.ops.annotations.LongHelpMessage;
 import net.udidb.engine.ops.impls.DisplayNameOperation;
 import net.udidb.engine.ops.results.Result;
 import net.udidb.engine.ops.results.TableResult;
@@ -26,11 +24,7 @@ import net.udidb.engine.ops.results.TableResult;
  *
  * @author mcnulty
  */
-@HelpMessage(enMessage = "Display all debuggee contexts")
-@LongHelpMessage(enMessage =
-        "show contexts\n\n" +
-        "Show all debuggee contexts managed by the debugger"
-)
+@HelpMessage("Display all debuggee contexts")
 @DisplayName("show contexts")
 public class Contexts extends DisplayNameOperation {
 

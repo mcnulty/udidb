@@ -15,7 +15,6 @@ import net.udidb.engine.ops.impls.DisplayNameOperation;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.HelpMessage;
-import net.udidb.engine.ops.annotations.LongHelpMessage;
 import net.udidb.engine.ops.results.Result;
 import net.udidb.engine.ops.results.VoidResult;
 
@@ -24,9 +23,8 @@ import net.udidb.engine.ops.results.VoidResult;
  *
  * @author mcnulty
  */
-@HelpMessage(enMessage="Quit the debugger")
-@LongHelpMessage(enMessage="Quit the debugger")
-@DisplayName(value ="quit")
+@HelpMessage("Quit the debugger")
+@DisplayName("quit")
 public class Quit extends DisplayNameOperation {
 
     @Inject

@@ -22,7 +22,6 @@ import net.udidb.engine.ops.impls.DisplayNameOperation;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.HelpMessage;
-import net.udidb.engine.ops.annotations.LongHelpMessage;
 import net.udidb.engine.ops.annotations.Operand;
 import net.udidb.engine.ops.results.Result;
 import net.udidb.engine.ops.results.ValueResult;
@@ -32,11 +31,7 @@ import net.udidb.engine.ops.results.ValueResult;
  *
  * @author mcnulty
  */
-@HelpMessage(enMessage = "Display help for operations")
-@LongHelpMessage(enMessage =
-        "help [operation name]\n\n" +
-        "Display detailed help for a specific operation or short help for all operations"
-)
+@HelpMessage("Display help for operations")
 @DisplayName("help")
 @GlobalOperation
 public class Help extends DisplayNameOperation implements DebuggeeContextAware
@@ -45,14 +40,15 @@ public class Help extends DisplayNameOperation implements DebuggeeContextAware
     private DebuggeeContext debuggeeContext;
 
     @Operand(order=0, optional=true, restOfLine=true)
-    private List<String> args;
+    @HelpMessage("the requested operations")
+    private List<String> operationName;
 
-    public List<String> getArgs() {
-        return args;
+    public List<String> getOperationName() {
+        return operationName;
     }
 
-    public void setArgs(List<String> args) {
-        this.args = args;
+    public void setOperationName(List<String> operationName) {
+        this.operationName = operationName;
     }
 
     @Inject
@@ -64,14 +60,14 @@ public class Help extends DisplayNameOperation implements DebuggeeContextAware
     public Result execute() throws OperationException {
 
         if (debuggeeContext != null) {
-            if (args == null) {
+            if (operationName == null) {
                 StringBuilder builder = new StringBuilder();
                 provider.getAllShortMessages(builder);
 
                 return new ValueResult(builder.toString());
             }
 
-            String opName = StringUtils.join(args, " ");
+            String opName = StringUtils.join(operationName, " ");
 
             String longMessage = provider.getLongMessage(opName);
             if (longMessage == null) {
@@ -81,14 +77,14 @@ public class Help extends DisplayNameOperation implements DebuggeeContextAware
             return new ValueResult(longMessage);
         }
 
-        if (args == null) {
+        if (operationName == null) {
             StringBuilder builder = new StringBuilder();
             provider.getAllGlobalShortMessages(builder);
 
             return new ValueResult(builder.toString());
         }
 
-        String opName = StringUtils.join(args, " ");
+        String opName = StringUtils.join(operationName, " ");
 
         String longMessage = provider.getGlobalLongMessage(opName);
         if (longMessage == null) {

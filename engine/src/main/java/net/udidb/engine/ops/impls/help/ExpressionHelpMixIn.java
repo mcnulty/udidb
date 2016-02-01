@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015, Dan McNulty
+ * Copyright (c) 2011-2016, Dan McNulty
  * All rights reserved.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -7,19 +7,18 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-package net.udidb.engine.ops.impls.source;
+package net.udidb.engine.ops.impls.help;
 
-import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.HelpMessage;
+import net.udidb.engine.ops.annotations.HelpMessages;
 
 /**
- * An Operation to obtain lines of source from a specified file
+ * Mix-in class that is used to add global help annotation to the Expression type
  *
  * @author mcnulty
  */
-@HelpMessage("Obtain lines of source from a file")
-@DisplayName("source lines")
-public class GetSourceLines
+@HelpMessages(@HelpMessage("a C language expression"))
+class ExpressionHelpMixIn
 {
 
 }

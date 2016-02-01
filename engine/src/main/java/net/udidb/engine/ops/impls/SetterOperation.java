@@ -9,6 +9,7 @@
 
 package net.udidb.engine.ops.impls;
 
+import net.udidb.engine.ops.annotations.HelpMessage;
 import net.udidb.engine.ops.annotations.Operand;
 
 /**
@@ -21,6 +22,7 @@ import net.udidb.engine.ops.annotations.Operand;
 public abstract class SetterOperation<T> extends DisplayNameOperation {
 
     @Operand(order=0)
+    @HelpMessage("the value to set")
     protected T value;
 
     public T getValue() {

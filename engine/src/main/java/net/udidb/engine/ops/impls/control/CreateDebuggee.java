@@ -27,7 +27,6 @@ import net.udidb.engine.ops.impls.DisplayNameOperation;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.HelpMessage;
-import net.udidb.engine.ops.annotations.LongHelpMessage;
 import net.udidb.engine.ops.annotations.Operand;
 import net.udidb.engine.ops.results.Result;
 import net.udidb.engine.ops.results.ValueResult;
@@ -37,11 +36,7 @@ import net.udidb.engine.ops.results.ValueResult;
  *
  * @author mcnulty
  */
-@HelpMessage(enMessage="Create a new debuggee")
-@LongHelpMessage(enMessage=
-        "create /path/to/executable args\n\n" +
-        "Create a new debuggee"
-)
+@HelpMessage("Create a new debuggee")
 @DisplayName("create")
 @GlobalOperation
 public class CreateDebuggee extends DisplayNameOperation {
@@ -51,9 +46,11 @@ public class CreateDebuggee extends DisplayNameOperation {
     private final BinaryReader reader;
 
     @Operand(order=0)
+    @HelpMessage("the full path to the executable")
     private String execPath;
 
     @Operand(order=1, restOfLine=true, optional=true)
+    @HelpMessage("the arguments for the execution of the executable")
     private String[] args;
 
     @Inject

@@ -19,7 +19,6 @@ import net.udidb.engine.ops.impls.DisplayNameOperation;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.HelpMessage;
-import net.udidb.engine.ops.annotations.LongHelpMessage;
 import net.udidb.engine.ops.results.Result;
 import net.udidb.engine.ops.results.VoidResult;
 
@@ -28,11 +27,7 @@ import net.udidb.engine.ops.results.VoidResult;
  *
  * @author mcnulty
  */
-@HelpMessage(enMessage="Continue a debuggee")
-@LongHelpMessage(enMessage=
-        "continue\n\n" +
-        "Continue a debuggee"
-)
+@HelpMessage("Continue a debuggee")
 @DisplayName("continue")
 public class ContinueDebuggee extends DisplayNameOperation implements DebuggeeContextAware {
 

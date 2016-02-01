@@ -9,29 +9,36 @@
 
 package net.udidb.engine.ops.impls.help;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.util.HashSet;
-import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.tuple.Pair;
+import org.reflections.ReflectionUtils;
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
 import org.reflections.util.ClasspathHelper;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 
-import net.udidb.engine.context.DebuggeeContextAware;
 import net.udidb.engine.ops.Operation;
 import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.GlobalOperation;
 import net.udidb.engine.ops.annotations.HelpMessage;
-import net.udidb.engine.ops.annotations.LongHelpMessage;
+import net.udidb.engine.ops.annotations.HelpMessages;
+import net.udidb.engine.ops.annotations.Operand;
+import net.udidb.expr.Expression;
 
 /**
  * A class that provides access to help messages for operations
@@ -43,9 +50,15 @@ public class HelpMessageProvider {
 
     private static final String NEWLINE = System.lineSeparator();
 
-    private final Map<String, HelpMessages> helpMessages = new TreeMap<>();
+    private final Map<String, HelpMessageDescriptor> helpMessageDescriptors = new TreeMap<>();
 
-    private static class HelpMessages {
+    private final Map<String, Class<?>> operandTypeHelpMixins =
+            ImmutableMap.<String, Class<?>>builder()
+                        .put(Expression.class.getCanonicalName(), ExpressionHelpMixIn.class)
+                        .build();
+
+    private static class HelpMessageDescriptor
+    {
         public String shortMessage;
 
         public String longMessage;
@@ -55,6 +68,7 @@ public class HelpMessageProvider {
 
     @Inject
     public HelpMessageProvider(@Named("OP_PACKAGES") String[] opPackages) {
+
         Set<URL> packages = new HashSet<>();
         for (String opPackage : opPackages) {
             packages.addAll(ClasspathHelper.forPackage(opPackage));
@@ -63,31 +77,95 @@ public class HelpMessageProvider {
         for (Class<? extends Operation> opClass : reflections.getSubTypesOf(Operation.class)) {
             if (Modifier.isAbstract(opClass.getModifiers())) continue;
 
-            HelpMessage helpMessageAnnotation = opClass.getAnnotation(HelpMessage.class);
+            HelpMessage[] helpMessages = opClass.getAnnotationsByType(HelpMessage.class);
             DisplayName displayName = opClass.getAnnotation(DisplayName.class);
-            LongHelpMessage longHelpMessageAnnotation = opClass.getAnnotation(LongHelpMessage.class);
 
-            if (helpMessageAnnotation == null || displayName == null) {
+            if (helpMessages.length == 0 || displayName == null) {
                 throw new RuntimeException(opClass.getSimpleName() + " is an invalid Operation");
             }
 
             String name = displayName.value();
 
-            HelpMessages messages = new HelpMessages();
-            messages.global = opClass.isAnnotationPresent(GlobalOperation.class);
+            HelpMessageDescriptor descriptor = new HelpMessageDescriptor();
 
-            // TODO select message based on locale
-            messages.shortMessage = helpMessageAnnotation.enMessage();
+            descriptor.global = opClass.isAnnotationPresent(GlobalOperation.class);
+            descriptor.shortMessage = selectMessage(helpMessages);
+            descriptor.longMessage = createLongMessage(name, descriptor.shortMessage, opClass);
 
-            if (longHelpMessageAnnotation == null) {
-                messages.longMessage = "unspecified detailed help message";
-            }else{
-                // TODO select message based on locale
-                messages.longMessage = longHelpMessageAnnotation.enMessage().replaceAll("\n", NEWLINE);
-            }
-
-            helpMessages.put(name, messages);
+            helpMessageDescriptors.put(name, descriptor);
         }
+    }
+
+    private static String selectMessage(HelpMessage[] helpMessages)
+    {
+
+        HelpMessage helpMessage = HelpMessages.Helpers.fromLocale(helpMessages, Locale.getDefault());
+        if (helpMessage == null) {
+            return "missing help message for Locale " + Locale.getDefault();
+        }
+
+        return helpMessage.value();
+    }
+
+    private String createLongMessage(String name, String shortMessage, Class<? extends Operation> opClass)
+    {
+        List<Pair<Field, Operand>> operands =
+                ReflectionUtils.getAllFields(opClass, ReflectionUtils.withAnnotation(Operand.class))
+                               .stream()
+                               .map(f -> Pair.of(f, f.getAnnotation(Operand.class)))
+                               .filter(p -> p.getRight() != null)
+                               .sorted((p1, p2) -> Integer.compare(p1.getRight().order(), p2.getRight().order()))
+                               .collect(Collectors.toList());
+
+        String header = name + " " + operands.stream()
+                                             .map(p -> getOperandIdentifier(p.getLeft(), p.getRight()))
+                                             .collect(Collectors.joining(" "));
+
+        String operandDescriptions = operands.stream()
+                                             .map(p -> String.format("%15s -- %s",
+                                                     p.getLeft().getName(),
+                                                     getOperandDescription(p.getLeft())))
+                                             .collect(Collectors.joining("\n"));
+
+        return header + "\n\n" + shortMessage + "\n\n" + operandDescriptions;
+    }
+
+    private String getOperandDescription(Field field)
+    {
+        HelpMessage[] helpMessages = field.getAnnotationsByType(HelpMessage.class);
+        String message;
+        if (helpMessages.length != 0) {
+            message = selectMessage(helpMessages);
+        }else{
+            message = null;
+        }
+
+        if (message == null) {
+            Class<?> mixInClass = operandTypeHelpMixins.get(field.getType().getCanonicalName());
+            if (mixInClass != null) {
+                HelpMessage[] mixInMessages = mixInClass.getAnnotationsByType(HelpMessage.class);
+                message = selectMessage(mixInMessages);
+            }
+        }
+
+        return message;
+    }
+
+    private String getOperandIdentifier(Field field, Operand operand)
+    {
+        String identifier;
+        if (operand.restOfLine()) {
+            identifier = field.getName() + "...";
+        }else{
+            identifier = field.getName();
+        }
+
+        if (operand.optional())
+        {
+            return "[" + identifier + "]";
+        }
+
+        return "<" + identifier + ">";
     }
 
     /**
@@ -95,7 +173,7 @@ public class HelpMessageProvider {
      * @return the short message; null if the operation is unknown
      */
     public String getShortMessage(String opName) {
-        HelpMessages messages = helpMessages.get(opName);
+        HelpMessageDescriptor messages = helpMessageDescriptors.get(opName);
         if ( messages != null ) {
             return messages.shortMessage;
         }
@@ -108,7 +186,7 @@ public class HelpMessageProvider {
      * @return the long message; null if the operation is unknown
      */
     public String getLongMessage(String opName) {
-        HelpMessages messages = helpMessages.get(opName);
+        HelpMessageDescriptor messages = helpMessageDescriptors.get(opName);
         if ( messages != null ) {
             return messages.longMessage;
         }
@@ -117,7 +195,7 @@ public class HelpMessageProvider {
     }
 
     public String getGlobalLongMessage(String opName) {
-         HelpMessages messages = helpMessages.get(opName);
+         HelpMessageDescriptor messages = helpMessageDescriptors.get(opName);
         if ( messages != null ) {
             if (messages.global) {
                 return messages.longMessage;
@@ -136,10 +214,10 @@ public class HelpMessageProvider {
         getAllShortMessages(builder, e -> true);
     }
 
-    private void getAllShortMessages(StringBuilder builder, Predicate<Map.Entry<String, HelpMessages>> predicate) {
+    private void getAllShortMessages(StringBuilder builder, Predicate<Map.Entry<String, HelpMessageDescriptor>> predicate) {
 
         boolean first = true;
-        for (Map.Entry<String, HelpMessages> entry : helpMessages.entrySet()) {
+        for (Map.Entry<String, HelpMessageDescriptor> entry : helpMessageDescriptors.entrySet()) {
 
             if (!predicate.test(entry)) {
                 continue;

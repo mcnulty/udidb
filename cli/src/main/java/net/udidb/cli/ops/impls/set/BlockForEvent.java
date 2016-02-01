@@ -15,7 +15,6 @@ import net.udidb.cli.ops.events.CliEventDispatcher;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.HelpMessage;
-import net.udidb.engine.ops.annotations.LongHelpMessage;
 import net.udidb.engine.ops.impls.SetterOperation;
 import net.udidb.engine.ops.impls.Setting;
 import net.udidb.engine.ops.results.Result;
@@ -26,11 +25,7 @@ import net.udidb.engine.ops.results.VoidResult;
  *
  * @author mcnulty
  */
-@HelpMessage(enMessage = "Disable/enable whether to block for an event after continuing a debuggee")
-@LongHelpMessage(enMessage =
-        "set block-for-event <boolean>\n\n" +
-        "Disable/enable whether to block for an event after continuing a debuggee"
-)
+@HelpMessage("Disable/enable whether to block for an event after continuing a debuggee")
 @DisplayName("set block-for-event")
 public class BlockForEvent extends SetterOperation<Boolean> implements Setting {
 

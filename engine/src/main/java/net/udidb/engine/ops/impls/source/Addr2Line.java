@@ -19,7 +19,6 @@ import net.udidb.engine.ops.MissingDebugInfoException;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.HelpMessage;
-import net.udidb.engine.ops.annotations.LongHelpMessage;
 import net.udidb.engine.ops.impls.ContextExpressionOperation;
 import net.udidb.engine.ops.results.Result;
 import net.udidb.engine.ops.results.TableResult;
@@ -33,11 +32,7 @@ import net.udidb.expr.values.ValueType;
  *
  * @author mcnulty
  */
-@HelpMessage(enMessage="Obtain the source line for the specified address")
-@LongHelpMessage(enMessage=
-        "source addr2line <address>\n\n" +
-        "Obtain the source line for the specified address"
-)
+@HelpMessage("Obtain the source line for the specified address")
 @DisplayName("source addr2line")
 public class Addr2Line extends ContextExpressionOperation
 {

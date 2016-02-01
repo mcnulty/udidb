@@ -9,8 +9,11 @@
 
 package net.udidb.engine.ops.annotations;
 
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.util.Locale;
 
 /**
  * An annotation used to provide the help message for using a command
@@ -18,10 +21,16 @@ import java.lang.annotation.RetentionPolicy;
  * @author mcnulty
  */
 @Retention(RetentionPolicy.RUNTIME)
+@Repeatable(HelpMessages.class)
 public @interface HelpMessage {
 
     /**
-     * @return the English help message
+     * @return the language tag that can be passed to {@link Locale.forLanguageTag}
      */
-    String enMessage();
+    String languageTag() default "en";
+
+    /**
+     * @return the message in the Locale specified by the language tag
+     */
+    String value();
 }

@@ -15,7 +15,6 @@ import net.udidb.cli.ops.CliResultVisitor;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.HelpMessage;
-import net.udidb.engine.ops.annotations.LongHelpMessage;
 import net.udidb.engine.ops.impls.SetterOperation;
 import net.udidb.engine.ops.impls.Setting;
 import net.udidb.engine.ops.results.Result;
@@ -26,11 +25,7 @@ import net.udidb.engine.ops.results.VoidResult;
  *
  * @author mcnulty
  */
-@HelpMessage(enMessage = "Disable/enable stack traces")
-@LongHelpMessage(enMessage=
-        "internals stack-trace <boolean>\n\n" +
-        "Disable/enable stack traces"
-)
+@HelpMessage("Disable/enable stack traces")
 @DisplayName("internals stack-trace")
 public class SetStackTrace extends SetterOperation<Boolean> implements Setting {
 

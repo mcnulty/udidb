@@ -47,9 +47,9 @@ public class UdidbDriver {
         try {
             ConfigBuilder builder = new ConfigBuilder();
             config = builder.build(cmdLineArgs);
-        }catch(HelpMessageRequested e) {
+        } catch (HelpMessageRequested e) {
             return true;
-        }catch(ParseException e) {
+        } catch (ParseException e) {
             System.err.println("Invalid arguments: " + e);
             return false;
         }
@@ -75,8 +75,13 @@ public class UdidbDriver {
      * @param args command line arguments (see help message)
      */
     public static void main(String[] args) {
-        UdidbDriver driver = new UdidbDriver(args);
+        try {
+            UdidbDriver driver = new UdidbDriver(args);
 
-        System.exit(driver.execute() ? EXIT_SUCCESS : EXIT_FAILURE );
+            System.exit(driver.execute() ? EXIT_SUCCESS : EXIT_FAILURE);
+        }catch (RuntimeException e) {
+            e.printStackTrace(System.err);
+            System.exit(EXIT_FAILURE);
+        }
     }
 }

@@ -11,8 +11,6 @@ package net.udidb.engine.ops.impls.control;
 
 import java.util.List;
 
-import javax.annotation.Nullable;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +35,6 @@ import net.udidb.engine.ops.NoDebuggeeContextException;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.HelpMessage;
-import net.udidb.engine.ops.annotations.LongHelpMessage;
 import net.udidb.engine.ops.impls.DisplayNameOperation;
 import net.udidb.engine.ops.results.DeferredResult;
 import net.udidb.engine.ops.results.OperationResultVisitor;
@@ -51,11 +48,7 @@ import net.udidb.engine.source.SourceLineRowFactory;
  *
  * @author mcnulty
  */
-@HelpMessage(enMessage="Step over the next statement in the debuggee")
-@LongHelpMessage(enMessage=
-        "next\n\n" +
-        "Execute the next statement of source for the current debuggee, stepping over method calls"
-)
+@HelpMessage("Step over the next statement in the debuggee")
 @DisplayName("next")
 public class StepOverDebuggee extends DisplayNameOperation implements EventObserver, DebuggeeContextAware
 {

@@ -13,16 +13,10 @@ import com.google.inject.Inject;
 
 import net.libudi.api.exceptions.UdiException;
 import net.udidb.engine.context.DebuggeeContext;
-import net.udidb.engine.context.DebuggeeContextAware;
-import net.udidb.engine.ops.NoDebuggeeContextException;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.HelpMessage;
-import net.udidb.engine.ops.annotations.LongHelpMessage;
-import net.udidb.engine.ops.annotations.Operand;
 import net.udidb.engine.ops.impls.ContextExpressionOperation;
-import net.udidb.engine.ops.impls.DisplayNameOperation;
-import net.udidb.engine.ops.parser.ExpressionParser;
 import net.udidb.engine.ops.results.Result;
 import net.udidb.engine.ops.results.ValueResult;
 import net.udidb.expr.Expression;
@@ -33,11 +27,7 @@ import net.udidb.expr.values.ValueType;
  *
  * @author mcnulty
  */
-@HelpMessage(enMessage="Set a breakpoint in a debuggee")
-@LongHelpMessage(enMessage=
-        "break <address>\n\n" +
-        "Create and install a breakpoint in a debuggee"
-)
+@HelpMessage("Set a breakpoint in a debuggee")
 @DisplayName("break")
 public class SetBreakpoint extends ContextExpressionOperation
 {
