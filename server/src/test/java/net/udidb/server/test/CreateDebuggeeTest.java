@@ -35,7 +35,7 @@ public class CreateDebuggeeTest extends BaseServerTest
 {
     public CreateDebuggeeTest()
     {
-        super("linux/clang/3.2-11/basic-64bit-dynamic");
+        super("basic.310b3f661611270328fde43a330a321c7d02173c");
     }
 
     @Test
