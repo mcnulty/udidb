@@ -32,6 +32,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 
+import net.sourcecrumbs.api.Range;
 import net.udidb.engine.ops.Operation;
 import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.GlobalOperation;
@@ -55,6 +56,7 @@ public class HelpMessageProvider {
     private final Map<String, Class<?>> operandTypeHelpMixins =
             ImmutableMap.<String, Class<?>>builder()
                         .put(Expression.class.getCanonicalName(), ExpressionHelpMixIn.class)
+                        .put(Range.class.getCanonicalName(), RangeHelpMixIn.class)
                         .build();
 
     private static class HelpMessageDescriptor

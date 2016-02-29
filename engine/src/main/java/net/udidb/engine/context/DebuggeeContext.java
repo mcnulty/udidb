@@ -38,6 +38,4 @@ public interface DebuggeeContext extends TableRow, RegisterContext, ExecutionCon
     String[] getArgs();
 
     UdiProcess getProcess();
-
-    Executable getExecutable();
 }

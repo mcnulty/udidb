@@ -25,7 +25,6 @@ import net.udidb.engine.ops.results.TableResult;
 import net.udidb.engine.source.SourceLineRow;
 import net.udidb.engine.source.SourceLineRowFactory;
 import net.udidb.expr.Expression;
-import net.udidb.expr.values.ValueType;
 
 /**
  * An operation to obtain the source line for the specified address
@@ -46,10 +45,16 @@ public class Addr2Line extends ContextExpressionOperation
     @Override
     protected Result executeWithExpression(DebuggeeContext context, Expression expression) throws OperationException
     {
-        if (expression.getValue().getType() != ValueType.ADDRESS &&
-                expression.getValue().getType() != ValueType.NUMBER)
-        {
-            throw new OperationException("Expression value cannot be used to obtain the source line");
+        long addressValue;
+        switch (expression.getValue().getType()) {
+            case ADDRESS:
+                addressValue = expression.getValue().getAddressValue();
+                break;
+            case NUMBER:
+                addressValue = expression.getValue().getNumberValue().longValue();
+                break;
+            default:
+                throw new OperationException("Expression value cannot be used to obtain the source line");
         }
 
         MachineCodeMapping machineCodeMapping = context.getExecutable().getMachineCodeMapping();
@@ -58,8 +63,7 @@ public class Addr2Line extends ContextExpressionOperation
         }
 
         try {
-            return new TableResult(sourceLineRowFactory.create(machineCodeMapping.getSourceLinesRanges(
-                    expression.getValue().getAddressValue())));
+            return new TableResult(sourceLineRowFactory.create(machineCodeMapping.getSourceLinesRanges(addressValue)));
         }catch (NoSuchLineException e) {
             return new TableResult(new SourceLineRow());
         }

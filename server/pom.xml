@@ -23,7 +23,7 @@
 
     <properties>
         <jetty.version>9.3.7.v20160115</jetty.version>
-        <udidb.test.native-file-tests>${project.parent.basedir}/../native-file-tests/files</udidb.test.native-file-tests>
+        <udidb.test.native-file-tests>${project.parent.basedir}/../native-file-tests/dist</udidb.test.native-file-tests>
         <udidb.test.udi-dir>${project.parent.basedir}/../udi</udidb.test.udi-dir>
     </properties>
 
