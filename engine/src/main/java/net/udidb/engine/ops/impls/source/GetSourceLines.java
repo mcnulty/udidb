@@ -12,7 +12,6 @@ package net.udidb.engine.ops.impls.source;
 import com.google.inject.Inject;
 
 import net.sourcecrumbs.api.Range;
-import net.sourcecrumbs.api.machinecode.MachineCodeMapping;
 import net.udidb.engine.context.DebuggeeContext;
 import net.udidb.engine.context.DebuggeeContextAware;
 import net.udidb.engine.ops.OperationException;
@@ -74,7 +73,6 @@ public class GetSourceLines extends DisplayNameOperation implements DebuggeeCont
     public Result execute() throws OperationException
     {
         if (file != null) {
-            MachineCodeMapping codeMapping = debuggeeContext.getExecutable()
         }
         return null;
     }

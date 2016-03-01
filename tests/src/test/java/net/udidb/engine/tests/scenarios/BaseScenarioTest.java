@@ -9,21 +9,33 @@
 
 package net.udidb.engine.tests.scenarios;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
+import org.junit.BeforeClass;
+
+import net.sourcecrumbs.file.tests.NativeFileTestsInfo;
 
 /**
  * @author mcnulty
  */
 public abstract class BaseScenarioTest
 {
-    private static final String basePath = System.getProperty("native.file.tests.basePath");
+    private static final Path basePath = Paths.get(System.getProperty("native.file.tests.basePath"));
+    private static NativeFileTestsInfo fileTestsInfo = null;
 
     private final Path binaryPath;
 
     protected BaseScenarioTest(String url)
     {
-        binaryPath = Paths.get(basePath, url);
+        binaryPath = fileTestsInfo.getFirstExecutablePath(url);
+    }
+
+    @BeforeClass
+    public static void initClass() throws IOException
+    {
+        fileTestsInfo = new NativeFileTestsInfo(basePath);
     }
 
     public Path getBinaryPath()

@@ -35,7 +35,7 @@ public class CreateDebuggeeTest extends BaseServerTest
 {
     public CreateDebuggeeTest()
     {
-        super("basic.310b3f661611270328fde43a330a321c7d02173c");
+        super("basic");
     }
 
     @Test

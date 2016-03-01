@@ -19,6 +19,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
+import net.sourcecrumbs.file.tests.NativeFileTestsInfo;
 import net.udidb.server.api.models.UdiEventModel;
 import net.udidb.server.driver.UdidbServer;
 import net.udidb.server.test.events.JettyWampConnectorProvider;
@@ -32,10 +33,11 @@ import ws.wamp.jawampa.WampClientBuilder;
  */
 public abstract class BaseServerTest
 {
-    private static final String basePath = System.getProperty("native.file.tests.basePath");
+    private static final Path basePath = Paths.get(System.getProperty("native.file.tests.basePath"));
     private static final long EVENT_TIMEOUT_SECONDS = Long.getLong("udidb.server.tests.eventTimeout", 5);
-
     private static final UdidbServer udidbServer = new UdidbServer(new String[]{});
+
+    private static NativeFileTestsInfo fileTestsInfo = null;
 
     private final Path binaryPath;
     private final String baseUri;
@@ -46,7 +48,7 @@ public abstract class BaseServerTest
 
     protected BaseServerTest(String binaryPath)
     {
-        this.binaryPath = Paths.get(basePath, binaryPath);
+        this.binaryPath = fileTestsInfo.getFirstExecutablePath(binaryPath);
         this.baseUri = "http://localhost:8888";
         this.baseWsUri = "ws://localhost:8888";
     }
@@ -64,6 +66,8 @@ public abstract class BaseServerTest
     @BeforeClass
     public static void startServer() throws Exception
     {
+        fileTestsInfo = new NativeFileTestsInfo(basePath);
+
         udidbServer.start();
     }
 
