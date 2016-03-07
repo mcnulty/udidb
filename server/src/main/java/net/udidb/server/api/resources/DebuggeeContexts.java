@@ -13,6 +13,7 @@ import java.io.IOException;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.OPTIONS;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -90,6 +91,13 @@ public class DebuggeeContexts
         }
     }
 
+    @OPTIONS
+    @Path("/")
+    public Response optionsCreate()
+    {
+        return Response.ok().build();
+    }
+
     @GET @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response get(@PathParam("id") String id)
@@ -161,6 +169,13 @@ public class DebuggeeContexts
         }
     }
 
+    @OPTIONS
+    @Path("/{id}/process/operation")
+    public Response optionsCreateOperation(@PathParam("id") String id)
+    {
+        return Response.ok().build();
+    }
+
     @GET @Path("/{id}/process/operation")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getOperation(@PathParam("id") String id)
@@ -219,6 +234,13 @@ public class DebuggeeContexts
             }
             return generalFailure(e);
         }
+    }
+
+    @OPTIONS
+    @Path("/globalOperation")
+    public Response optionsCreateGlobalOperation()
+    {
+        return Response.ok().build();
     }
 
     private Response success(Object o) {

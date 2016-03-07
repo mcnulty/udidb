@@ -13,7 +13,6 @@ import java.nio.file.Paths;
 import java.util.EnumSet;
 
 import javax.servlet.DispatcherType;
-import javax.servlet.FilterConfig;
 
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
