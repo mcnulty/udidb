@@ -163,5 +163,6 @@ public class EventsSocket implements IWampConnection
     public void close(boolean sendRemaining, IWampConnectionPromise<Void> promise)
     {
         serverWebSocket.close();
+        promise.fulfill(null);
     }
 }
