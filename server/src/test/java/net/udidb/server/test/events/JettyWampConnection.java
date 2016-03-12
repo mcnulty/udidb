@@ -23,6 +23,7 @@ import net.udidb.server.driver.EventsSocket;
 import ws.wamp.jawampa.WampError;
 import ws.wamp.jawampa.WampMessages.WampMessage;
 import ws.wamp.jawampa.WampSerialization;
+import ws.wamp.jawampa.connection.IPendingWampConnectionListener;
 import ws.wamp.jawampa.connection.IWampConnection;
 import ws.wamp.jawampa.connection.IWampConnectionListener;
 import ws.wamp.jawampa.connection.IWampConnectionPromise;
@@ -37,10 +38,12 @@ public class JettyWampConnection implements IWampConnection, WebSocketListener
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private final IWampConnectionListener connectionListener;
+    private final IPendingWampConnectionListener connectListener;
     private Session session;
 
-    public JettyWampConnection(IWampConnectionListener connectionListener)
+    public JettyWampConnection(IPendingWampConnectionListener connectListener, IWampConnectionListener connectionListener)
     {
+        this.connectListener = connectListener;
         this.connectionListener = connectionListener;
     }
 
@@ -70,15 +73,18 @@ public class JettyWampConnection implements IWampConnection, WebSocketListener
                         public void writeFailed(Throwable x)
                         {
                             promise.reject(x);
+                            logger.error("[CLIENT] failed to send WAMP message", x);
                         }
 
                         @Override
                         public void writeSuccess()
                         {
                             promise.fulfill(null);
+                            logger.debug("[CLIENT] WAMP message sent");
                         }
                     });
-        }catch (WampError | JsonProcessingException e) {
+        }catch (WampError | JsonProcessingException | RuntimeException e) {
+            logger.error("Failed to send message", e);
             promise.reject(e);
         }
     }
@@ -114,6 +120,7 @@ public class JettyWampConnection implements IWampConnection, WebSocketListener
     public void onWebSocketConnect(Session session)
     {
         this.session = session;
+        connectListener.connectSucceeded(this);
     }
 
     @Override

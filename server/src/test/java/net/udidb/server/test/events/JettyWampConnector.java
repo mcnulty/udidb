@@ -46,7 +46,7 @@ public class JettyWampConnector implements IWampConnector
         try {
             client.start();
 
-            JettyWampConnection connection = new JettyWampConnection(connectionListener);
+            JettyWampConnection connection = new JettyWampConnection(connectListener, connectionListener);
 
             ClientUpgradeRequest upgradeRequest = new ClientUpgradeRequest();
             upgradeRequest.setRequestURI(uri);
@@ -62,11 +62,11 @@ public class JettyWampConnector implements IWampConnector
                 @Override
                 public void onHandshakeResponse(UpgradeResponse response)
                 {
-                    if (response.isSuccess()) {
-                        connectListener.connectSucceeded(connection);
-                    }else{
+                    if (!response.isSuccess()) {
                         connectListener.connectFailed(new Exception("Failed to open websocket: " + response.getStatusCode() + " " + response.getStatusReason()));
                     }
+                    // If the handshake was successful, wait to complete the WAMP connection until the session is passed
+                    // to the JettyWampConnection
                 }
             });
         }catch (Exception e) {

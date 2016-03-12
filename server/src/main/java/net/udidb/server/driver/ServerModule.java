@@ -10,12 +10,16 @@
 package net.udidb.server.driver;
 
 import java.util.Collections;
+import java.util.logging.Logger;
 
 import javax.inject.Singleton;
+import javax.ws.rs.container.ContainerRequestFilter;
+import javax.ws.rs.container.ContainerResponseFilter;
 
 import org.glassfish.hk2.api.Context;
 import org.glassfish.hk2.api.TypeLiteral;
 import org.glassfish.hk2.utilities.ServiceLocatorUtilities;
+import org.glassfish.jersey.filter.LoggingFilter;
 import org.jvnet.hk2.guice.bridge.api.GuiceBridge;
 import org.jvnet.hk2.guice.bridge.api.GuiceIntoHK2Bridge;
 import org.jvnet.hk2.guice.bridge.api.GuiceScope;
@@ -29,6 +33,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
 import com.google.inject.Module;
+import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 
@@ -79,6 +84,8 @@ import ws.wamp.jawampa.WampRouterBuilder;
  */
 public class ServerModule extends AbstractModule
 {
+    private static final Logger logger = Logger.getLogger("net.udidb.server.http.logger");
+
     private static final String WAMP_REALM = "udidb";
     private static final String INTERNAL_CLIENT_URI = "udidb://wamp";
 
@@ -108,6 +115,9 @@ public class ServerModule extends AbstractModule
         Vertx vertx = new VertxFactoryImpl().vertx();
         bind(Vertx.class).toInstance(vertx);
         install(Modules.override(new GuiceJerseyBinder()).with(new JerseyOverride(jerseyOptions)));
+        LoggingFilter loggingFilter = new LoggingFilter(logger, true);
+        Multibinder.newSetBinder(binder(), ContainerRequestFilter.class).addBinding().toInstance(loggingFilter);
+        Multibinder.newSetBinder(binder(), ContainerResponseFilter.class).addBinding().toInstance(loggingFilter);
 
         // Engine configuration
         bind(String[].class).annotatedWith(Names.named("OP_PACKAGES")).toInstance(

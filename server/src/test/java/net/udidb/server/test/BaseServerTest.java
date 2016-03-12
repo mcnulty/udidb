@@ -14,10 +14,13 @@ import java.nio.file.Paths;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import net.sourcecrumbs.file.tests.NativeFileTestsInfo;
 import net.udidb.server.api.models.UdiEventModel;
@@ -33,6 +36,8 @@ import ws.wamp.jawampa.WampClientBuilder;
  */
 public abstract class BaseServerTest
 {
+    private static final Logger logger = LoggerFactory.getLogger(BaseServerTest.class);
+
     private static final Path basePath = Paths.get(System.getProperty("native.file.tests.basePath"));
     private static final long EVENT_TIMEOUT_SECONDS = Long.getLong("udidb.server.tests.eventTimeout", 5);
     private static final UdidbServer udidbServer = new UdidbServer(new String[]{});
@@ -89,6 +94,7 @@ public abstract class BaseServerTest
 
         CompletableFuture<Void> connectFuture = new CompletableFuture<>();
         eventsClient.statusChanged().subscribe((WampClient.State newState) -> {
+            logger.debug("WampClient State => {}", newState);
             if (newState instanceof WampClient.ConnectedState) {
                 eventsClient.makeSubscription("com.udidb.events", UdiEventModel.class)
                         .subscribe(
@@ -101,8 +107,14 @@ public abstract class BaseServerTest
         });
         eventsClient.open();
 
-        // Wait for the connection to be initialized
-        connectFuture.get(EVENT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        try {
+            // Wait for the connection to be initialized
+            connectFuture.get(EVENT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        }catch (TimeoutException e) {
+            logger.error("Failed to initialize websocket", e);
+            throw e;
+        }
+        logger.debug("Events WebSocket connected");
     }
 
     protected UdiEventModel waitForEvent() throws InterruptedException

@@ -27,8 +27,6 @@ import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.CorsHandler;
-import io.vertx.ext.web.handler.LoggerFormat;
-import io.vertx.ext.web.handler.LoggerHandler;
 import io.vertx.ext.web.handler.StaticHandler;
 
 /**
@@ -64,10 +62,6 @@ public final class UdidbServer
         this.httpServer = vertx.createHttpServer(new HttpServerOptions().setWebsocketSubProtocols("wamp.2.json"));
 
         Router router = Router.router(vertx);
-
-        if (logger.isDebugEnabled()) {
-            router.route().handler(LoggerHandler.create(LoggerFormat.SHORT));
-        }
 
         if (cors) {
             router.route().handler(CorsHandler.create("*")
