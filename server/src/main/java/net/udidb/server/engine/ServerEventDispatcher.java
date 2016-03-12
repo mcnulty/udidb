@@ -59,6 +59,7 @@ public class ServerEventDispatcher extends Thread
         this.processManager = processManager;
         this.debuggeeContextManager = debuggeeContextManager;
         this.wampClient = wampClient;
+        this.setName(ServerEventDispatcher.class.getSimpleName());
         this.setDaemon(true);
         this.start();
     }

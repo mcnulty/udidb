@@ -9,11 +9,33 @@
 
 package net.udidb.server.driver;
 
+import java.util.Collections;
+
+import javax.inject.Singleton;
+
+import org.glassfish.hk2.api.Context;
+import org.glassfish.hk2.api.TypeLiteral;
+import org.glassfish.hk2.utilities.ServiceLocatorUtilities;
+import org.jvnet.hk2.guice.bridge.api.GuiceBridge;
+import org.jvnet.hk2.guice.bridge.api.GuiceIntoHK2Bridge;
+import org.jvnet.hk2.guice.bridge.api.GuiceScope;
+import org.jvnet.hk2.guice.bridge.internal.GuiceScopeContext;
+
+import com.englishtown.vertx.guice.GuiceJerseyBinder;
+import com.englishtown.vertx.jersey.JerseyOptions;
+import com.englishtown.vertx.jersey.impl.DefaultJerseyOptions;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.inject.AbstractModule;
+import com.google.inject.Binder;
+import com.google.inject.Module;
 import com.google.inject.name.Names;
+import com.google.inject.util.Modules;
 
+import io.vertx.core.Vertx;
+import io.vertx.core.impl.VertxFactoryImpl;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import net.libudi.api.UdiProcessManager;
 import net.libudi.api.jni.impl.UdiProcessManagerImpl;
 import net.sourcecrumbs.api.files.BinaryReader;
@@ -63,6 +85,7 @@ public class ServerModule extends AbstractModule
     @Override
     protected void configure()
     {
+        // JSON configuration
         SimpleModule simpleModule = new SimpleModule();
         simpleModule.addSerializer(ExpressionValue.class, new ExpressionValueSerializer());
 
@@ -73,9 +96,18 @@ public class ServerModule extends AbstractModule
         objectMapper.addMixInAnnotations(ValueResult.class, ValueResultMixIn.class);
         objectMapper.addMixInAnnotations(TableRow.class, TableRowMixIn.class);
         objectMapper.registerModule(simpleModule);
+        bind(ObjectMapper.class).toInstance(objectMapper);
 
         // REST API configuration
-        bind(DebuggeeContexts.class);
+        JsonObject jerseyConfig = new JsonObject();
+        jerseyConfig.put("guice_binder", ServerModule.class.getCanonicalName());
+        jerseyConfig.put("base_path", "/");
+        jerseyConfig.put("resources", new JsonArray(Collections.<String>singletonList(DebuggeeContexts.class.getPackage().getName())));
+        DefaultJerseyOptions jerseyOptions = new DefaultJerseyOptions(jerseyConfig);
+
+        Vertx vertx = new VertxFactoryImpl().vertx();
+        bind(Vertx.class).toInstance(vertx);
+        install(Modules.override(new GuiceJerseyBinder()).with(new JerseyOverride(jerseyOptions)));
 
         // Engine configuration
         bind(String[].class).annotatedWith(Names.named("OP_PACKAGES")).toInstance(
@@ -97,8 +129,6 @@ public class ServerModule extends AbstractModule
 
         bind(ServerEngine.class).to(ServerEngineImpl.class);
 
-        bind(ObjectMapper.class).toInstance(objectMapper);
-
         bind(OperationResultVisitor.class).to(OperationEngine.class);
 
         bind(ServerEventDispatcher.class).asEagerSingleton();
@@ -108,6 +138,22 @@ public class ServerModule extends AbstractModule
 
         bind(WampClient.class).toInstance(configureWampClient(wampRouter));
 
+    }
+
+    private static class JerseyOverride implements Module
+    {
+        private final JerseyOptions jerseyOptions;
+
+        public JerseyOverride(JerseyOptions jerseyOptions)
+        {
+            this.jerseyOptions = jerseyOptions;
+        }
+
+        @Override
+        public void configure(Binder binder)
+        {
+            binder.bind(JerseyOptions.class).toInstance(jerseyOptions);
+        }
     }
 
     private WampRouter configureWampRouter()

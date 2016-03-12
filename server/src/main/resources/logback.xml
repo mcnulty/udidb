@@ -10,7 +10,7 @@
 <configuration scan="true">
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level [%C] - %msg%n</pattern>
+            <pattern>%d{HH:mm:ss.SSS} %-5level [%thread] %C - %msg%n</pattern>
         </encoder>
     </appender>
     <!--
@@ -25,6 +25,8 @@
 
     <logger name="org.reflections" level="WARN"/>
     <logger name="org.eclipse.jetty" level="INFO"/>
+    <logger name="io.netty" level="INFO"/>
+    <logger name="com.englishtown" level="INFO"/>
 
     <root level="DEBUG">
         <appender-ref ref="STDOUT"/>

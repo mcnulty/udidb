@@ -9,32 +9,27 @@
 
 package net.udidb.server.driver;
 
-import java.nio.file.Paths;
-import java.util.EnumSet;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.servlet.DispatcherType;
-
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.handler.ContextHandler;
-import org.eclipse.jetty.server.handler.ContextHandlerCollection;
-import org.eclipse.jetty.server.handler.ResourceHandler;
-import org.eclipse.jetty.servlet.FilterHolder;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.servlets.CrossOriginFilter;
-import org.eclipse.jetty.util.log.Log;
-import org.eclipse.jetty.util.log.Slf4jLog;
-import org.eclipse.jetty.util.resource.Resource;
-import org.jboss.resteasy.plugins.guice.GuiceResteasyBootstrapServletContextListener;
-import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
+import com.englishtown.vertx.guice.GuiceJerseyServer;
+import com.englishtown.vertx.jersey.JerseyHandler;
+import com.englishtown.vertx.jersey.VertxContainer;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+
+import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpServer;
+import io.vertx.core.http.HttpServerOptions;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.handler.CorsHandler;
+import io.vertx.ext.web.handler.LoggerFormat;
+import io.vertx.ext.web.handler.LoggerHandler;
+import io.vertx.ext.web.handler.StaticHandler;
 
 /**
  * Entry point for the udidb server
@@ -45,86 +40,130 @@ public final class UdidbServer
 {
     private static final Logger logger = LoggerFactory.getLogger(UdidbServer.class);
 
-    private final Server server;
+    private static AtomicBoolean loggingInitialized = new AtomicBoolean(false);
+
+    private final HttpServer httpServer;
+    private final VertxContainer vertxContainer;
+    private final JerseyHandler jerseyHandler;
 
     public UdidbServer(String[] args)
     {
         // TODO process args to configure the server
 
+        initializeLogging();
+
         String uiPath = System.getProperty("udidb.ui.path");
         boolean cors = Boolean.getBoolean("udidb.cors");
 
-        server = new Server();
-        ServerConnector httpConnector = new ServerConnector(server);
-        httpConnector.setPort(8888);
-        server.addConnector(httpConnector);
-
         Injector injector = Guice.createInjector(new ServerModule());
-        GuiceResteasyBootstrapServletContextListener resteasyListener = injector.getInstance(GuiceResteasyBootstrapServletContextListener.class);
 
-        ServletHolder websocketEventsHolder = new ServletHolder(injector.getInstance(EventsServlet.class));
+        // This will initialize the Jersey HK2 bridge
+        injector.getInstance(GuiceJerseyServer.class);
 
-        ServletContextHandler contextHandler = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
-        contextHandler.setContextPath("/");
-        contextHandler.addEventListener(resteasyListener);
-        contextHandler.addServlet(websocketEventsHolder, "/events");
-        contextHandler.addServlet(HttpServletDispatcher.class, "/*");
+        Vertx vertx = injector.getInstance(Vertx.class);
+        this.httpServer = vertx.createHttpServer(new HttpServerOptions().setWebsocketSubProtocols("wamp.2.json"));
+
+        Router router = Router.router(vertx);
+
+        if (logger.isDebugEnabled()) {
+            router.route().handler(LoggerHandler.create(LoggerFormat.SHORT));
+        }
 
         if (cors) {
-            FilterHolder crossOriginFilterHolder = contextHandler.addFilter(CrossOriginFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
-            crossOriginFilterHolder.setInitParameter("allowedOrigins", "*");
+            router.route().handler(CorsHandler.create("*")
+                                              .allowedHeader("Content-Type"));
         }
 
-        ResourceHandler resourceHandler = new ResourceHandler();
+        // static content for the UI
+        StaticHandler staticHandler = StaticHandler.create();
         if (uiPath != null) {
-            resourceHandler.setBaseResource(Resource.newResource(Paths.get(uiPath).toFile()));
+            staticHandler.setAllowRootFileSystemAccess(true);
+            staticHandler.setWebRoot(uiPath);
         }else{
-            resourceHandler.setBaseResource(Resource.newClassPathResource("/webui"));
+            staticHandler.setWebRoot("webui");
         }
+        router.route("/webui/*").handler(staticHandler);
 
-        ContextHandler resourceContextHandler = new ContextHandler();
-        resourceContextHandler.setContextPath("/webui");
-        resourceContextHandler.setHandler(resourceHandler);
+        // WebSocket events
+        this.httpServer.websocketHandler(websocket -> {
+            if (!websocket.path().equals("/events")) {
+                websocket.reject();
+            }
 
-        ContextHandlerCollection handlerCollection = new ContextHandlerCollection();
-        handlerCollection.setHandlers(new Handler[]{ resourceContextHandler, contextHandler});
+            injector.getInstance(EventsSocket.class).setServerWebSocket(websocket);
+        });
 
-        server.setHandler(handlerCollection);
+        // API resources
+        this.vertxContainer = injector.getInstance(VertxContainer.class);
+        this.jerseyHandler = injector.getInstance(JerseyHandler.class);
 
-        logger.debug("Started udidb server");
+        router.routeWithRegex("/.*").handler(context -> jerseyHandler.handle(context.request()));
+
+        httpServer.requestHandler(router::accept);
     }
 
     public void start() throws Exception
     {
-        server.start();
+        vertxContainer.start();
+
+        CompletableFuture<Void> listenComplete = new CompletableFuture<>();
+        httpServer.listen(8888, result -> {
+            if (result.succeeded()) {
+                listenComplete.complete(null);
+            }else{
+                logger.error("Failed to start server", result.cause());
+                listenComplete.completeExceptionally(result.cause());
+            }
+        });
+        listenComplete.get();
+        logger.info("Listening on port 8888");
     }
 
     public void join() throws Exception
     {
-        server.join();
+        Thread.sleep(Long.MAX_VALUE);
     }
 
     public void stop() throws Exception
     {
-        server.stop();
+        vertxContainer.stop();
+
+        httpServer.close(result -> {
+            if (result.succeeded()) {
+                logger.info("Server stopped");
+            }else{
+                logger.error("Failed to stop server", result.cause());
+            }
+        });
     }
 
-    private static void initializeLogging() throws Exception
+    private static void initializeLogging()
     {
-        Log.setLog(new Slf4jLog());
+        if (!loggingInitialized.get()) {
+            synchronized (UdidbServer.class) {
+                if (!loggingInitialized.get()) {
+                    System.setProperty("vertx.logger-delegate-factory-class-name",
+                            "io.vertx.core.logging.SLF4JLogDelegateFactory");
 
-        SLF4JBridgeHandler.removeHandlersForRootLogger();
+                    SLF4JBridgeHandler.removeHandlersForRootLogger();
 
-        SLF4JBridgeHandler.install();
+                    SLF4JBridgeHandler.install();
+
+                    loggingInitialized.set(true);
+                }
+            }
+        }
     }
 
     public static void main(String[] args) throws Exception
     {
-        initializeLogging();
+        try {
+            UdidbServer server = new UdidbServer(args);
 
-        UdidbServer server = new UdidbServer(args);
-
-        server.start();
-        server.join();
+            server.start();
+            server.join();
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

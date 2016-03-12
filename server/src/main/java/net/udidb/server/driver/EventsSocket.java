@@ -11,9 +11,6 @@ package net.udidb.server.driver;
 
 import java.io.IOException;
 
-import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.api.WebSocketAdapter;
-import org.eclipse.jetty.websocket.api.WriteCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,6 +19,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.google.inject.Inject;
 
+import io.vertx.core.Handler;
+import io.vertx.core.http.ServerWebSocket;
+import io.vertx.core.http.WebSocketFrame;
 import ws.wamp.jawampa.WampError;
 import ws.wamp.jawampa.WampMessages;
 import ws.wamp.jawampa.WampMessages.WampMessage;
@@ -34,13 +34,14 @@ import ws.wamp.jawampa.connection.IWampConnectionPromise;
 /**
  * @author mcnulty
  */
-public class EventsSocket extends WebSocketAdapter implements IWampConnection
+public class EventsSocket implements IWampConnection
 {
     private static final Logger logger = LoggerFactory.getLogger(EventsSocket.class);
 
     private final WampRouter wampRouter;
     private final ObjectMapper objectMapper;
 
+    private ServerWebSocket serverWebSocket;
     private IWampConnectionListener connectionListener;
 
     @Inject
@@ -50,17 +51,55 @@ public class EventsSocket extends WebSocketAdapter implements IWampConnection
         this.wampRouter = wampRouter;
     }
 
-    @Override
-    public void onWebSocketBinary(byte[] payload, int offset, int len)
+    public void setServerWebSocket(ServerWebSocket serverWebSocket)
     {
-        throw new IllegalArgumentException("Binary messages are not supported by this server");
+        this.serverWebSocket = serverWebSocket;
+        this.serverWebSocket.frameHandler(frameHandler());
+        this.serverWebSocket.exceptionHandler(exceptionHandler());
+        this.serverWebSocket.closeHandler(closeHandler());
+
+        connectionListener = wampRouter.connectionAcceptor().createNewConnectionListener();
+        wampRouter.connectionAcceptor().acceptNewConnection(this, connectionListener);
+        logger.debug("Opened WebSocket[{} <=> {}]",
+                serverWebSocket.remoteAddress(),
+                serverWebSocket.localAddress());
+
     }
 
-    @Override
-    public void onWebSocketText(String message)
+    private Handler<WebSocketFrame> frameHandler()
     {
-        logger.debug("[SERVER] Received WAMP message {}", message);
-        passMessageToWampListener(message, objectMapper, connectionListener);
+        return frame -> {
+            if (frame.isBinary()) {
+                throw new IllegalArgumentException("Binary messages are not supported by this server");
+            }
+
+            // TODO this doesn't handle multi-frame messages
+            String message = frame.textData();
+
+            logger.debug("[SERVER] Received WAMP message {}", message);
+            passMessageToWampListener(message, objectMapper, connectionListener);
+        };
+    }
+
+    private Handler<Throwable> exceptionHandler()
+    {
+        return cause -> {
+            connectionListener.transportError(cause);
+            logger.debug("Error for WebSocket[{} <=> {}]",
+                    serverWebSocket.remoteAddress(),
+                    serverWebSocket.localAddress(),
+                    cause);
+        };
+    }
+
+    private Handler<Void> closeHandler()
+    {
+        return (v) -> {
+            connectionListener.transportClosed();
+            logger.debug("Closing WebSocket[{} <=> {}]",
+                    serverWebSocket.remoteAddress(),
+                    serverWebSocket.localAddress());
+        };
     }
 
     public static void passMessageToWampListener(String message, ObjectMapper objectMapper, IWampConnectionListener connectionListener)
@@ -84,34 +123,6 @@ public class EventsSocket extends WebSocketAdapter implements IWampConnection
     }
 
     @Override
-    public void onWebSocketClose(int statusCode, String reason)
-    {
-        super.onWebSocketClose(statusCode, reason);
-
-        connectionListener.transportClosed();
-        logger.debug("Closing WebSocket for session {}", getSession());
-    }
-
-    @Override
-    public void onWebSocketConnect(Session sess)
-    {
-        super.onWebSocketConnect(sess);
-
-        connectionListener = wampRouter.connectionAcceptor().createNewConnectionListener();
-        wampRouter.connectionAcceptor().acceptNewConnection(this, connectionListener);
-        logger.debug("Opened WebSocket for session {}", sess);
-    }
-
-    @Override
-    public void onWebSocketError(Throwable cause)
-    {
-        super.onWebSocketError(cause);
-
-        connectionListener.transportError(cause);
-        logger.debug("WebSocket error for session {}", getSession(), cause);
-    }
-
-    @Override
     public WampSerialization serialization()
     {
         return WampSerialization.Json;
@@ -127,26 +138,12 @@ public class EventsSocket extends WebSocketAdapter implements IWampConnection
     public void sendMessage(WampMessage message, IWampConnectionPromise<Void> promise)
     {
         try {
-            if (getSession().isOpen()) {
+            if (serverWebSocket != null) {
                 try {
                     String rawMessage = objectMapper.writeValueAsString(message.toObjectArray(objectMapper));
                     logger.debug("[SERVER] Sending WAMP message {}", rawMessage);
-                    getRemote().sendString(rawMessage,
-                            new WriteCallback()
-                            {
-
-                                @Override
-                                public void writeFailed(Throwable x)
-                                {
-                                    promise.reject(x);
-                                }
-
-                                @Override
-                                public void writeSuccess()
-                                {
-                                    promise.fulfill(null);
-                                }
-                            });
+                    serverWebSocket.writeFinalTextFrame(rawMessage);
+                    promise.fulfill(null);
                 } catch (IOException | WampError e) {
                     logger.error("Recieved exception while sending message", e);
                     promise.reject(e);
@@ -165,15 +162,6 @@ public class EventsSocket extends WebSocketAdapter implements IWampConnection
     @Override
     public void close(boolean sendRemaining, IWampConnectionPromise<Void> promise)
     {
-        try {
-            if (sendRemaining) {
-                getRemote().flush();
-            }
-            getSession().close();
-
-            promise.fulfill(null);
-        }catch (IOException e) {
-            promise.reject(e);
-        }
+        serverWebSocket.close();
     }
 }

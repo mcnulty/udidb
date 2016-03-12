@@ -11,6 +11,8 @@ package net.udidb.server.api.resources;
 
 import java.io.IOException;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.OPTIONS;
@@ -29,7 +31,6 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.inject.Inject;
 
 import net.libudi.api.exceptions.RequestException;
 import net.udidb.engine.ops.OperationException;
@@ -43,6 +44,7 @@ import net.udidb.server.engine.ServerEngine;
 /**
  * @author mcnulty
  */
+@Singleton
 @Path("/debuggeeContexts")
 public class DebuggeeContexts
 {
@@ -53,13 +55,13 @@ public class DebuggeeContexts
     private final ServerEngine serverEngine;
 
     @Inject
-    DebuggeeContexts(ObjectMapper objectMapper, ServerEngine serverEngine)
+    public DebuggeeContexts(ObjectMapper objectMapper, ServerEngine serverEngine)
     {
         this.objectMapper = objectMapper;
         this.serverEngine = serverEngine;
     }
 
-    @GET @Path("/")
+    @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAll()
     {
@@ -70,7 +72,7 @@ public class DebuggeeContexts
         }
     }
 
-    @POST @Path("/")
+    @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response create(String body)
@@ -92,7 +94,6 @@ public class DebuggeeContexts
     }
 
     @OPTIONS
-    @Path("/")
     public Response optionsCreate()
     {
         return Response.ok().build();
