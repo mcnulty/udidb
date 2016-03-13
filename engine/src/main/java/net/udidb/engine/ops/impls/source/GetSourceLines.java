@@ -9,11 +9,25 @@
 
 package net.udidb.engine.ops.impls.source;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
 import com.google.inject.Inject;
 
+import net.libudi.api.exceptions.UdiException;
 import net.sourcecrumbs.api.Range;
+import net.sourcecrumbs.api.machinecode.MachineCodeMapping;
+import net.sourcecrumbs.api.machinecode.SourceLineRange;
+import net.sourcecrumbs.api.transunit.NoSuchLineException;
+import net.sourcecrumbs.api.transunit.TranslationUnit;
 import net.udidb.engine.context.DebuggeeContext;
 import net.udidb.engine.context.DebuggeeContextAware;
+import net.udidb.engine.ops.MissingDebugInfoException;
+import net.udidb.engine.ops.NoDebuggeeContextException;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.annotations.DisplayName;
 import net.udidb.engine.ops.annotations.HelpMessage;
@@ -21,6 +35,7 @@ import net.udidb.engine.ops.annotations.Operand;
 import net.udidb.engine.ops.impls.DisplayNameOperation;
 import net.udidb.engine.ops.parser.RangeParser;
 import net.udidb.engine.ops.results.Result;
+import net.udidb.engine.ops.results.TableResult;
 import net.udidb.engine.source.SourceLineRowFactory;
 
 /**
@@ -34,9 +49,10 @@ public class GetSourceLines extends DisplayNameOperation implements DebuggeeCont
 {
     private final SourceLineRowFactory sourceLineRowFactory;
     private DebuggeeContext debuggeeContext;
+    private MachineCodeMapping machineCodeMapping;
 
     @HelpMessage("the range of source lines in the file")
-    @Operand(order = 0, operandParser = RangeParser.class)
+    @Operand(order = 0, operandParser = RangeParser.class, optional = true)
     private Range<Integer> range;
 
     @HelpMessage("the name of the source file as defined in the binary. " +
@@ -69,17 +85,79 @@ public class GetSourceLines extends DisplayNameOperation implements DebuggeeCont
         this.file = file;
     }
 
+    private TranslationUnit getTranslationUnitFromFile() throws AmbiguousFileException
+    {
+        Path filePath = Paths.get(file);
+
+        Iterable<TranslationUnit> translationUnits = debuggeeContext.getExecutable().getTranslationUnits();
+
+        // Filter based on equality first
+        Optional<TranslationUnit> candidate = StreamSupport.stream(translationUnits.spliterator(), false)
+                                                           .filter(t -> t.getPath().equals(filePath))
+                                                           .findAny();
+        if (candidate.isPresent()) {
+            return candidate.get();
+        }
+
+        if (filePath.isAbsolute()) {
+            // An absolute path should have matched a path
+            throw new AmbiguousFileException(file);
+        }
+
+        List<TranslationUnit> partialMatches = StreamSupport.stream(translationUnits.spliterator(), false)
+                                                            .filter(t -> t.getPath().endsWith(filePath))
+                                                            .collect(Collectors.toList());
+        if (partialMatches.size() != 1) {
+            throw new AmbiguousFileException(file);
+        }
+
+        return partialMatches.get(0);
+    }
+
     @Override
     public Result execute() throws OperationException
     {
-        if (file != null) {
+        if (debuggeeContext == null) {
+            throw new NoDebuggeeContextException();
         }
-        return null;
+
+        try {
+            if (range != null) {
+                TranslationUnit translationUnit;
+                if (file != null) {
+                    translationUnit = getTranslationUnitFromFile();
+                } else {
+                    // Determine the current translation unit
+                    long currentPc = debuggeeContext.getCurrentThread().getPC();
+                    translationUnit = debuggeeContext.getExecutable().getContainingTranslationUnit(currentPc);
+                    if (translationUnit == null) {
+                        throw new MissingDebugInfoException();
+                    }
+                }
+
+                SourceLineRange sourceLineRange = new SourceLineRange();
+                sourceLineRange.setTranslationUnit(translationUnit);
+                sourceLineRange.setLineRange(range);
+
+                return new TableResult(sourceLineRowFactory.create(sourceLineRange));
+            }else{
+                if (machineCodeMapping == null) {
+                    throw new MissingDebugInfoException();
+                }
+
+                // Get the current line
+                long currentPc = debuggeeContext.getCurrentThread().getPC();
+                return new TableResult(sourceLineRowFactory.create(machineCodeMapping.getSourceLinesRanges(currentPc)));
+            }
+        }catch (UdiException | NoSuchLineException e) {
+            throw new OperationException("Failed to obtain requested source lines", e);
+        }
     }
 
     @Override
     public void setDebuggeeContext(DebuggeeContext debuggeeContext)
     {
         this.debuggeeContext = debuggeeContext;
+        this.machineCodeMapping = debuggeeContext.getExecutable().getMachineCodeMapping();
     }
 }
