@@ -12,7 +12,6 @@ package net.udidb.engine.source;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -22,8 +21,6 @@ import net.sourcecrumbs.api.machinecode.SourceLine;
 import net.sourcecrumbs.api.machinecode.SourceLineRange;
 import net.sourcecrumbs.api.transunit.NoSuchLineException;
 import net.sourcecrumbs.api.transunit.TranslationUnit;
-import net.udidb.engine.source.SourceLineRow;
-import net.udidb.engine.source.SourceLineRowFactory;
 
 /**
  * In-memory implementation of SourceLineRowFactory
@@ -39,10 +36,11 @@ public class InMemorySourceLineRowFactory implements SourceLineRowFactory {
 
     private final Map<String, List<String>> lineCache = new HashMap<>();
 
-    private SourceLineRow create(TranslationUnit unit, int line) throws NoSuchLineException {
-        try {
-            String pathKey = unit.getPath().toAbsolutePath().toString();
+    private List<String> getLines(TranslationUnit unit) throws NoSuchLineException
+    {
+        String pathKey = unit.getPath().toAbsolutePath().toString();
 
+        try {
             List<String> lines;
             synchronized (lineCache) {
                 lines = lineCache.get(pathKey);
@@ -52,14 +50,34 @@ public class InMemorySourceLineRowFactory implements SourceLineRowFactory {
                 }
             }
 
-            if (lines == null || line > lines.size()-1) {
-                throw new NoSuchLineException(String.format("Cannot retrieve source for line %s:%d", unit.getName(), line));
+            if (lines == null) {
+                throw new NoSuchLineException("Cannot retrieve source lines for translation unit " +
+                        unit.getName());
             }
-
-            return new SourceLineRow(line, lines.get(line-1));
+            return lines;
         }catch (IOException e) {
             throw new NoSuchLineException(e);
         }
+    }
+
+    private SourceLineRow create(TranslationUnit unit, int line) throws NoSuchLineException {
+        List<String> lines = getLines(unit);
+
+        if (line > lines.size()-1) {
+            throw new NoSuchLineException(String.format("Cannot retrieve source for line %s:%d", unit.getName(), line));
+        }
+
+        return new SourceLineRow(line, lines.get(line-1));
+    }
+
+    private List<SourceLineRow> create(TranslationUnit unit) throws NoSuchLineException {
+        List<String> lines = getLines(unit);
+
+        List<SourceLineRow> sourceLineRows = new LinkedList<>();
+        for (int i = 0; i < lines.size(); ++i) {
+            sourceLineRows.add(new SourceLineRow(i+1, lines.get(i)));
+        }
+        return sourceLineRows;
     }
 
     @Override
@@ -77,8 +95,13 @@ public class InMemorySourceLineRowFactory implements SourceLineRowFactory {
     }
 
     private void create(SourceLineRange range, List<SourceLineRow> output) throws NoSuchLineException {
-        for (int i = range.getLineRange().getStart(); i <= range.getLineRange().getEnd(); ++i) {
-            output.add(create(range.getTranslationUnit(), i));
+        // Handle special range for retrieving all lines
+        if (range.getLineRange().getStart() == 0 && range.getLineRange().getEnd() == 0) {
+            output.addAll(create(range.getTranslationUnit()));
+        }else{
+            for (int i = range.getLineRange().getStart(); i <= range.getLineRange().getEnd(); ++i) {
+                output.add(create(range.getTranslationUnit(), i));
+            }
         }
     }
 

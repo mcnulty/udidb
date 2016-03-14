@@ -371,36 +371,94 @@ export default React.createClass({
         };
         newContext["activeThreadIndex"] = 0;
 
-        let processPromise = new Promise(function(resolve, reject) {
-            request.get(this.props.baseApiUri + "/debuggeeContexts/" + context.id + "/process")
-                   .end(function(err, resp) {
-                       if (err) {
-                           reject(resp);
-                       }else{
-                           resolve(resp);
+        let operationUri = "/debuggeeContexts/" + context.id + "/process/operation";
+        this._getAsPromise("/debuggeeContexts/" + context.id + "/process")
+            .then(function(resp) {
+                newContext["processId"] = resp.body.pid;
+                return this._getAsPromise("/debuggeeContexts/" + context.id + "/process/threads");
+            }.bind(this))
+            .then(function(resp) {
+                newContext["threads"] = resp.body.elements;
+                return this._getAsPromise("/debuggeeContexts/" + context.id + "/process/operations");
+            }.bind(this))
+            .then(function(resp) {
+                newContext["operationDescriptors"] = resp.body.elements;
+                return this._postAsPromise(operationUri,
+                        this._createOperationApiModel(
+                            this._createOperation("source files", newContext["operationDescriptors"])));
+            }.bind(this))
+            .then(function(resp) {
+                // Create a list of promises to get all the source information for all the files
+                let resultObj = resp.body.result;
+                let sourceLinePromises = [];
+                resultObj.rows.forEach(function(fileRow, array, index) {
+                    let fileSourcePromise = 
+                        this._postAsPromise(operationUri,
+                                this._createOperationApiModel(
+                                    this._createOperation("source lines 0:0 " + fileRow.columnValues[0],
+                                        newContext["operationDescriptors"])))
+                        .then(function(resp) {
+                            let sourceLines = [];
+                            resp.body.result.rows.forEach(function(lineRow, array, index) {
+                                sourceLines.push(lineRow.columnValues[1]);
+                            });
+                            let sourceMap = {};
+                            sourceMap[fileRow.columnValues[0]] = {
+                                startLineNo: 1,
+                                lines: sourceLines
+                            };
+                            return sourceMap;
+                        });
+                    sourceLinePromises.push(fileSourcePromise);
+                }.bind(this));
+                return Promise.all(sourceLinePromises);
+            }.bind(this))
+            .then(function(sourceMapEntries) {
+                newContext["sourceMap"] = sourceMapEntries.reduce(function(prev, cur, index, arr) {
+                    return Object.assign(prev, cur);
+                }, {});
+
+                let threadPromises = [];
+                newContext.threads.forEach(function(thread, index, array) {
+                    if (thread.pc && thread.pc !== "0") {
+                        let threadPromise = this._postAsPromise(operationUri,
+                                this._createOperationApiModel(this._createOperation("source addr2line 0x" + thread.pc,
+                                        newContext["operationDescriptors"])))
+                            .then(function(resp) {
+                                let sourceObj = {
+                                    file: resp.body.result.rows[0].columnValues[0],
+                                    line: parseInt(resp.body.result.rows[0].columnValues[1], 10)
+                                };
+                                newContext.threads[index].source = sourceObj;
+                            });
+                        threadPromises.push(threadPromise);
+                    }
+                }.bind(this))
+                return Promise.all(threadPromises);
+            }.bind(this))
+            .then(function(unused) {
+                let newState = update(this.state, {
+                    contexts: {
+                        $push: [ newContext ]
+                    },
+                    currentContextIndex: { $apply: function(x) {
+                        if (x === -1) {
+                            return 0;
                         }
-                   });
-        }.bind(this))
-        .then(function(resp) {
-            newContext["processId"] = resp.body.pid;
-        });
-
-        let threadsPromise = new Promise(function(resolve, reject) {
-            request.get(this.props.baseApiUri + "/debuggeeContexts/" + context.id + "/process/threads")
-            .end(function(err, resp) {
-                if (err) {
-                    reject(resp);
-                }else{
-                    resolve(resp);
-                }
+                        return x + 1;
+                    }}
+                });
+                this.setState(newState);
+            }.bind(this))
+            .catch(function(errorResponse) {
+                errorCallback(errorResponse);
             });
-        }.bind(this))
-        .then(function(resp) {
-            newContext["threads"] = resp.body.elements;
-        });
+    },
 
-        let descriptorsPromise = new Promise(function(resolve, reject) {
-            request.get(this.props.baseApiUri + "/debuggeeContexts/" + context.id + "/process/operations")
+    _postAsPromise: function(url, payload) {
+        return new Promise(function(resolve, reject) {
+            request.post(this.props.baseApiUri + url)
+                   .send(payload)
                    .end(function(err, resp) {
                        if (err) {
                            reject(resp);
@@ -408,29 +466,20 @@ export default React.createClass({
                            resolve(resp);
                        }
                    });
-        }.bind(this))
-        .then(function(resp) {
-            newContext["operationDescriptors"] = resp.body.elements;
-        });
+        }.bind(this));
+    },
 
-        Promise.all([ processPromise, threadsPromise, descriptorsPromise ])
-               .then(function (responses) {
-                   let newState = update(this.state, {
-                       contexts: {
-                           $push: [ newContext ]
-                       },
-                       currentContextIndex: { $apply: function(x) {
-                           if (x === -1) {
-                               return 0;
-                           }
-                           return x + 1;
-                       }}
-                   });
-                   this.setState(newState);
-               }.bind(this))
-               .catch(function(errorResponse) {
-                   errorCallback(errorResponse);
-               });
+    _getAsPromise: function(url) {
+        return new Promise(function(resolve, reject) {
+            request.get(this.props.baseApiUri + url)
+                  .end(function(err, resp) {
+                      if (err) {
+                          reject(resp);
+                      }else{
+                          resolve(resp);
+                      }
+                  });
+        }.bind(this));
     },
 
     _removeContext: function(contextIndex) {
@@ -443,6 +492,39 @@ export default React.createClass({
             }
         });
         this.setState(newState);
+    },
+
+    _updateThreadSourceInfo: function(contextIndex, tid, pc) {
+        let context = this.state.contexts[contextIndex];
+        let threadIndex = context.threads.findIndex(function(thread, index, array) {
+            return thread.id === tid;
+        });
+        this._postAsPromise("/debuggeeContexts/" + context.id + "/process/operation",
+                this._createOperationApiModel(
+                    this._createOperation("source addr2line 0x" + pc, context["operationDescriptors"])))
+            .then(function(resp) {
+                let sourceObj = {
+                    file: resp.body.result.rows[0].columnValues[0],
+                    line: parseInt(resp.body.result.rows[0].columnValues[1], 10)
+                };
+                let newState = update(this.state, {
+                    contexts: {
+                        [contextIndex] : {
+                            threads: {
+                                [threadIndex] : {
+                                    pc: { $set: pc },
+                                    source: { $set: sourceObj }
+                                }
+                            }
+                        }
+                    }
+                });
+                this.setState(newState);
+            }.bind(this))
+            .catch(function(resp) {
+                console.log("Failed to retrieve source info for thread " + tid + " in context " + contextIndex + 
+                        JSON.stringify(resp));
+            });
     },
 
     _udidbEventHandler: function(args) {
@@ -480,8 +562,9 @@ export default React.createClass({
             console.log("Could not determine context for breakpoint event");
             return;
         }
-        this._updateLastResult(contextIndex, "Breakpoint hit at 0x" +
-                               udidbEvent.eventData.address.toString(16));
+        let pc = udidbEvent.eventData.address.toString(16);
+        this._updateLastResult(contextIndex, "Breakpoint hit at 0x" + pc);
+        this._updateThreadSourceInfo(contextIndex, udidbEvent.tid, pc);
     },
 
     _handleProcessExit: function(udidbEvent, contextIndex) {
@@ -511,7 +594,8 @@ export default React.createClass({
             }else{
                 this._addContextFromApiModel(resp.body,
                                              function(resp) {
-                                                 console.log("Failed to add context: " + resp);
+                                                 console.log("Failed to add context: " +
+                                                         JSON.stringify(resp));
 
                                                  if (resp instanceof Error) {
                                                      console.log(resp.stack);

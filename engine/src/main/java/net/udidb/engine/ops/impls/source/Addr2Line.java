@@ -10,9 +10,16 @@
 package net.udidb.engine.ops.impls.source;
 
 
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
+import net.sourcecrumbs.api.Range;
 import net.sourcecrumbs.api.machinecode.MachineCodeMapping;
+import net.sourcecrumbs.api.machinecode.SourceLineRange;
 import net.sourcecrumbs.api.transunit.NoSuchLineException;
 import net.udidb.engine.context.DebuggeeContext;
 import net.udidb.engine.ops.MissingDebugInfoException;
@@ -22,6 +29,7 @@ import net.udidb.engine.ops.annotations.HelpMessage;
 import net.udidb.engine.ops.impls.ContextExpressionOperation;
 import net.udidb.engine.ops.results.Result;
 import net.udidb.engine.ops.results.TableResult;
+import net.udidb.engine.ops.results.TableRow;
 import net.udidb.engine.source.SourceLineRow;
 import net.udidb.engine.source.SourceLineRowFactory;
 import net.udidb.expr.Expression;
@@ -62,10 +70,39 @@ public class Addr2Line extends ContextExpressionOperation
             throw new MissingDebugInfoException();
         }
 
-        try {
-            return new TableResult(sourceLineRowFactory.create(machineCodeMapping.getSourceLinesRanges(addressValue)));
-        }catch (NoSuchLineException e) {
-            return new TableResult(new SourceLineRow());
+        return new TableResult(machineCodeMapping.getSourceLinesRanges(addressValue)
+                                                 .stream()
+                                                 .map(Addr2LineRow::new)
+                                                 .collect(Collectors.toList()));
+
+    }
+
+    private static class Addr2LineRow implements TableRow
+    {
+        private final SourceLineRange sourceLineRange;
+
+        public Addr2LineRow(SourceLineRange sourceLineRange)
+        {
+            this.sourceLineRange = sourceLineRange;
+        }
+
+        @Override
+        public List<String> getColumnHeaders()
+        {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public List<String> getColumnValues()
+        {
+            String path = sourceLineRange.getTranslationUnit().getPath().toAbsolutePath().toString();
+            Range<Integer> lineRange = sourceLineRange.getLineRange();
+
+            if (lineRange.getIntLength() == 0) {
+                return Lists.newArrayList(path, Integer.toString(lineRange.getStart()));
+            }
+
+            return Lists.newArrayList(path, lineRange.toString());
         }
     }
 }

@@ -158,6 +158,7 @@ public final class UdidbServer
             server.join();
         }catch (Exception e) {
             e.printStackTrace();
+            throw e;
         }
     }
 }

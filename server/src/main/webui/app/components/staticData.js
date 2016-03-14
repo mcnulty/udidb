@@ -9,7 +9,7 @@ var staticProps = {
             threads: [
                 {
                     id: "1",
-                    pc: "0xeff0f0",
+                    pc: "eff0f0",
                     source: {
                         line: 1215,
                         file: "main.c"
@@ -17,7 +17,7 @@ var staticProps = {
                 },
                 {
                     id: "2",
-                    pc: "0xeff0f0",
+                    pc: "eff0f0",
                     source: {
                         line: 110,
                         file: "events.c"
@@ -134,7 +134,7 @@ var staticProps = {
             threads: [
                 {
                     id: "1",
-                    pc: "0xeff0f7",
+                    pc: "eff0f7",
                     source: {
                         line: 20,
                         file: "main.cxx"
