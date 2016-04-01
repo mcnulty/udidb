@@ -63,24 +63,22 @@ export default React.createClass({
             let currentLineNo = index + lineStart;
 
             let markedUpLine;
-            let markedUpLineNo;
             if (activeLineNo == currentLineNo) {
                 markedUpLine = '<td style="background-color: rgb(10,81,99); width: 100%;">' +
                     line +
                         '</td>';
-                
-                markedUpLineNo = ' ' + currentLineNo + ' >';
             }else{
                 markedUpLine = '<td style="width: 100%;">' + line + '</td>';
-                markedUpLineNo = ' ' + currentLineNo + '  ';
             }
 
             let lineNoCell = '<td style="' + 
                         'background-color: rgb(7,54,66);' + 
                         'border:1px solid rgb(7,54,66);' +
                         'color: rgb(131, 148, 150);' +
+                        'padding-left: 5px;' +
+                        'padding-right: 5px;' +
                    '">'
-                   + markedUpLineNo + '</td>';
+                   + currentLineNo + '</td>';
                    
             return '<tr>' + lineNoCell + markedUpLine + "</tr>";
         }).join("");
