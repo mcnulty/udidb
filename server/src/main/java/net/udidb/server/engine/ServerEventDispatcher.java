@@ -9,6 +9,7 @@
 
 package net.udidb.server.engine;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -73,8 +74,8 @@ public class ServerEventDispatcher extends Thread
                 procEventObs = new HashSet<>();
                 eventObservers.put(eventObserver.getDebuggeeContext().getProcess(), procEventObs);
             }
+            procEventObs.add(eventObserver);
         }
-        procEventObs.add(eventObserver);
     }
 
     @Override
@@ -116,18 +117,28 @@ public class ServerEventDispatcher extends Thread
                     DbEventData dbEventData = new DbEventData();
                     udiEvent.setUserData(dbEventData);
 
+                    Set<EventObserver> observers;
                     synchronized (eventObservers) {
-                        Set<EventObserver> observers = eventObservers.get(udiEvent.getProcess());
-                        if (observers != null) {
-                            synchronized (observers) {
-                                Iterator<EventObserver> i = observers.iterator();
-                                while (i.hasNext()) {
-                                    EventObserver eventObserver = i.next();
-                                    if (!eventObserver.publish(udiEvent)) {
-                                        i.remove();
-                                    }
-                                }
-                            }
+                        Set<EventObserver> registeredObservers = eventObservers.get(udiEvent.getProcess());
+                        if (registeredObservers != null) {
+                            observers = new HashSet<>(registeredObservers);
+                        }else{
+                            observers = Collections.<EventObserver>emptySet();
+                        }
+                    }
+
+                    Iterator<EventObserver> i = observers.iterator();
+                    while (i.hasNext()) {
+                        EventObserver eventObserver = i.next();
+                        if (eventObserver.publish(udiEvent)) {
+                            i.remove();
+                        }
+                    }
+
+                    synchronized (eventObservers) {
+                        Set<EventObserver> registeredObservers = eventObservers.get(udiEvent.getProcess());
+                        if (registeredObservers != null) {
+                            registeredObservers.removeAll(observers);
                         }
                     }
 
