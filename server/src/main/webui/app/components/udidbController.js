@@ -541,6 +541,14 @@ export default React.createClass({
             contextIndex = null;
         }
 
+        let intermediateEvent = false;
+        if ("intermediateEvent" in udidbEvent) {
+            intermediateEvent = udidbEvent.intermediateEvent;
+        }
+        if (intermediateEvent) {
+            // TODO issue a request for the latest operation data for this context
+        }
+
         switch (udidbEvent.eventType) {
             case "BREAKPOINT":
                 this._handleBreakpointEvent(udidbEvent, contextIndex);

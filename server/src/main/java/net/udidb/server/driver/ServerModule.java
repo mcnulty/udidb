@@ -12,18 +12,10 @@ package net.udidb.server.driver;
 import java.util.Collections;
 import java.util.logging.Logger;
 
-import javax.inject.Singleton;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ContainerResponseFilter;
 
-import org.glassfish.hk2.api.Context;
-import org.glassfish.hk2.api.TypeLiteral;
-import org.glassfish.hk2.utilities.ServiceLocatorUtilities;
 import org.glassfish.jersey.filter.LoggingFilter;
-import org.jvnet.hk2.guice.bridge.api.GuiceBridge;
-import org.jvnet.hk2.guice.bridge.api.GuiceIntoHK2Bridge;
-import org.jvnet.hk2.guice.bridge.api.GuiceScope;
-import org.jvnet.hk2.guice.bridge.internal.GuiceScopeContext;
 
 import com.englishtown.vertx.guice.GuiceJerseyBinder;
 import com.englishtown.vertx.jersey.JerseyOptions;
@@ -47,6 +39,8 @@ import net.sourcecrumbs.api.files.BinaryReader;
 import net.sourcecrumbs.refimpl.CrossPlatformBinaryReader;
 import net.udidb.engine.context.DebuggeeContextManager;
 import net.udidb.engine.context.DebuggeeContextManagerImpl;
+import net.udidb.engine.events.EventPump;
+import net.udidb.engine.events.EventSink;
 import net.udidb.engine.expr.ExpressionCompilerDelegate;
 import net.udidb.engine.ops.impls.help.HelpMessageProvider;
 import net.udidb.engine.ops.results.DeferredResult;
@@ -142,6 +136,10 @@ public class ServerModule extends AbstractModule
         bind(OperationResultVisitor.class).to(OperationEngine.class);
 
         bind(ServerEventDispatcher.class).asEagerSingleton();
+
+        bind(EventPump.class).asEagerSingleton();
+
+        bind(EventSink.class).to(ServerEventDispatcher.class);
 
         WampRouter wampRouter = configureWampRouter();
         bind(WampRouter.class).toInstance(wampRouter);

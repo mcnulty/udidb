@@ -21,6 +21,7 @@ import net.libudi.api.event.UdiEventProcessExit;
 import net.libudi.api.event.UdiEventThreadCreate;
 import net.libudi.api.event.UdiEventVisitor;
 import net.udidb.engine.context.DebuggeeContext;
+import net.udidb.engine.events.DbEventData;
 
 /**
  * @author mcnulty
@@ -37,6 +38,8 @@ public class UdiEventModel
 
     private Map<String, Object> eventData = new HashMap<>();
 
+    private boolean intermediateEvent = false;
+
     public UdiEventModel()
     {
     }
@@ -52,9 +55,13 @@ public class UdiEventModel
         populateEventData(udiEvent);
 
         Object processData = udiEvent.getProcess().getUserData();
-        if (processData instanceof DebuggeeContext)
-        {
+        if (processData instanceof DebuggeeContext) {
             contextId = ((DebuggeeContext) processData).getId();
+        }
+
+        Object userData = udiEvent.getUserData();
+        if (userData instanceof DbEventData) {
+            intermediateEvent = ((DbEventData) userData).isIntermediateEvent();
         }
     }
 
@@ -142,5 +149,15 @@ public class UdiEventModel
     public void setTid(String tid)
     {
         this.tid = tid;
+    }
+
+    public boolean isIntermediateEvent()
+    {
+        return intermediateEvent;
+    }
+
+    public void setIntermediateEvent(boolean intermediateEvent)
+    {
+        this.intermediateEvent = intermediateEvent;
     }
 }

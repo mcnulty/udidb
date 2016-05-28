@@ -38,4 +38,8 @@ public interface DebuggeeContext extends TableRow, RegisterContext, ExecutionCon
     String[] getArgs();
 
     UdiProcess getProcess();
+
+    Object getEngineUserData();
+
+    void setEngineUserData(Object engineUserData);
 }

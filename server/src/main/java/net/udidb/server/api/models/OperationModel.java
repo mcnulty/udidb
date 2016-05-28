@@ -24,6 +24,7 @@ public final class OperationModel
 
     private Map<String, Object> operands;
 
+    @JsonIgnore
     private boolean pending;
 
     private Result result;

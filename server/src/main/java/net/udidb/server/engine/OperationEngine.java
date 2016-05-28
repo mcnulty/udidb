@@ -60,19 +60,16 @@ public final class OperationEngine implements OperationResultVisitor
 
     private final Injector injector;
     private final ServerEventDispatcher eventDispatcher;
-    private final DebuggeeContextManager debuggeeContextManager;
     private final Map<String, Class<? extends Operation>> operations;
     private final BeanUtilsBean beanUtils;
 
     @Inject
     public OperationEngine(Injector injector,
                            OperationProvider operationProvider,
-                           ServerEventDispatcher eventDispatcher,
-                           DebuggeeContextManager debuggeeContextManager)
+                           ServerEventDispatcher eventDispatcher)
     {
         this.injector = injector;
         this.eventDispatcher = eventDispatcher;
-        this.debuggeeContextManager = debuggeeContextManager;
         this.operations = operationProvider.getOperations();
         this.beanUtils = BeanUtilsBean.getInstance();
     }
@@ -92,59 +89,34 @@ public final class OperationEngine implements OperationResultVisitor
         Operation operation = configureOperation(operationModel, debuggeeContext);
 
         try {
-            OperationModel resultModel = new OperationModel(operationModel);
+            OperationModel opModel = new OperationModel(operationModel);
             if (debuggeeContext != null) {
-                contextsToModels.put(debuggeeContext.getId(), resultModel);
+                contextsToModels.put(debuggeeContext.getId(), opModel);
                 operationsToContexts.put(System.identityHashCode(operation), debuggeeContext.getId());
             }
 
             Result result = operation.execute();
 
             if (result.isEventPending()) {
-                resultModel.setPending(true);
-
-                if (debuggeeContext != null) {
-                    eventDispatcher.registerEventObserver(new EventObserver()
-                    {
-                        @Override
-                        public DebuggeeContext getDebuggeeContext()
-                        {
-                            return debuggeeContext;
-                        }
-
-                        @Override
-                        public boolean publish(UdiEvent event) throws OperationException
-                        {
-                            completeOperation(debuggeeContext);
-                            return false;
-                        }
-                    });
-                }
-
-                eventDispatcher.notifyOfEvents();
+                opModel.setPending(true);
+                opModel.setResult(null);
             }else{
-                resultModel.setResult(result);
+                opModel.setResult(result);
             }
 
             if (debuggeeContext != null) {
                 result.accept(operation, this);
             }
 
-            return resultModel;
+            eventDispatcher.readyForEvent(debuggeeContext);
+
+            return opModel;
         }catch (OperationException e) {
             visit(operation, e);
             throw e;
         }catch (Exception e) {
             visit(operation, e);
             throw new OperationException(e);
-        }
-    }
-
-    public synchronized void completeOperation(DebuggeeContext debuggeeContext)
-    {
-        OperationModel operationModel = contextsToModels.get(debuggeeContext.getId());
-        if (operationModel != null) {
-            operationModel.setPending(false);
         }
     }
 

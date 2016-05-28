@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015, Dan McNulty
+ * Copyright (c) 2011-2016, Dan McNulty
  * All rights reserved.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -9,14 +9,13 @@
 
 package net.udidb.server.engine;
 
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,13 +24,10 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import net.libudi.api.UdiProcess;
-import net.libudi.api.UdiProcessManager;
 import net.libudi.api.event.UdiEvent;
-import net.libudi.api.exceptions.UdiException;
 import net.udidb.engine.context.DebuggeeContext;
-import net.udidb.engine.context.DebuggeeContextManager;
-import net.udidb.engine.events.DbEventData;
 import net.udidb.engine.events.EventObserver;
+import net.udidb.engine.events.EventSink;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.server.api.models.UdiEventModel;
 import ws.wamp.jawampa.WampClient;
@@ -40,41 +36,46 @@ import ws.wamp.jawampa.WampClient;
  * @author mcnulty
  */
 @Singleton
-public class ServerEventDispatcher extends Thread
+public class ServerEventDispatcher extends Thread implements EventSink
 {
-    private static final String GLOBAL_TOPIC = "com.udidb.events";
-
     private static final Logger logger = LoggerFactory.getLogger(ServerEventDispatcher.class);
 
-    private final Map<UdiProcess, Set<EventObserver>> eventObservers = new HashMap<>();
+    private static final String GLOBAL_TOPIC = "com.udidb.events";
 
-    private final UdiProcessManager processManager;
-    private final DebuggeeContextManager debuggeeContextManager;
     private final WampClient wampClient;
+    private final BlockingQueue<Notification> notifications = new LinkedBlockingQueue<>();
+    private final Map<UdiProcess, EventContext> eventContexts = new HashMap<>();
 
     @Inject
-    public ServerEventDispatcher(DebuggeeContextManager debuggeeContextManager,
-                                 UdiProcessManager processManager,
-                                 WampClient wampClient)
+    public ServerEventDispatcher(WampClient wampClient)
     {
-        this.processManager = processManager;
-        this.debuggeeContextManager = debuggeeContextManager;
         this.wampClient = wampClient;
         this.setName(ServerEventDispatcher.class.getSimpleName());
         this.setDaemon(true);
         this.start();
     }
 
+    @Override
+    public void accept(List<UdiEvent> events)
+    {
+        Notification notification = new Notification();
+        notification.events = new LinkedList<>(events);
+        notifications.add(notification);
+    }
+
     public void registerEventObserver(EventObserver eventObserver)
     {
-        Set<EventObserver> procEventObs;
-        synchronized (eventObservers) {
-            procEventObs = eventObservers.get(eventObserver.getDebuggeeContext().getProcess());
-            if (procEventObs == null) {
-                procEventObs = new HashSet<>();
-                eventObservers.put(eventObserver.getDebuggeeContext().getProcess(), procEventObs);
-            }
-            procEventObs.add(eventObserver);
+        Notification notification = new Notification();
+        notification.eventObserver = eventObserver;
+        notifications.add(notification);
+    }
+
+    public void readyForEvent(DebuggeeContext debuggeeContext)
+    {
+        if (debuggeeContext != null) {
+            Notification notification = new Notification();
+            notification.debuggeeContext = debuggeeContext;
+            notifications.add(notification);
         }
     }
 
@@ -82,75 +83,79 @@ public class ServerEventDispatcher extends Thread
     public void run()
     {
         while(true) {
-            List<UdiProcess> processes = debuggeeContextManager.getEventContexts().stream()
-                    .map(DebuggeeContext::getProcess)
-                    .collect(Collectors.toList());
 
-            synchronized (this) {
-                while(processes.size() == 0) {
-                    try {
-                        logger.debug("Waiting for event processes");
-                        wait();
-                        processes = debuggeeContextManager.getEventContexts().stream()
-                                .map(DebuggeeContext::getProcess)
-                                .collect(Collectors.toList());
-                        logger.debug("{} event processes found", processes.size());
-                    }catch (InterruptedException e) {
-                        logger.debug("Interrupted", e);
-                        Thread.currentThread().interrupt();
-                    }
-                }
-            }
-
-            List<UdiEvent> udiEvents;
+            Notification notification;
             try {
-                logger.debug("Waiting for events");
-                udiEvents = processManager.waitForEvents(processes);
-            }catch (UdiException e) {
-                logger.warn("Failed to wait for events", e);
+                notification = notifications.take();
+            }catch (InterruptedException e) {
+                logger.debug("Interrupted while waiting for notification", e);
                 continue;
             }
 
-            for (UdiEvent udiEvent : udiEvents) {
-                logger.debug("Processing event {} for process {}", udiEvent.getEventType(), udiEvent.getProcess().getPid());
-                try {
-                    DbEventData dbEventData = new DbEventData();
-                    udiEvent.setUserData(dbEventData);
-
-                    Set<EventObserver> observers;
-                    synchronized (eventObservers) {
-                        Set<EventObserver> registeredObservers = eventObservers.get(udiEvent.getProcess());
-                        if (registeredObservers != null) {
-                            observers = new HashSet<>(registeredObservers);
-                        }else{
-                            observers = Collections.<EventObserver>emptySet();
-                        }
-                    }
-
-                    Iterator<EventObserver> i = observers.iterator();
-                    while (i.hasNext()) {
-                        EventObserver eventObserver = i.next();
-                        if (eventObserver.publish(udiEvent)) {
-                            i.remove();
-                        }
-                    }
-
-                    synchronized (eventObservers) {
-                        Set<EventObserver> registeredObservers = eventObservers.get(udiEvent.getProcess());
-                        if (registeredObservers != null) {
-                            registeredObservers.removeAll(observers);
-                        }
-                    }
-
-                    publishEvent(udiEvent);
-
-                    handleTermination(udiEvent);
-                }catch (OperationException e) {
-                    logger.warn("Failed to handle event {}",
-                            udiEvent.getEventType(),
-                            e);
-                }
+            if (notification.events != null) {
+                handleEvents(notification.events);
+            }else if (notification.eventObserver != null) {
+                handleEventObserver(notification.eventObserver);
+            }else if (notification.debuggeeContext != null) {
+                handleReadyForEvents(notification.debuggeeContext);
+            }else{
+                logger.warn("Invalid notification received");
+                throw new IllegalStateException("Invalid notification received");
             }
+        }
+    }
+
+    private void handleEvents(List<UdiEvent> events)
+    {
+        for (UdiEvent event : events) {
+            EventContext eventContext = getEventContext(event.getProcess());
+            eventContext.events.add(event);
+        }
+
+        eventContexts.values().stream().forEach(this::publishIfReady);
+    }
+
+    private void handleEventObserver(EventObserver eventObserver)
+    {
+        EventContext eventContext = getEventContext(eventObserver.getDebuggeeContext().getProcess());
+        eventContext.eventObservers.add(eventObserver);
+
+        publishIfReady(eventContext);
+    }
+
+    private void handleReadyForEvents(DebuggeeContext debuggeeContext)
+    {
+        EventContext eventContext = getEventContext(debuggeeContext.getProcess());
+        eventContext.readyForEvents = true;
+
+        publishIfReady(eventContext);
+    }
+
+    private void publishIfReady(EventContext context)
+    {
+        if (context.readyForEvents && context.events.size() > 0) {
+            Iterator<UdiEvent> eventIterator = context.events.iterator();
+            while (eventIterator.hasNext()) {
+                UdiEvent event = eventIterator.next();
+
+                Iterator<EventObserver> observerIterator = context.eventObservers.iterator();
+                while (observerIterator.hasNext()) {
+                    EventObserver observer = observerIterator.next();
+                    try {
+                        if (!observer.publish(event)) {
+                            observerIterator.remove();
+                        }
+                    }catch (OperationException e) {
+                        logger.error("{} failed to handle published event", observer, e);
+                        observerIterator.remove();
+                    }
+                }
+
+                publishEvent(event);
+                eventIterator.remove();
+            }
+
+            context.readyForEvents = false;
         }
     }
 
@@ -162,32 +167,31 @@ public class ServerEventDispatcher extends Thread
         );
     }
 
-    private void handleTermination(UdiEvent udiEvent) throws OperationException {
-        boolean termination = false;
-        switch (udiEvent.getEventType()) {
-            case PROCESS_CLEANUP:
-                termination = true;
-                break;
-            default:
-                break;
+    private EventContext getEventContext(UdiProcess process)
+    {
+        EventContext eventContext = eventContexts.get(process);
+        if (eventContext == null) {
+            eventContext = new EventContext();
+            eventContexts.put(process, eventContext);
         }
-
-        if (termination) {
-            DebuggeeContext debuggeeContext = debuggeeContextManager.deleteContext(udiEvent.getProcess());
-
-            try {
-                udiEvent.getProcess().close();
-            } catch (Exception e) {
-                throw new OperationException("Failed to cleanup terminated process", e);
-            }
-            logger.debug("Debuggee[{}] terminated after event {}",
-                    debuggeeContext.getId(),
-                    udiEvent.getEventType());
-        }
+        return eventContext;
     }
 
-    public synchronized void notifyOfEvents()
+    private static class Notification
     {
-        notifyAll();
+        private List<UdiEvent> events;
+
+        private EventObserver eventObserver;
+
+        private DebuggeeContext debuggeeContext;
+    }
+
+    private static class EventContext
+    {
+        private final List<UdiEvent> events = new LinkedList<>();
+
+        private final List<EventObserver> eventObservers = new LinkedList<>();
+
+        private boolean readyForEvents = false;
     }
 }

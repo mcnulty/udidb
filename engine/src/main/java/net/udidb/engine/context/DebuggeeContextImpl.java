@@ -46,6 +46,8 @@ public class DebuggeeContextImpl implements DebuggeeContext
 
     private Executable executable;
 
+    private Object engineUserData;
+
     private final int id;
 
     public DebuggeeContextImpl(int id) {
@@ -104,6 +106,7 @@ public class DebuggeeContextImpl implements DebuggeeContext
         this.process = process;
     }
 
+    @Override
     public UdiThread getCurrentThread() {
         return currentThread;
     }
@@ -112,12 +115,25 @@ public class DebuggeeContextImpl implements DebuggeeContext
         this.currentThread = currentThread;
     }
 
+    @Override
     public Executable getExecutable() {
         return executable;
     }
 
     public void setExecutable(Executable executable) {
         this.executable = executable;
+    }
+
+    @Override
+    public Object getEngineUserData()
+    {
+        return engineUserData;
+    }
+
+    @Override
+    public void setEngineUserData(Object engineUserData)
+    {
+        this.engineUserData = engineUserData;
     }
 
     public UdiProcessConfig createProcessConfig() {
