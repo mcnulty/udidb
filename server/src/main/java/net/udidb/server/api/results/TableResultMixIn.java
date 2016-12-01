@@ -14,6 +14,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import net.udidb.engine.events.EventObserver;
+import net.udidb.engine.ops.results.TableResult;
 import net.udidb.engine.ops.results.TableRow;
 
 /**
@@ -29,5 +30,7 @@ public class TableResultMixIn
     private List<String> columnHeaders;
 
     private List<TableRow> rows;
+
+    private String typeName = TableResult.class.getSimpleName();
 
 }

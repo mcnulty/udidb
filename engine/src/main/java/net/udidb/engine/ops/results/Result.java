@@ -45,4 +45,9 @@ public interface Result {
      * @return the event observer for the operation, or null if the event has not been deferred
      */
     EventObserver getDeferredEventObserver();
+
+    /**
+     * @return the name of the type for the Result
+     */
+    String getTypeName();
 }

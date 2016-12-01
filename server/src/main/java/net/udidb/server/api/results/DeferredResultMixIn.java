@@ -12,6 +12,7 @@ package net.udidb.server.api.results;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import net.udidb.engine.events.EventObserver;
+import net.udidb.engine.ops.results.DeferredResult;
 
 /**
  * @author mcnulty
@@ -23,4 +24,5 @@ public class DeferredResultMixIn
     @JsonIgnore
     private EventObserver deferredEventObserver = null;
 
+    private String typeName = DeferredResult.class.getSimpleName();
 }

@@ -12,6 +12,7 @@ package net.udidb.server.api.results;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import net.udidb.engine.events.EventObserver;
+import net.udidb.engine.ops.results.ValueResult;
 
 /**
  * @author mcnulty
@@ -26,5 +27,7 @@ public class ValueResultMixIn
     private String description;
 
     private Object value;
+
+    private String typeName = ValueResult.class.getSimpleName();
 
 }

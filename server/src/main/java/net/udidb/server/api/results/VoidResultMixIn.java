@@ -12,6 +12,7 @@ package net.udidb.server.api.results;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import net.udidb.engine.events.EventObserver;
+import net.udidb.engine.ops.results.VoidResult;
 
 /**
  * @author mcnulty
@@ -24,5 +25,7 @@ public class VoidResultMixIn
 
     @JsonIgnore
     private EventObserver deferredEventObserver = null;
+
+    private String typeName = VoidResult.class.getSimpleName();
 
 }

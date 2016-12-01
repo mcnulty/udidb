@@ -31,4 +31,10 @@ public abstract class BaseResult implements Result {
     public EventObserver getDeferredEventObserver() {
         return deferredEventObserver;
     }
+
+    @Override
+    public String getTypeName()
+    {
+        return this.getClass().getSimpleName();
+    }
 }
