@@ -10,21 +10,10 @@
 package net.udidb.server.api.resources;
 
 import java.io.IOException;
+import java.util.List;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.OPTIONS;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-import javax.ws.rs.core.Response.Status.Family;
-import javax.ws.rs.core.Response.StatusType;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +21,10 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.netty.handler.codec.http.HttpHeaders.Names;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.vertx.core.http.HttpServerResponse;
+import io.vertx.ext.web.RoutingContext;
 import net.libudi.api.exceptions.RequestException;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.OperationParseException;
@@ -45,9 +38,10 @@ import net.udidb.server.engine.ServerEngine;
  * @author mcnulty
  */
 @Singleton
-@Path("/debuggeeContexts")
 public class DebuggeeContexts
 {
+    private static final String APPLICATION_JSON = "application/json";
+
     private static final Logger logger = LoggerFactory.getLogger(DebuggeeContexts.class);
 
     private final ObjectMapper objectMapper;
@@ -61,252 +55,182 @@ public class DebuggeeContexts
         this.serverEngine = serverEngine;
     }
 
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getAll()
+    public void getAll(HttpServerResponse response)
     {
         try {
-            return success(new ModelContainer<>(serverEngine.getDebuggeeContexts()));
+            success(response, new ModelContainer<>(serverEngine.getDebuggeeContexts()));
         }catch (OperationException e) {
-            return generalFailure(e);
+            generalFailure(response, e);
         }
     }
 
-    @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response create(String body)
+    public void get(HttpServerResponse response, String id)
+    {
+        try {
+            success(response, serverEngine.getDebuggeeContext(id));
+        }catch (OperationException e) {
+            generalFailure(response, e);
+        }
+    }
+
+    public void create(HttpServerResponse response, String body)
     {
         DebuggeeConfigModel config;
         try {
             config = objectMapper.readValue(body, DebuggeeConfigModel.class);
+            success(response, serverEngine.createDebuggeeContext(config));
+        }catch (OperationException e) {
+            generalFailure(response, e);
         }catch (JsonProcessingException e) {
-            return invalidJsonResponse(e);
+            invalidJsonResponse(response, e);
         }catch (IOException e) {
-            return generalFailure(e);
-        }
-
-        try {
-            return success(serverEngine.createDebuggeeContext(config));
-        }catch (OperationException e) {
-            return generalFailure(e);
+            generalFailure(response, e);
         }
     }
 
-    @OPTIONS
-    public Response optionsCreate()
-    {
-        return Response.ok().build();
-    }
-
-    @GET @Path("/{id}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response get(@PathParam("id") String id)
+    public void getProcess(HttpServerResponse response, String id)
     {
         try {
-            return success(serverEngine.getDebuggeeContext(id));
+            success(response, serverEngine.getProcess(id));
         }catch (OperationException e) {
-            return generalFailure(e);
+            generalFailure(response, e);
         }
     }
 
-    @GET @Path("/{id}/process")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getProcess(@PathParam("id") String id)
+    public void getThreads(HttpServerResponse response, String id)
     {
         try {
-            return success(serverEngine.getProcess(id));
+            success(response, new ModelContainer<>(serverEngine.getThreads(id)));
         }catch (OperationException e) {
-            return generalFailure(e);
+            generalFailure(response, e);
         }
     }
 
-    @GET @Path("/{id}/process/threads")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getThreads(@PathParam("id") String id)
+    public void getThread(HttpServerResponse response, List<String> params)
+    {
+        String id = params.get(0);
+        String threadId = params.get(1);
+        try {
+            success(response, serverEngine.getThread(id, threadId));
+        }catch (OperationException e) {
+            generalFailure(response, e);
+        }
+    }
+
+    public void createOperation(RoutingContext context, String id)
     {
         try {
-            return success(new ModelContainer<>(serverEngine.getThreads(id)));
+            OperationModel operation = objectMapper.readValue(context.getBodyAsString(), OperationModel.class);
+            success(context.response(), serverEngine.executeOperation(id, operation));
+        }catch (OperationParseException e) {
+            inputError(context.response(), e);
         }catch (OperationException e) {
-            return generalFailure(e);
+            if (e.getCause() instanceof RequestException) {
+                inputError(context.response(), (RequestException)e.getCause());
+            }else {
+                generalFailure(context.response(), e);
+            }
+        }catch (JsonProcessingException e) {
+            invalidJsonResponse(context.response(), e);
+        }catch (IOException e) {
+            generalFailure(context.response(), e);
         }
     }
 
-    @GET @Path("/{id}/process/threads/{threadId}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getThread(@PathParam("id") String id, @PathParam("threadId") String threadId)
+    public void getOperation(HttpServerResponse response, String id)
     {
         try {
-            return success(serverEngine.getThread(id, threadId));
+            success(response, serverEngine.getOperation(id));
         }catch (OperationException e) {
-            return generalFailure(e);
+            generalFailure(response, e);
         }
     }
 
-    @POST
-    @Path("/{id}/process/operation")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
-    public Response createOperation(@PathParam("id") String id, String body)
+    public void getOperationDescriptions(HttpServerResponse response, String id)
+    {
+        try {
+            success(response, new ModelContainer<>(serverEngine.getOperationDescriptions(id)));
+        }catch (OperationException e) {
+            generalFailure(response, e);
+        }
+    }
+
+    public void getOperationDescriptions(HttpServerResponse response)
+    {
+        try {
+            success(response, new ModelContainer<>(serverEngine.getOperationDescriptions()));
+        }catch (OperationException e) {
+            generalFailure(response, e);
+        }
+    }
+
+    public void createGlobalOperation(HttpServerResponse response, String body)
     {
         OperationModel operation;
         try {
             operation = objectMapper.readValue(body, OperationModel.class);
-        }catch (JsonProcessingException e) {
-            return invalidJsonResponse(e);
-        }catch (IOException e) {
-            return generalFailure(e);
-        }
-
-        try {
-            return success(serverEngine.executeOperation(id, operation));
+            success(response, serverEngine.executeGlobalOperation(operation));
         }catch (OperationParseException e) {
-            return inputError(e);
+            inputError(response, e);
         }catch (OperationException e) {
             if (e.getCause() instanceof RequestException) {
-                return inputError((RequestException)e.getCause());
+                inputError(response, (RequestException)e.getCause());
+            }else{
+                generalFailure(response, e);
             }
-            return generalFailure(e);
-        }
-    }
-
-    @OPTIONS
-    @Path("/{id}/process/operation")
-    public Response optionsCreateOperation(@PathParam("id") String id)
-    {
-        return Response.ok().build();
-    }
-
-    @GET @Path("/{id}/process/operation")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getOperation(@PathParam("id") String id)
-    {
-        try {
-            return success(serverEngine.getOperation(id));
-        }catch (OperationException e) {
-            return generalFailure(e);
-        }
-    }
-
-    @GET @Path("{id}/process/operations")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getOperationDescriptions(@PathParam("id") String id) throws JsonProcessingException
-    {
-        try {
-            return success(new ModelContainer<>(serverEngine.getOperationDescriptions(id)));
-        }catch (OperationException e) {
-            return generalFailure(e);
-        }
-    }
-
-    @GET @Path("/operations")
-    @Produces(MediaType. APPLICATION_JSON)
-    public Response getOperationDescriptions() throws JsonProcessingException
-    {
-        try {
-            return success(new ModelContainer<>(serverEngine.getOperationDescriptions()));
-        }catch (OperationException e) {
-            return generalFailure(e);
-        }
-    }
-
-    @POST
-    @Path("/globalOperation")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
-    public Response createGlobalOperation(String body)
-    {
-        OperationModel operation;
-        try {
-            operation = objectMapper.readValue(body, OperationModel.class);
         }catch (JsonProcessingException e) {
-            return invalidJsonResponse(e);
+            invalidJsonResponse(response, e);
         }catch (IOException e) {
-            return generalFailure(e);
-        }
-
-        try {
-            return success(serverEngine.executeGlobalOperation(operation));
-        }catch (OperationParseException e) {
-            return inputError(e);
-        }catch (OperationException e) {
-            if (e.getCause() instanceof RequestException) {
-                return inputError((RequestException)e.getCause());
-            }
-            return generalFailure(e);
+            generalFailure(response, e);
         }
     }
 
-    @OPTIONS
-    @Path("/globalOperation")
-    public Response optionsCreateGlobalOperation()
-    {
-        return Response.ok().build();
-    }
-
-    private Response success(Object o) {
+    private void success(HttpServerResponse response, Object o) {
         try {
             if (o != null) {
-                return Response.ok(objectMapper.writeValueAsString(o)).build();
+                response.setStatusCode(HttpResponseStatus.OK.code())
+                        .putHeader(Names.CONTENT_TYPE, APPLICATION_JSON)
+                        .end(objectMapper.writeValueAsString(o));
             }else{
-                return Response.status(Status.NOT_FOUND).build();
+                response.setStatusCode(HttpResponseStatus.NOT_FOUND.code())
+                        .end();
             }
         }catch (JsonProcessingException e) {
-            return generalFailureNoBody(e);
+            generalFailureNoBody(response, e);
         }
     }
 
-    private Response generalFailure(Exception e) {
+    private void generalFailure(HttpServerResponse response, Exception e) {
         logger.debug("Failed to produce valid response", e);
         try {
-            return Response.status(Status.INTERNAL_SERVER_ERROR)
-                           .entity(objectMapper.writeValueAsString(new ErrorModel(e)))
-                           .build();
+            response.setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+                    .putHeader(Names.CONTENT_TYPE, APPLICATION_JSON)
+                    .end(objectMapper.writeValueAsString(new ErrorModel(e)));
         }catch (JsonProcessingException jsonException) {
-            return generalFailureNoBody(jsonException);
+            generalFailureNoBody(response, jsonException);
         }
     }
 
-    private Response generalFailureNoBody(Exception e) {
+    private void generalFailureNoBody(HttpServerResponse response, Exception e) {
         logger.error("Failed to produce valid response", e);
-        return Response.serverError().build();
+        response.setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+                .end();
     }
 
-    private Response inputError(Exception e) {
+    private void inputError(HttpServerResponse response, Exception e) {
         logger.error("Invalid input", e);
         try {
-            return Response.status(Status.BAD_REQUEST)
-                    .entity(objectMapper.writeValueAsString(new ErrorModel(e)))
-                    .build();
+            response.setStatusCode(HttpResponseStatus.BAD_REQUEST.code())
+                    .putHeader(Names.CONTENT_TYPE, APPLICATION_JSON)
+                    .end(objectMapper.writeValueAsString(new ErrorModel(e)));
         }catch (JsonProcessingException jsonException) {
-            return generalFailureNoBody(jsonException);
+            generalFailureNoBody(response, jsonException);
         }
     }
 
-    private Response invalidJsonResponse(JsonProcessingException e) {
+    private void invalidJsonResponse(HttpServerResponse response, JsonProcessingException e) {
         logger.debug("Invalid JSON", e);
-        return Response.status(INVALID_ENTITY).build();
+        response.setStatusCode(HttpResponseStatus.UNPROCESSABLE_ENTITY.code())
+                .end();
     }
-
-    private static final StatusType INVALID_ENTITY = new StatusType()
-    {
-
-        @Override
-        public int getStatusCode()
-        {
-            return 422;
-        }
-
-        @Override
-        public Family getFamily()
-        {
-            return Family.CLIENT_ERROR;
-        }
-
-        @Override
-        public String getReasonPhrase()
-        {
-            return "Unprocessable Entity";
-        }
-    };
 }
