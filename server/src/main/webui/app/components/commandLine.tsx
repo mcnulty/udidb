@@ -46,6 +46,13 @@ export class Component extends React.Component<Props, {}> {
         operation: HTMLInputElement;
     };
 
+    constructor(props: Props) {
+        super(props);
+        this.refs = {
+            operation: null
+        };
+    }
+
     private handleNewOperation(e: React.FormEvent<HTMLFormElement>): void {
         e.preventDefault();
         let value = this.refs.operation.value.trim();
@@ -123,7 +130,7 @@ export class Component extends React.Component<Props, {}> {
 
         return (
             <div className="hljs" style={topLevelStyle}>
-                <div onClick={this.focus}>
+                <div onClick={this.focus.bind(this)}>
                     {output.join("\n")}
                 </div>
                 {inputElement}

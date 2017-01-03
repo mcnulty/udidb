@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -136,6 +137,7 @@ public class ServerEventDispatcher extends Thread implements EventSink
 
     private void publishIfReady(EventContext context)
     {
+        logger.debug("{}", context);
         if (context.readyForEvents && context.events.size() > 0) {
             Iterator<UdiEvent> eventIterator = context.events.iterator();
             while (eventIterator.hasNext()) {
@@ -197,5 +199,17 @@ public class ServerEventDispatcher extends Thread implements EventSink
         private final List<EventObserver> eventObservers = new LinkedList<>();
 
         private boolean readyForEvents = false;
+
+        @Override
+        public String toString()
+        {
+            return "EventContext{[" +
+                    events.stream().map(UdiEvent::getEventType).map(Object::toString).collect(Collectors.joining(",")) +
+                    "]," +
+                    eventObservers +
+                    "," +
+                    "readyForEvents=" + readyForEvents +
+                    "}";
+        }
     }
 }

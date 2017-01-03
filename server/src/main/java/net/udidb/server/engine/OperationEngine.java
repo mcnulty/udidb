@@ -105,7 +105,9 @@ public final class OperationEngine implements OperationResultVisitor
                     result.accept(operation, this);
                 }
 
-                eventDispatcher.readyForEvent(debuggeeContext);
+                if (result.isEventPending()) {
+                    eventDispatcher.readyForEvent(debuggeeContext);
+                }
 
                 return opModel;
             } catch (OperationException e) {

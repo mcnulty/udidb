@@ -35,7 +35,7 @@ export class Component extends React.Component<Props, {}> {
         if (this.props.currentContext === null) {
             return this.renderPlaceholderContent(this.props.defaultSourceContent);
         } else {
-            return this._renderContent();
+            return this.renderContent();
         }
     }
 
@@ -53,7 +53,7 @@ export class Component extends React.Component<Props, {}> {
         );
     }
 
-    _renderContent() {
+    private renderContent() {
         let currentContext = this.props.currentContext;
         let sourceContext = currentContext.threads[currentContext.activeThreadIndex].source;
 

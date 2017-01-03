@@ -88,6 +88,7 @@ public class EventPump extends Thread implements DebuggeeContextObserver
             }
 
             if (events.size() > 0) {
+                events.stream().forEach(event -> event.setUserData(new DbEventData()));
                 eventSink.accept(events);
 
                 for (UdiEvent event : events) {

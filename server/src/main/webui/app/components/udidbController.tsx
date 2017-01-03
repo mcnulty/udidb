@@ -649,7 +649,7 @@ export class Component extends React.Component<Props, State> {
                 let threads = context.threads.slice(0);
                 let thread = threads[threadIndex];
                 let table = TableResultModel.fromResultModel(OperationModel.fromJson(resp.body).result);
-                thread = new Thread(thread.id, pc, SourceLine.fromAddr2LineTable(table));
+                threads[threadIndex] = new Thread(thread.id, pc, SourceLine.fromAddr2LineTable(table));
 
                 contexts[contextIndex] = ContextBuilder.fromContext(context)
                                                        .setThreads(threads)
