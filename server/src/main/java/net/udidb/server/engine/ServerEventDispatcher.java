@@ -43,13 +43,16 @@ public class ServerEventDispatcher extends Thread implements EventSink
     private static final String GLOBAL_TOPIC = "com.udidb.events";
 
     private final WampClient wampClient;
+    private final ServerState serverState;
     private final BlockingQueue<Notification> notifications = new LinkedBlockingQueue<>();
     private final Map<UdiProcess, EventContext> eventContexts = new HashMap<>();
 
     @Inject
-    public ServerEventDispatcher(WampClient wampClient)
+    public ServerEventDispatcher(WampClient wampClient, ServerState serverState)
     {
         this.wampClient = wampClient;
+        this.serverState = serverState;
+
         this.setName(ServerEventDispatcher.class.getSimpleName());
         this.setDaemon(true);
         this.start();
@@ -151,6 +154,7 @@ public class ServerEventDispatcher extends Thread implements EventSink
                     }
                 }
 
+                serverState.completePendingOperation(event);
                 publishEvent(event);
                 eventIterator.remove();
             }

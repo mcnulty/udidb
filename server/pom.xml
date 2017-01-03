@@ -135,6 +135,7 @@
                         <native.file.tests.basePath>${udidb.test.native-file-tests}</native.file.tests.basePath>
                     </systemPropertyVariables>
                     <environmentVariables>
+                        <UDI_DEBUG>1</UDI_DEBUG>
                         <UDI_SRC_ROOT>${udidb.test.udi-dir}</UDI_SRC_ROOT>
                         <UDI_RT_LIB_DIR>${udidb.test.udi-dir}/build/libudirt</UDI_RT_LIB_DIR>
                         <UDI_TEST_LIB_DIR>${udidb.test.udi-dir}/build/tests/libuditest</UDI_TEST_LIB_DIR>

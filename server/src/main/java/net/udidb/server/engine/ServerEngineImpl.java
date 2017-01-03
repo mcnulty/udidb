@@ -56,17 +56,20 @@ public class ServerEngineImpl implements ServerEngine
     private final OperationProvider operationProvider;
     private final Injector injector;
     private final OperationEngine operationEngine;
+    private final ServerState serverState;
 
     @Inject
     public ServerEngineImpl(Injector injector,
                             DebuggeeContextManager debuggeeContextManager,
                             OperationProvider operationProvider,
-                            OperationEngine operationEngine)
+                            OperationEngine operationEngine,
+                            ServerState serverState)
     {
         this.injector = injector;
         this.debuggeeContextManager = debuggeeContextManager;
         this.operationProvider = operationProvider;
         this.operationEngine = operationEngine;
+        this.serverState = serverState;
     }
 
     @Override
@@ -169,9 +172,7 @@ public class ServerEngineImpl implements ServerEngine
         if (!operation.getName().equals(CREATE_OP_NAME)) {
             DebuggeeContext debuggeeContext = debuggeeContextManager.getContexts().get(id);
             if (debuggeeContext != null) {
-                synchronized (debuggeeContext) {
-                    return operationEngine.execute(operation, debuggeeContext);
-                }
+                return operationEngine.execute(operation, debuggeeContext);
             }
         }else{
             logger.error("The create operation cannot be applied to an existing debuggee");
@@ -197,9 +198,7 @@ public class ServerEngineImpl implements ServerEngine
     {
         DebuggeeContext debuggeeContext = debuggeeContextManager.getContexts().get(id);
         if (debuggeeContext != null) {
-            synchronized (debuggeeContext) {
-                return operationEngine.get(debuggeeContext);
-            }
+            return serverState.getOperationModel(debuggeeContext);
         }
 
         return null;

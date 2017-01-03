@@ -25,11 +25,8 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
 
-import net.libudi.api.event.UdiEvent;
 import net.udidb.engine.context.DebuggeeContext;
 import net.udidb.engine.context.DebuggeeContextAware;
-import net.udidb.engine.context.DebuggeeContextManager;
-import net.udidb.engine.events.EventObserver;
 import net.udidb.engine.ops.Operation;
 import net.udidb.engine.ops.OperationException;
 import net.udidb.engine.ops.OperationParseException;
@@ -55,68 +52,69 @@ public final class OperationEngine implements OperationResultVisitor
 {
     private static final Logger logger = LoggerFactory.getLogger(OperationEngine.class);
 
-    private final Map<String, OperationModel> contextsToModels = new HashMap<>();
-    private final Map<Integer, String> operationsToContexts = new HashMap<>();
-
     private final Injector injector;
     private final ServerEventDispatcher eventDispatcher;
     private final Map<String, Class<? extends Operation>> operations;
     private final BeanUtilsBean beanUtils;
+    private final ServerState serverState;
 
     @Inject
     public OperationEngine(Injector injector,
                            OperationProvider operationProvider,
-                           ServerEventDispatcher eventDispatcher)
+                           ServerEventDispatcher eventDispatcher,
+                           ServerState serverState)
     {
         this.injector = injector;
         this.eventDispatcher = eventDispatcher;
         this.operations = operationProvider.getOperations();
         this.beanUtils = BeanUtilsBean.getInstance();
+        this.serverState = serverState;
     }
 
-    public synchronized OperationModel execute(OperationModel operationModel, final DebuggeeContext debuggeeContext)
+    public OperationModel execute(OperationModel operationModel, DebuggeeContext debuggeeContext)
             throws UnknownOperationException, OperationException
     {
-        if (debuggeeContext != null) {
-            OperationModel lastOperation = contextsToModels.get(debuggeeContext.getId());
-            if (lastOperation != null && lastOperation.isPending()) {
-                throw new OperationInProgressException("Operation '" + lastOperation.getName() +
-                        "' already in progress for debuggee context '"
-                        + debuggeeContext.getId() + "'");
-            }
-        }
-
-        Operation operation = configureOperation(operationModel, debuggeeContext);
-
-        try {
-            OperationModel opModel = new OperationModel(operationModel);
+        synchronized (serverState) {
             if (debuggeeContext != null) {
-                contextsToModels.put(debuggeeContext.getId(), opModel);
-                operationsToContexts.put(System.identityHashCode(operation), debuggeeContext.getId());
+                OperationModel lastOperation = serverState.getOperationModel(debuggeeContext);
+                if (lastOperation != null && lastOperation.isPending()) {
+                    throw new OperationInProgressException("Operation '" + lastOperation.getName() +
+                            "' already in progress for debuggee context '"
+                            + debuggeeContext.getId() + "'");
+                }
             }
 
-            Result result = operation.execute();
+            Operation operation = configureOperation(operationModel, debuggeeContext);
 
-            if (result.isEventPending()) {
-                opModel.setPending(true);
-                opModel.setResult(null);
-            }else{
-                opModel.setResult(result);
+            try {
+                OperationModel opModel = new OperationModel(operationModel);
+                if (debuggeeContext != null) {
+                    serverState.registerPendingOperation(debuggeeContext, operation, opModel);
+                }
+
+                Result result = operation.execute();
+
+                if (result.isEventPending()) {
+                    opModel.setPending(true);
+                    opModel.setResult(null);
+                } else {
+                    opModel.setResult(result);
+                }
+
+                if (debuggeeContext != null) {
+                    result.accept(operation, this);
+                }
+
+                eventDispatcher.readyForEvent(debuggeeContext);
+
+                return opModel;
+            } catch (OperationException e) {
+                visit(operation, e);
+                throw e;
+            } catch (Exception e) {
+                visit(operation, e);
+                throw new OperationException(e);
             }
-
-            if (debuggeeContext != null) {
-                result.accept(operation, this);
-            }
-
-            eventDispatcher.readyForEvent(debuggeeContext);
-
-            return opModel;
-        }catch (OperationException e) {
-            visit(operation, e);
-            throw e;
-        }catch (Exception e) {
-            visit(operation, e);
-            throw new OperationException(e);
         }
     }
 
@@ -189,85 +187,44 @@ public final class OperationEngine implements OperationResultVisitor
         return operation;
     }
 
-    public synchronized OperationModel get(DebuggeeContext debuggeeContext)
-    {
-        if (debuggeeContext != null) {
-            return contextsToModels.get(debuggeeContext.getId());
-        }
-
-        return null;
-    }
-
     @Override
-    public synchronized boolean visit(Operation op, VoidResult result)
+    public boolean visit(Operation op, VoidResult result)
     {
-        updateModel(op, result, "(no result)");
+        serverState.updateModel(op, result, "(no result)");
         return true;
     }
 
     @Override
-    public synchronized boolean visit(Operation op, ValueResult result)
+    public boolean visit(Operation op, ValueResult result)
     {
-        updateModel(op, result, result.getDescription());
+        serverState.updateModel(op, result, result.getDescription());
         return true;
     }
 
     @Override
-    public synchronized boolean visit(Operation op, TableResult result)
+    public boolean visit(Operation op, TableResult result)
     {
-        updateModel(op, result, "\n" + result.toCSV("    "));
+        serverState.updateModel(op, result, "\n" + result.toCSV("    "));
         return true;
     }
 
     @Override
-    public synchronized boolean visit(Operation op, DeferredResult result)
+    public boolean visit(Operation op, DeferredResult result)
     {
-        String contextId = operationsToContexts.get(System.identityHashCode(op));
-        if (contextId == null) {
-            logUnknownOperation(op, result);
-        }else{
-            logger.debug("Debuggee[{}]: operation {}, deferred result",
-                    contextId,
-                    op.getName());
-            if (result.getDeferredEventObserver() != null) {
-                eventDispatcher.registerEventObserver(result.getDeferredEventObserver());
-            }
+        String contextId = serverState.getContextId(op);
+        logger.debug("Debuggee[{}]: operation {}, deferred result",
+                contextId,
+                op.getName());
+        if (result.getDeferredEventObserver() != null) {
+            eventDispatcher.registerEventObserver(result.getDeferredEventObserver());
         }
         return true;
     }
 
     @Override
-    public synchronized boolean visit(Operation op, Exception e)
+    public boolean visit(Operation op, Exception e)
     {
         logger.error("Exception encountered while processing operation " + op.getName(), e);
         return true;
-    }
-
-    private void updateModel(Operation op, Result result, String description)
-    {
-        String contextId = operationsToContexts.get(System.identityHashCode(op));
-        OperationModel model;
-        if (contextId != null) {
-            model = contextsToModels.get(contextId);
-        }else{
-            model = null;
-        }
-
-        if (model == null) {
-            logUnknownOperation(op, result);
-        }else{
-            model.setResult(result);
-            logger.debug("Debuggee[{}]: operation {}, result '{}'",
-                    contextId,
-                    op.getName(),
-                    description);
-        }
-    }
-
-    private void logUnknownOperation(Operation op, Result result)
-    {
-        // This indicates a programming error
-        logger.error("Failed to locate state for operation {} when processing result {}", op.getName(),
-                result.getClass().getSimpleName());
     }
 }

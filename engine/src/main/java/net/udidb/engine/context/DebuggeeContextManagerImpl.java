@@ -163,6 +163,26 @@ public class DebuggeeContextManagerImpl implements DebuggeeContextManager
     }
 
     @Override
+    public DebuggeeContext getContext(UdiProcess process)
+    {
+        if (process.getUserData() instanceof DebuggeeContext) {
+            return (DebuggeeContext)process.getUserData();
+        }else{
+            synchronized (contexts) {
+                Iterator<Entry<String, DebuggeeContext>> i = contexts.entrySet().iterator();
+                while (i.hasNext()) {
+                    DebuggeeContext context = i.next().getValue();
+                    if (context.getProcess().equals(process)) {
+                        return context;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    @Override
     public Map<String, DebuggeeContext> getContexts()
     {
         synchronized (contexts) {

@@ -69,6 +69,14 @@ public interface DebuggeeContextManager
     DebuggeeContext deleteContext(UdiProcess process);
 
     /**
+     * Obtains the DebuggeeContext, given its associated process
+     *
+     * @param process the process
+     * @return the debuggee context or null if none could be found
+     */
+    DebuggeeContext getContext(UdiProcess process);
+
+    /**
      * @return the contexts managed by this factory
      */
     Map<String, DebuggeeContext> getContexts();
