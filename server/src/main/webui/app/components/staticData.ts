@@ -1,6 +1,47 @@
 /** test data used by udidb */
 
-let staticProps = {
+import * as Imm from "immutable";
+
+import {
+    UserPrefs,
+    HistoryPrefs,
+    FileSourceLines,
+    ContextBuilder,
+    UdidbRequest
+} from "./types";
+
+import * as Udidb from "./udidb";
+
+let staticProps: Udidb.Props = {
+    process: function(request: UdidbRequest) {},
+    defaultSourceContent: [
+        " ",
+        "udidb - UDI debugger",
+        " ",
+        " ",
+        " ",
+        " ",
+        "Create processes with the 'create' operation.",
+        " ",
+        "Enter 'help' at the prompt for a list of available operations.",
+        " ",
+        " ",
+        " ",
+        " ",
+        " ",
+        " ",
+        " ",
+        " ",
+        " ",
+        " ",
+    ],
+
+    globalContext: new ContextBuilder().build(),
+
+    currentContextIndex: 0,
+
+    prefs: new UserPrefs(new HistoryPrefs(3)),
+
     contexts: [
         {
             id: "1234",
@@ -24,8 +65,9 @@ let staticProps = {
                     }
                 },
             ],
-            sourceMap: {
-                "main.c": {
+            sourceMap: Imm.Map<string, FileSourceLines>()
+                .set("main.c",
+                {
                     startLineNo: 1200,
                     lines: [
                         "#include <stdlib.h>",
@@ -60,8 +102,9 @@ let staticProps = {
                         "",
                         "        if ( config->root_dir != NULL ) {"
                     ]
-                },
-                "events.c": {
+                })
+                .set("events.c",
+                {
                     startLineNo: 90,
                     lines: [
                         "void free_event_list(udi_event *event_list) {",
@@ -91,8 +134,7 @@ let staticProps = {
                         "udi_event *decode_event(udi_process *proc, udi_event_internal *event) {",
                         "    udi_event *ret_event = (udi_event *)malloc(sizeof(udi_event));",
                     ]
-                }
-            },
+                }),
             history: {
                 baseIndex: 20,
                 operations: [
@@ -126,6 +168,7 @@ let staticProps = {
                     }
                 ]
             },
+            operationDescriptions: []
         },
         {
             id: "1235",
@@ -141,8 +184,8 @@ let staticProps = {
                     }
                 },
             ],
-            sourceMap: {
-                "main.cxx": {
+            sourceMap: Imm.Map<string, FileSourceLines>()
+                .set("main.cxx", {
                     startLineNo: 10,
                     lines: [
                         "    char *argv[] = { NULL };",
@@ -171,8 +214,7 @@ let staticProps = {
                         "",
                         "    wait_for_breakpoint(thr, TEST_FUNCTION);",
                     ]
-                }
-            },
+                }),
             history: {
                 baseIndex: 20,
                 operations: [
@@ -217,16 +259,9 @@ let staticProps = {
                     }
                 ]
             },
+            operationDescriptions: []
         }
-    ],
-
-    currentContextIndex: 0,
-
-    prefs: {
-        history: {
-            numDisplayedOps: 3,
-        },
-    },
+    ]
 };
 
 export default staticProps;
