@@ -64,6 +64,18 @@ class Component extends React.Component<Props, Udidb.Props> {
                     }
                 }));
                 break;
+            case "commandLine.height":
+                let commandLineHeight = parseInt(request.value, 10);
+                
+                // convert to vh units
+                let newSourceViewerHeight = 100 - (commandLineHeight * ( 100 / document.documentElement.clientHeight ));
+
+                this.setState(update(this.state, {
+                    sourceViewerHeight: {
+                        $set: newSourceViewerHeight + "vh"
+                    }
+                }));
+                break;
             default:
                 console.log("PUT with unknown path: " + request);
                 break;

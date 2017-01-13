@@ -16,6 +16,7 @@ let topLevelStyle = {
     border: "1px solid rgb(204, 204, 204)",
     borderRadius: "4px",
     padding: "5px 0px 5px 0px",
+    overflow: "scroll"
 };
 
 let placeholderStyle = Object.assign({
@@ -26,6 +27,7 @@ let noSourceContent: string[];
 
 export interface Props {
     readonly currentContext: Context;
+    readonly height: string;
     readonly defaultSourceContent: ReadonlyArray<string>;
 }
 
@@ -93,8 +95,12 @@ export class Component extends React.Component<Props, {}> {
                 return "<tr>" + lineNoCell + markedUpLine + "</tr>";
             }).join("");
 
+        let style = Object.assign({
+            maxHeight: this.props.height
+        }, topLevelStyle);
+
         return (
-            <div className="hljs" style={topLevelStyle}>
+            <div className="hljs" style={style}>
                 <table style={{ width: "100%" }}>
                     <tbody dangerouslySetInnerHTML={{ __html: numberedSourceRows }} />
                 </table>

@@ -4,7 +4,6 @@ import * as Imm from "immutable";
 
 import {
     UserPrefs,
-    HistoryPrefs,
     FileSourceLines,
     ContextBuilder,
     UdidbRequest
@@ -40,7 +39,9 @@ let staticProps: Udidb.Props = {
 
     currentContextIndex: 0,
 
-    prefs: new UserPrefs(new HistoryPrefs(3)),
+    prefs: new UserPrefs(),
+
+    sourceViewerHeight: "50vh",
 
     contexts: [
         {
@@ -100,7 +101,21 @@ let staticProps: Udidb.Props = {
                         "        proc->running = 0;",
                         "        proc->terminated = 0;",
                         "",
-                        "        if ( config->root_dir != NULL ) {"
+                        "        if ( config->root_dir != NULL ) {",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
                     ]
                 })
                 .set("events.c",
@@ -243,6 +258,45 @@ let staticProps: Udidb.Props = {
                             }
                         ],
                         result: "Breakpoint at 0xdeadbeef hit"
+                    },
+                    {
+                        name: "print",
+                        operands: [
+                            {
+                                name: "value",
+                                type: "list",
+                                value: [
+                                    "localVar"
+                                ]
+                            }
+                        ],
+                        result: "36"
+                    },
+                    {
+                        name: "print",
+                        operands: [
+                            {
+                                name: "value",
+                                type: "list",
+                                value: [
+                                    "localVar"
+                                ]
+                            }
+                        ],
+                        result: "36"
+                    },
+                    {
+                        name: "print",
+                        operands: [
+                            {
+                                name: "value",
+                                type: "list",
+                                value: [
+                                    "localVar"
+                                ]
+                            }
+                        ],
+                        result: "36"
                     },
                     {
                         name: "print",

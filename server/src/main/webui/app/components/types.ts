@@ -208,20 +208,7 @@ export class ContextBuilder {
     }
 }
 
-export class HistoryPrefs {
-    readonly numDisplayedOps: number;
-
-    constructor(numDisplayedOps: number) {
-        this.numDisplayedOps = numDisplayedOps;
-    }
-}
-
 export class UserPrefs {
-    readonly history: HistoryPrefs;
-
-    constructor(history: HistoryPrefs) {
-        this.history = history;
-    }
 }
 
 // State Update Requests

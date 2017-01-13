@@ -5,6 +5,7 @@ import {
     Row,
     Col
 } from "react-bootstrap";
+import * as Measure from 'react-measure';
 
 import * as ContextSelector from "./contextSelector";
 import * as SourceViewer from "./sourceViewer";
@@ -12,6 +13,7 @@ import * as CommandLine from "./commandLine";
 import * as StatusLine from "./statusLine";
 import {
     UdidbRequest,
+    PUT_METHOD,
     Context,
     History,
     UserPrefs
@@ -23,12 +25,17 @@ export interface Props {
     readonly currentContextIndex: number;
     readonly prefs: UserPrefs;
     readonly defaultSourceContent: ReadonlyArray<string>;
+    readonly sourceViewerHeight: string;
     readonly process: (request: UdidbRequest) => void;
 }
 
 export class Component extends React.Component<Props, {}> {
 
-    render(): JSX.Element {
+    private onMeasureDimensionChange(dims: Measure.Dimensions): void {
+        this.props.process(new UdidbRequest(PUT_METHOD, "commandLine.height", "" + dims.height));
+    }
+
+    public render(): JSX.Element {
         let currentContext: Context;
         if (this.props.contexts.length > 0 && this.props.currentContextIndex >= 0) {
             if (this.props.currentContextIndex >= this.props.contexts.length) {
@@ -41,39 +48,43 @@ export class Component extends React.Component<Props, {}> {
             currentContext = null;
         }
 
+        let mainPaneStyle = {
+            paddingLeft: "256px",
+            minHeight: "100vh"
+        };
+
+        let leftPaneStyle = {
+            position: "fixed",
+            minHeight: "100vh",
+            top: 0,
+            left: 0,
+            maxWidth: "256px",
+            minWidth: "256px"
+        };
+
         return (
-            <Grid fluid={true}>
-                <Panel>
-                    <Row className="contentRow">
-                        <Col xs={3} className="contextSelector">
-                            <ContextSelector.Component contexts={this.props.contexts}
-                                globalContext={this.props.globalContext}
+            <div>
+                <div style={ mainPaneStyle }>
+                    <Measure whitelist={ [ "height" ]} onMeasure={this.onMeasureDimensionChange.bind(this)}>
+                        <div>
+                            <CommandLine.Component currentContext={currentContext}
                                 currentContextIndex={this.props.currentContextIndex}
-                                process={this.props.process}/>
-                        </Col>
-                        <Col xs={8} className="contextPane">
-                            <Row className="sourceViewerRow">
-                                <SourceViewer.Component currentContext={currentContext}
-                                    defaultSourceContent={this.props.defaultSourceContent}/>
-                            </Row>
-                            <Row className="statusLine">
-                                <StatusLine.Component currentContext={currentContext}/>
-                            </Row>
-                            <Row className="commandLineRow">
-                                <CommandLine.Component currentContext={currentContext}
-                                    currentContextIndex={this.props.currentContextIndex}
-                                    globalContext={this.props.globalContext}
-                                    historyPrefs={this.props.prefs.history}
-                                    process={this.props.process} />
-                            </Row>
-                        </Col>
-                    </Row>
-                    <Row className="footer">
-                        <a target="_blank"
-                            href="https://github.com/mcnulty/udidb">udidb</a>
-                    </Row>
-                </Panel>
-            </Grid>
+                                globalContext={this.props.globalContext}
+                                process={this.props.process} />
+                            <StatusLine.Component currentContext={currentContext}/>
+                        </div>
+                    </Measure>
+                    <SourceViewer.Component currentContext={currentContext}
+                                            height={this.props.sourceViewerHeight}
+                                            defaultSourceContent={this.props.defaultSourceContent}/>
+                </div>
+                <div style={ leftPaneStyle }>
+                    <ContextSelector.Component contexts={this.props.contexts}
+                                               globalContext={this.props.globalContext}
+                                               currentContextIndex={this.props.currentContextIndex}
+                                               process={this.props.process}/>
+                </div>
+            </div>
         );
     }
 }

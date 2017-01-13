@@ -1,18 +1,8 @@
 body {
-    background-color: rgb(220, 220, 220);
+    min-height: 100vh;
+    overflow: hidden;
 }
 
 #udidb-app-container {
-    margin-top: 10px;
+    min-height: 100vh;
 }
-
-.statusLine {
-    margin-top: 2px;
-    margin-bottom: 2px;
-}
-
-.footer {
-    text-align: center;
-}
-
-

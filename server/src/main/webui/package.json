@@ -42,6 +42,7 @@
     "@types/react-addons-update": "^0.14.14",
     "@types/react-bootstrap": "0.0.34",
     "@types/react-dom": "^0.14.18",
+    "@types/react-measure": "^0.4.5",
     "@types/superagent": "^2.0.35",
     "autobahn": "^0.11.1",
     "babel-polyfill": "^6.0.14",
@@ -54,6 +55,7 @@
     "react-addons-update": "^15.3.2",
     "react-bootstrap": "^0.27.2",
     "react-dom": "^15.4.1",
+    "react-measure": "^1.4.5",
     "superagent": "^1.4.0"
   }
 }

@@ -3,7 +3,6 @@ import * as React from "react";
 import {
     Context,
     History,
-    HistoryPrefs,
     UdidbRequest,
     POST_METHOD
 } from "./types";
@@ -13,7 +12,10 @@ let topLevelStyle = {
     whiteSpace: "pre",
     border: "1px solid rgb(204, 204, 204)",
     borderRadius: "4px",
-    padding: "5px 5px 5px 5px"
+    padding: "5px 5px 5px 5px",
+    resize: "vertical",
+    maxHeight: "50vh",
+    overflow: "scroll"
 };
 
 let formStyle = {
@@ -35,7 +37,6 @@ export interface Props {
     readonly currentContextIndex: number;
     readonly currentContext: Context;
     readonly globalContext: Context;
-    readonly historyPrefs: HistoryPrefs;
     readonly process: (request: UdidbRequest) => void;
 }
 
@@ -72,17 +73,11 @@ export class Component extends React.Component<Props, {}> {
         } else {
             history = this.props.currentContext.history;
         }
-        let numDisplayedOps = this.props.historyPrefs.numDisplayedOps;
 
         let output: string[] = [];
 
-        let startIndex = history.operations.length - numDisplayedOps;
-        if (startIndex < 0) {
-            startIndex = 0;
-        }
-
         let pendingOperation = false;
-        for (let i = startIndex; i < history.operations.length; i++) {
+        for (let i = 0; i < history.operations.length; i++) {
             let operation = history.operations[i];
 
             let operationResultValue: string;

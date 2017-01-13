@@ -34,7 +34,6 @@ import {
     DeferredResultModel,
     ResultVisitor,
     UserPrefs,
-    HistoryPrefs,
     UdidbRequest,
     PUT_METHOD,
     POST_METHOD
@@ -278,10 +277,24 @@ export class Component extends React.Component<Props, State> {
             case "currentContext.activeThreadIndex":
                 this.selectActiveThread(parseInt(request.value, 10));
                 break;
+            case "commandLine.height":
+                this.handleCommandLineHeightChange(parseInt(request.value, 10));
+                break;
             default:
                 console.log("PUT with unknown path: " + request);
                 break;
         }
+    }
+
+    private handleCommandLineHeightChange(commandLineHeight: number): void {
+        // convert to vh units
+        let newSourceViewerHeight = 100 - (commandLineHeight * ( 100 / document.documentElement.clientHeight ));
+
+        this.setState(update(this.state, {
+            sourceViewerHeight: {
+                $set: newSourceViewerHeight + "vh"
+            }
+        }));
     }
 
     private createOperation(value: string, operationDescriptions: ReadonlyArray<OperationDescription>): Operation {
@@ -870,9 +883,11 @@ class DefaultResultVisitor implements ResultVisitor<string> {
 initialState = {
     contexts: [],
 
+    sourceViewerHeight: "50vh",
+
     currentContextIndex: -1,
 
-    prefs: new UserPrefs(new HistoryPrefs(3)),
+    prefs: new UserPrefs(),
 
     defaultSourceContent: [
         " ",
