@@ -350,10 +350,12 @@ export class Component extends React.Component<Props, State> {
                 });
             }
 
-            operation = new Operation(
-                newOp.name,
-                newOp.operands,
-                newOp.result);
+            if (foundOperation) {
+                operation = new Operation(
+                    newOp.name,
+                    newOp.operands,
+                    newOp.result);
+            }
         }
 
         if (operation === null) {

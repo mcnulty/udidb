@@ -14,7 +14,8 @@ let topLevelStyle = {
     borderRadius: "4px",
     padding: "5px 5px 5px 5px",
     resize: "vertical",
-    maxHeight: "50vh",
+    maxHeight: "40vh",
+    minHeight: "10vh",
     overflow: "scroll"
 };
 
@@ -61,12 +62,7 @@ export class Component extends React.Component<Props, {}> {
         this.props.process(new UdidbRequest(POST_METHOD, "currentContext.operation", value));
     }
 
-    focus(e: React.MouseEvent<HTMLDivElement>): void {
-        e.preventDefault();
-        this.refs.operation.focus();
-    }
-
-    render(): JSX.Element {
+    public render(): JSX.Element {
         let history: History;
         if (this.props.currentContext === null) {
             history = this.props.globalContext.history;
@@ -125,7 +121,7 @@ export class Component extends React.Component<Props, {}> {
 
         return (
             <div className="hljs" style={topLevelStyle}>
-                <div onClick={this.focus.bind(this)}>
+                <div>
                     {output.join("\n")}
                 </div>
                 {inputElement}

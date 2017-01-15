@@ -22,37 +22,48 @@ export interface Props {
 
 export class Component extends React.Component<Props, {}> {
 
-    _handleContextSelect(currentContextIndex: number, index: number, e: React.FormEvent<HTMLFormElement>): void {
+    private handleContextSelect(currentContextIndex: number, index: number, e: React.FormEvent<HTMLFormElement>): void {
         e.preventDefault();
         if (currentContextIndex !== index) {
             this.props.process(new UdidbRequest(PUT_METHOD, "currentContextIndex", "" + index));
         }
     }
 
-    render(): JSX.Element {
+    public render(): JSX.Element {
         let selectedContextIndex = this.props.currentContextIndex;
         let items = this.props.contexts.map(function(currentValue, index, array) {
             let navProps: NavItemProps = {};
-            navProps.key = currentValue.id;
+            navProps.key = index;
             navProps.eventKey = index;
-            navProps.onClick = this._handleContextSelect.bind(this,
+            navProps.onClick = this.handleContextSelect.bind(this,
                 this.props.currentContextIndex,
                 index);
-            return (<ContextItem.Component navProps={navProps}
-                context={currentValue}
-                process={this.props.process} />);
+
+            let active = index === this.props.currentContextIndex;
+
+            return (
+                <ContextItem.Component navProps={navProps}
+                                       context={currentValue}
+                                       active={active}
+                                       process={this.props.process} />
+            );
         }, this);
 
         let defaultNavProps: NavItemProps = {};
         defaultNavProps.key = -1;
         defaultNavProps.eventKey = -1;
-        defaultNavProps.onClick = this._handleContextSelect.bind(this,
+        defaultNavProps.onClick = this.handleContextSelect.bind(this,
             this.props.currentContextIndex,
             -1);
 
-        let defaultItem = (<ContextItem.Component navProps={defaultNavProps}
-            context={this.props.globalContext}
-            process={null} />);
+        let defaultActive = this.props.currentContextIndex == -1;
+
+        let defaultItem = (
+            <ContextItem.Component navProps={defaultNavProps}
+                                   context={this.props.globalContext}
+                                   active={defaultActive}
+                                   process={this.props.process} />
+        );
         items.push(defaultItem);
 
         return (
