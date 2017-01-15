@@ -84,10 +84,12 @@ export class OperationDescription {
 export class History {
     readonly baseIndex: number;
     readonly operations: ReadonlyArray<Operation>;
+    readonly opIndex: number;
 
-    constructor(baseIndex: number, operations: Operation[]) {
+    constructor(baseIndex: number, operations: Operation[], opIndex: number) {
         this.baseIndex = baseIndex;
         this.operations = operations.slice(0);
+        this.opIndex = opIndex;
     }
 }
 
@@ -135,7 +137,7 @@ export class ContextBuilder {
     private processId: string = "";
     private activeThreadIndex: number = -1;
     private threads: ReadonlyArray<Thread> = [];
-    private history: History = new History(0, []);
+    private history: History = new History(0, [], -1);
     private sourceMap: Imm.Map<string, FileSourceLines> = Imm.Map<string, FileSourceLines>();
     private operationDescriptions: ReadonlyArray<OperationDescription> = [];
 

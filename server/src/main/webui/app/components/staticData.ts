@@ -152,6 +152,7 @@ let staticProps: Udidb.Props = {
                 }),
             history: {
                 baseIndex: 20,
+                opIndex: -1,
                 operations: [
                     {
                         name: "eval",
@@ -232,6 +233,7 @@ let staticProps: Udidb.Props = {
                 }),
             history: {
                 baseIndex: 20,
+                opIndex: -1,
                 operations: [
                     {
                         name: "break",

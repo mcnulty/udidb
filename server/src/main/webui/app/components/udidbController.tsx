@@ -268,35 +268,6 @@ export class Component extends React.Component<Props, State> {
                 break;
         }
     }
-
-    private processPut(request: UdidbRequest): void {
-        switch (request.path) {
-            case "currentContextIndex":
-                this.selectContext(parseInt(request.value, 10));
-                break;
-            case "currentContext.activeThreadIndex":
-                this.selectActiveThread(parseInt(request.value, 10));
-                break;
-            case "commandLine.height":
-                this.handleCommandLineHeightChange(parseInt(request.value, 10));
-                break;
-            default:
-                console.log("PUT with unknown path: " + request);
-                break;
-        }
-    }
-
-    private handleCommandLineHeightChange(commandLineHeight: number): void {
-        // convert to vh units
-        let newSourceViewerHeight = 100 - (commandLineHeight * ( 100 / document.documentElement.clientHeight ));
-
-        this.setState(update(this.state, {
-            sourceViewerHeight: {
-                $set: newSourceViewerHeight + "vh"
-            }
-        }));
-    }
-
     private createOperation(value: string, operationDescriptions: ReadonlyArray<OperationDescription>): Operation {
 
         let foundOperation = false;
@@ -367,7 +338,7 @@ export class Component extends React.Component<Props, State> {
             }
 
             operation = {
-                name: "<unknown>",
+                name: value,
                 operands: [],
                 result: resultMsg
             };
@@ -416,7 +387,8 @@ export class Component extends React.Component<Props, State> {
             let operations = context.history.operations.slice(0);
             operations.push(operation);
             let history = new History(context.history.baseIndex,
-                                      operations);
+                                      operations,
+                                      -1);
 
             contexts[currentContextIndex] = ContextBuilder.fromContext(context)
                                                           .setHistory(history)
@@ -432,7 +404,8 @@ export class Component extends React.Component<Props, State> {
             let operations = this.state.globalContext.history.operations.slice(0);
             operations.push(operation);
             let history = new History(this.state.globalContext.history.baseIndex,
-                                      operations);
+                                      operations,
+                                      -1);
 
             let globalContext = ContextBuilder.fromContext(this.state.globalContext)
                                               .setHistory(history)
@@ -479,7 +452,7 @@ export class Component extends React.Component<Props, State> {
         let opDescs: OperationDescription[] = [];
         let newContext = new ContextBuilder();
         newContext.setId(context.id);
-        newContext.setHistory(new History(0, []));
+        newContext.setHistory(new History(0, [], -1));
         newContext.setActiveThreadIndex(0);
 
         let operationUri = "/debuggeeContexts/" + context.id + "/process/operation";
@@ -781,7 +754,8 @@ export class Component extends React.Component<Props, State> {
                 );
                 let history = new History(
                     globalContext.history.baseIndex,
-                    operations
+                    operations,
+                    globalContext.history.opIndex
                 );
 
                 let newGlobalContext = ContextBuilder.fromContext(globalContext)
@@ -811,7 +785,8 @@ export class Component extends React.Component<Props, State> {
 
                     let history = new History(
                         context.history.baseIndex,
-                        operations
+                        operations,
+                        context.history.opIndex
                     );
 
                     let contexts = this.state.contexts.slice(0);
@@ -830,28 +805,89 @@ export class Component extends React.Component<Props, State> {
         }
     }
 
-    private selectContext(index: number): void {
-        let newState = update(this.state, {
+    private processPut(request: UdidbRequest): void {
+        switch (request.path) {
+            case "currentContextIndex":
+                this.setState(Component.selectContext(this.state, parseInt(request.value, 10)));
+                break;
+            case "currentContext.activeThreadIndex":
+                this.setState(Component.selectActiveThread(this.state, parseInt(request.value, 10)));
+                break;
+            case "commandLine.height":
+                this.setState(Component.handleCommandLineHeightChange(this.state, parseInt(request.value, 10)));
+                break;
+            case "currentContext.history.setOpIndex":
+                this.setState(Component.setOpIndex(this.state, parseInt(request.value, 10)));
+            default:
+                console.log("PUT with unknown path: " + request);
+                break;
+        }
+    }
+
+    public static handleCommandLineHeightChange<S extends Udidb.Props>(state: S, commandLineHeight: number): S {
+        // convert to vh units
+        let newSourceViewerHeight = 100 - (commandLineHeight * ( 100 / document.documentElement.clientHeight ));
+
+        return update(state, {
+            sourceViewerHeight: {
+                $set: newSourceViewerHeight + "vh"
+            }
+        });
+    }
+
+    public static selectContext<S extends Udidb.Props>(state: S, index: number): S {
+        return update(state, {
             currentContextIndex: {
                 $set: index
             }
         });
-        this.setState(newState);
     }
 
-    private selectActiveThread(index: number): void {
-        let currentContextIndex = this.state.currentContextIndex;
-        let contexts = this.state.contexts.slice(0);
+    public static selectActiveThread<S extends Udidb.Props>(state: S, index: number): S {
+        let currentContextIndex = state.currentContextIndex;
+        let contexts = state.contexts.slice(0);
 
         contexts[currentContextIndex] = ContextBuilder.fromContext(contexts[currentContextIndex])
                                                       .setActiveThreadIndex(index)
                                                       .build();
 
-        let newState = update(this.state, {
+        return update(state, {
             contexts: {
                 $set: contexts
             }
         });
+    }
+
+    public static setOpIndex<S extends Udidb.Props>(state: S, index: number): S {
+        let context: Context;
+        if (state.currentContextIndex === -1) {
+            context = state.globalContext;
+        } else {
+            context = state.contexts[state.currentContextIndex];
+        }
+
+        context = ContextBuilder.fromContext(context)
+                                .setHistory(new History(context.history.baseIndex,
+                                                        context.history.operations.slice(0),
+                                                        index))
+                                .build();
+
+        if (state.currentContextIndex === -1) {
+            return update(state, {
+                globalContext: {
+                    $set: context
+                }
+            });
+        }else{
+            let contexts = state.contexts.slice(0);
+            contexts[state.currentContextIndex] = context;
+
+            return update(state, {
+                contexts: {
+                    $set: contexts
+                }
+            });
+        }
     }
 }
 

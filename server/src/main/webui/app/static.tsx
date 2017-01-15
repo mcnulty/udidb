@@ -13,6 +13,7 @@ import {
     UdidbRequest,
     PUT_METHOD
 } from "./components/types";
+import * as Ctrl from "./components/udidbController";
 import update = require("react-addons-update");
 
 class Props {
@@ -44,37 +45,16 @@ class Component extends React.Component<Props, Udidb.Props> {
     private processPut(request: UdidbRequest): void {
         switch (request.path) {
             case "currentContextIndex":
-                this.setState(update(this.state, {
-                    currentContextIndex: {
-                        $set: parseInt(request.value, 10)
-                    }
-                }));
+                this.setState(Ctrl.Component.selectContext(this.state, parseInt(request.value, 10)));
                 break;
             case "currentContext.activeThreadIndex":
-                let contexts = this.state.contexts.slice(0);
-                let currentContextIndex = this.state.currentContextIndex;
-                let context = contexts[currentContextIndex];
-
-                contexts[currentContextIndex] = ContextBuilder.fromContext(context)
-                                                              .setActiveThreadIndex(parseInt(request.value, 10))
-                                                              .build();
-                this.setState(update(this.state, {
-                    contexts: {
-                        $set: contexts
-                    }
-                }));
+                this.setState(Ctrl.Component.selectActiveThread(this.state, parseInt(request.value, 10)));
                 break;
             case "commandLine.height":
-                let commandLineHeight = parseInt(request.value, 10);
-                
-                // convert to vh units
-                let newSourceViewerHeight = 100 - (commandLineHeight * ( 100 / document.documentElement.clientHeight ));
-
-                this.setState(update(this.state, {
-                    sourceViewerHeight: {
-                        $set: newSourceViewerHeight + "vh"
-                    }
-                }));
+                this.setState(Ctrl.Component.handleCommandLineHeightChange(this.state, parseInt(request.value, 10)));
+                break;
+            case "currentContext.history.setOpIndex":
+                this.setState(Ctrl.Component.setOpIndex(this.state, parseInt(request.value, 10)));
                 break;
             default:
                 console.log("PUT with unknown path: " + request);

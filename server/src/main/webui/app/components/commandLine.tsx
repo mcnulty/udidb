@@ -3,8 +3,10 @@ import * as React from "react";
 import {
     Context,
     History,
+    Operation,
     UdidbRequest,
-    POST_METHOD
+    POST_METHOD,
+    PUT_METHOD
 } from "./types";
 
 let topLevelStyle = {
@@ -62,14 +64,76 @@ export class Component extends React.Component<Props, {}> {
         this.props.process(new UdidbRequest(POST_METHOD, "currentContext.operation", value));
     }
 
-    public render(): JSX.Element {
-        let history: History;
-        if (this.props.currentContext === null) {
-            history = this.props.globalContext.history;
-        } else {
-            history = this.props.currentContext.history;
-        }
+    private handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>): void {
+        if (e.ctrlKey) {
+            if (e.key === "u") {
+                e.preventDefault();
+                this.refs.operation.value = "";
+            }
+        }else if (e.key === "Tab") {
+            e.preventDefault();
+        }else if (e.key === "ArrowUp") {
+            e.preventDefault();
 
+            let history = this.getHistory();
+
+            if (history.opIndex > 0 || history.opIndex === -1) {
+                let newOpIndex: number;
+                if (history.opIndex > 0) {
+                    newOpIndex = history.opIndex - 1;
+                } else {
+                    newOpIndex = history.operations.length - 1;
+                }
+
+                if (newOpIndex >= 0) {
+                    this.refs.operation.value = this.operationToString(history.operations[newOpIndex]);
+                    this.props.process(new UdidbRequest(PUT_METHOD, "currentContext.history.setOpIndex", "" + newOpIndex));
+                }
+            }
+        }else if (e.key === "ArrowDown") {
+            e.preventDefault();
+
+            let history = this.getHistory();
+
+            if (history.opIndex <= history.operations.length - 1 && history.opIndex !== -1) {
+                let newOpIndex: number;
+                if (history.opIndex === history.operations.length - 1) {
+                    newOpIndex = -1;
+                } else {
+                    newOpIndex = history.opIndex + 1;
+                }
+
+                if (newOpIndex >= 0) {
+                    this.refs.operation.value = this.operationToString(history.operations[newOpIndex]);
+                } else {
+                    this.refs.operation.value = "";
+                }
+                this.props.process(new UdidbRequest(PUT_METHOD, "currentContext.history.setOpIndex", "" + newOpIndex));
+            }
+        }
+    }
+
+    private getHistory(): History {
+        if (this.props.currentContext === null) {
+            return this.props.globalContext.history;
+        } else {
+            return this.props.currentContext.history;
+        }
+    }
+
+    private operationToString(operation: Operation): string {
+        let operationValue = operation.operands.reduce(function(p, c, i, a) {
+            if (c.type === "list") {
+                return p + " " + c.value.join(" ");
+            } else {
+                return p + " " + c.value;
+            }
+        }, operation.name);
+        return operationValue;
+    }
+
+    public render(): JSX.Element {
+        let history = this.getHistory();
         let output: string[] = [];
 
         let pendingOperation = false;
@@ -84,13 +148,7 @@ export class Component extends React.Component<Props, {}> {
                 operationResultValue = operation.result;
             }
 
-            let operationValue = operation.operands.reduce(function(p, c, i, a) {
-                if (c.type === "list") {
-                    return p + " " + c.value.join(" ");
-                } else {
-                    return p + " " + c.value;
-                }
-            }, operation.name);
+            let operationValue = this.operationToString(operation);
 
             output.push(PROMPT + " " + operationValue);
             output.push(operationResultValue);
@@ -113,7 +171,8 @@ export class Component extends React.Component<Props, {}> {
                             style={inputStyle}
                             type="text"
                             autoFocus={true}
-                            ref="operation" />
+                            ref="operation"
+                            onKeyDown={this.handleKeyDown.bind(this)}/>
                     </label>
                 </form>
             );
