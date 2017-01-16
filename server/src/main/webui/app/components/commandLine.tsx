@@ -4,6 +4,7 @@ import {
     Context,
     History,
     Operation,
+    OperationDescription,
     UdidbRequest,
     POST_METHOD,
     PUT_METHOD
@@ -72,6 +73,26 @@ export class Component extends React.Component<Props, {}> {
             }
         }else if (e.key === "Tab") {
             e.preventDefault();
+
+            let context: Context;
+            if (this.props.currentContext === null) {
+                context = this.props.globalContext;
+            }else{
+                context = this.props.currentContext;
+            }
+
+            let currentPrefix = this.refs.operation.value;
+
+            let ops: OperationDescription[] = context.operationDescriptions.reduce(function(p, c, i, a) {
+                if (c.name.startsWith(currentPrefix)) {
+                    p.push(c);
+                }
+                return p;
+            }, []);
+
+            if (ops.length === 1) {
+                this.refs.operation.value = ops[0].name;
+            }
         }else if (e.key === "ArrowUp") {
             e.preventDefault();
 
