@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import com.google.common.io.Files;
 import com.google.inject.Inject;
@@ -190,16 +189,19 @@ public class DebuggeeContextManagerImpl implements DebuggeeContextManager
         }
     }
 
-    /**
-     * @return the processes in this manager that could possibly deliver events
-     */
     @Override
-    public List<DebuggeeContext> getEventContexts() {
+    public List<DebuggeeContext> getEventContexts() throws UdiException {
 
         synchronized (contexts) {
-            return new LinkedList<>(contexts.values().stream()
-                    .filter(context -> !context.getProcess().isTerminated() && context.getProcess().isRunning())
-                    .collect(Collectors.toList()));
+            List<DebuggeeContext> output = new LinkedList<>();
+            for (DebuggeeContext context : contexts.values()) {
+                if (!context.getProcess().isTerminated() &&
+                        context.getProcess().isRunning())
+                {
+                    output.add(context);
+                }
+            }
+            return output;
         }
     }
 

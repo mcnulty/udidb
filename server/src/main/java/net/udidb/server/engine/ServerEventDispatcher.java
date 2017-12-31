@@ -27,6 +27,7 @@ import com.google.inject.Singleton;
 import net.libudi.api.UdiProcess;
 import net.libudi.api.event.UdiEvent;
 import net.udidb.engine.context.DebuggeeContext;
+import net.udidb.engine.context.DebuggeeContextManager;
 import net.udidb.engine.events.EventObserver;
 import net.udidb.engine.events.EventSink;
 import net.udidb.engine.ops.OperationException;
@@ -34,7 +35,7 @@ import net.udidb.server.api.models.UdiEventModel;
 import ws.wamp.jawampa.WampClient;
 
 /**
- * @author mcnulty
+ * Background thread that publishes events
  */
 @Singleton
 public class ServerEventDispatcher extends Thread implements EventSink
@@ -49,7 +50,8 @@ public class ServerEventDispatcher extends Thread implements EventSink
     private final Map<UdiProcess, EventContext> eventContexts = new HashMap<>();
 
     @Inject
-    public ServerEventDispatcher(WampClient wampClient, ServerState serverState)
+    public ServerEventDispatcher(WampClient wampClient,
+                                 ServerState serverState)
     {
         this.wampClient = wampClient;
         this.serverState = serverState;
@@ -96,30 +98,36 @@ public class ServerEventDispatcher extends Thread implements EventSink
                 continue;
             }
 
-            if (notification.events != null) {
-                handleEvents(notification.events);
-            }else if (notification.eventObserver != null) {
-                handleEventObserver(notification.eventObserver);
-            }else if (notification.debuggeeContext != null) {
-                handleReadyForEvents(notification.debuggeeContext);
-            }else{
-                logger.warn("Invalid notification received");
-                throw new IllegalStateException("Invalid notification received");
+            try {
+                if (notification.events != null) {
+                    handleEvents(notification.events);
+                } else if (notification.eventObserver != null) {
+                    handleEventObserver(notification.eventObserver);
+                } else if (notification.debuggeeContext != null) {
+                    handleReadyForEvents(notification.debuggeeContext);
+                } else {
+                    logger.warn("Invalid notification received");
+                    throw new IllegalStateException("Invalid notification received");
+                }
+            } catch (OperationException e) {
+                throw new IllegalStateException("Failed to handle event", e);
             }
         }
     }
 
-    private void handleEvents(List<UdiEvent> events)
+    private void handleEvents(List<UdiEvent> events) throws OperationException
     {
         for (UdiEvent event : events) {
             EventContext eventContext = getEventContext(event.getProcess());
             eventContext.events.add(event);
         }
 
-        eventContexts.values().stream().forEach(this::publishIfReady);
+        for (EventContext eventContext : eventContexts.values()) {
+            publishIfReady(eventContext);
+        }
     }
 
-    private void handleEventObserver(EventObserver eventObserver)
+    private void handleEventObserver(EventObserver eventObserver) throws OperationException
     {
         EventContext eventContext = getEventContext(eventObserver.getDebuggeeContext().getProcess());
         eventContext.eventObservers.add(eventObserver);
@@ -127,7 +135,7 @@ public class ServerEventDispatcher extends Thread implements EventSink
         publishIfReady(eventContext);
     }
 
-    private void handleReadyForEvents(DebuggeeContext debuggeeContext)
+    private void handleReadyForEvents(DebuggeeContext debuggeeContext) throws OperationException
     {
         EventContext eventContext = getEventContext(debuggeeContext.getProcess());
         eventContext.readyForEvents = true;
@@ -135,7 +143,7 @@ public class ServerEventDispatcher extends Thread implements EventSink
         publishIfReady(eventContext);
     }
 
-    private void publishIfReady(EventContext context)
+    private void publishIfReady(EventContext context) throws OperationException
     {
         logger.debug("{}", context);
         if (context.readyForEvents && context.events.size() > 0) {
@@ -159,18 +167,47 @@ public class ServerEventDispatcher extends Thread implements EventSink
                 serverState.completePendingOperation(event);
                 publishEvent(event);
                 eventIterator.remove();
+
+                handleTermination(event);
             }
 
             context.readyForEvents = false;
         }
     }
 
-    private void publishEvent(UdiEvent udiEvent)
+    private void publishEvent(UdiEvent udiEvent) throws OperationException
     {
         wampClient.publish(GLOBAL_TOPIC, new UdiEventModel(udiEvent)).subscribe(
                 publicationId -> logger.debug("{} successfully published with id {}", udiEvent, publicationId),
                 error -> logger.error("Failed to publish event", error)
         );
+    }
+
+    private void handleTermination(UdiEvent udiEvent) throws OperationException
+    {
+        boolean termination = false;
+        switch (udiEvent.getEventType()) {
+            case PROCESS_CLEANUP:
+                termination = true;
+                break;
+            default:
+                break;
+        }
+
+        if (termination) {
+            eventContexts.remove(udiEvent.getProcess());
+
+            int pid;
+            try {
+                pid = udiEvent.getProcess().getPid();
+                udiEvent.getProcess().close();
+            } catch (Exception e) {
+                throw new OperationException("Failed to cleanup terminated process", e);
+            }
+            logger.debug("Debuggee[pid={}] terminated after event {}",
+                         pid,
+                         udiEvent.getEventType());
+        }
     }
 
     private EventContext getEventContext(UdiProcess process)

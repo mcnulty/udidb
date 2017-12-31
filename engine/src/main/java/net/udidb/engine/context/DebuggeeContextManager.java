@@ -83,8 +83,10 @@ public interface DebuggeeContextManager
 
     /**
      * @return a list of contexts that could possibly return events
+     *
+     * @throws UdiException on failure to obtain the event contexts
      */
-    List<DebuggeeContext> getEventContexts();
+    List<DebuggeeContext> getEventContexts() throws UdiException;
 
     /**
      * @param observer add an observer to DebuggeeContext operations

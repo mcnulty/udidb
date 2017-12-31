@@ -171,11 +171,15 @@ public class DebuggeeContextImpl implements DebuggeeContext
 
     @Override
     public List<String> getColumnValues() {
-        return Arrays.asList(
-                Integer.toString(process.getPid()),
-                execPath.toString(),
-                (args != null ? StringUtils.join(args, ' ') : "")
-        );
+        try {
+            return Arrays.asList(
+                    Integer.toString(process.getPid()),
+                    execPath.toString(),
+                    (args != null ? StringUtils.join(args, ' ') : "")
+            );
+        } catch (UdiException e) {
+            throw new RuntimeException("Failed to determine column values", e);
+        }
     }
 
     @Override

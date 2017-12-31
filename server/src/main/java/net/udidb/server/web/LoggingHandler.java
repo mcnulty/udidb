@@ -20,6 +20,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.ext.web.Route;
@@ -27,7 +28,7 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.impl.RoutingContextDecorator;
 
 /**
- * @author mcnulty
+ * Handler that logs the request and response
  */
 public class LoggingHandler implements Handler<RoutingContext>
 {
@@ -308,6 +309,13 @@ public class LoggingHandler implements Handler<RoutingContext>
         }
 
         @Override
+        public HttpServerResponse endHandler(Handler<Void> handler)
+        {
+            super.response().endHandler(handler);
+            return this;
+        }
+
+        @Override
         public HttpServerResponse writeContinue()
         {
             super.response().writeContinue();
@@ -370,6 +378,57 @@ public class LoggingHandler implements Handler<RoutingContext>
         public long bytesWritten()
         {
             return super.response().bytesWritten();
+        }
+
+        @Override
+        public int streamId()
+        {
+            return 0;
+        }
+
+        @Override
+        public HttpServerResponse push(HttpMethod method, String host, String path, Handler<AsyncResult<HttpServerResponse>> handler)
+        {
+            super.response().push(method, host, path, handler);
+            return this;
+        }
+
+        @Override
+        public HttpServerResponse push(HttpMethod method, String path, MultiMap headers, Handler<AsyncResult<HttpServerResponse>> handler)
+        {
+            super.response().push(method, path, headers, handler);
+            return this;
+        }
+
+        @Override
+        public HttpServerResponse push(HttpMethod method, String path, Handler<AsyncResult<HttpServerResponse>> handler)
+        {
+            super.response().push(method, path, handler);
+            return this;
+        }
+
+        @Override
+        public HttpServerResponse push(HttpMethod method,
+                                       String host,
+                                       String path,
+                                       MultiMap headers,
+                                       Handler<AsyncResult<HttpServerResponse>> handler)
+        {
+            super.response().push(method, host, path, headers, handler);
+            return this;
+        }
+
+        @Override
+        public void reset(long code)
+        {
+            super.response().reset(code);
+        }
+
+        @Override
+        public HttpServerResponse writeCustomFrame(int type, int flags, Buffer payload)
+        {
+            super.response().writeCustomFrame(type, flags, payload);
+            return this;
         }
     }
 }

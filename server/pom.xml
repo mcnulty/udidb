@@ -23,8 +23,8 @@
 
     <properties>
         <jetty.version>9.2.15.v20160210</jetty.version>
-        <vertx.version>3.2.1</vertx.version>
-        <udidb.test.native-file-tests>${project.parent.basedir}/../native-file-tests/dist</udidb.test.native-file-tests>
+        <vertx.version>3.5.0</vertx.version>
+        <udidb.test.native-file-tests>${project.parent.basedir}/../udi/libudi/native-file-tests</udidb.test.native-file-tests>
         <udidb.test.udi-dir>${project.parent.basedir}/../udi</udidb.test.udi-dir>
     </properties>
 
@@ -95,10 +95,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>net.sourcecrumbs</groupId>
-            <artifactId>source-crumbs</artifactId>
+            <groupId>net.libudi</groupId>
+            <artifactId>native-file-tests</artifactId>
             <version>1.0-SNAPSHOT</version>
-            <type>test-jar</type>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -131,20 +130,17 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.10</version>
                 <configuration>
+                    <includes>
+                        <include>**/ServerTestSuite.java</include>
+                    </includes>
                     <systemPropertyVariables>
                         <native.file.tests.basePath>${udidb.test.native-file-tests}</native.file.tests.basePath>
                     </systemPropertyVariables>
                     <environmentVariables>
                         <UDI_DEBUG>1</UDI_DEBUG>
-                        <UDI_SRC_ROOT>${udidb.test.udi-dir}</UDI_SRC_ROOT>
-                        <UDI_RT_LIB_DIR>${udidb.test.udi-dir}/build/libudirt</UDI_RT_LIB_DIR>
-                        <UDI_TEST_LIB_DIR>${udidb.test.udi-dir}/build/tests/libuditest</UDI_TEST_LIB_DIR>
-                        <UDI_LIB_DIR>${udidb.test.udi-dir}/build/libudi</UDI_LIB_DIR>
-                        <UDI_RT_LIB_TEST_DIR>${udidb.test.udi-dir}/build/tests/udirt_tests</UDI_RT_LIB_TEST_DIR>
-                        <UDI_LIB_TEST_DIR>${udidb.test.udi-dir}/build/tests/udi_tests</UDI_LIB_TEST_DIR>
-                        <UDI_BUILD_DIR>${udidb.test.udi-dir}/build</UDI_BUILD_DIR>
-                        <LD_LIBRARY_PATH>${udidb.test.udi-dir}/build/libudi:${udidb.test.udi-dir}/build/libudirt:${udidb.test.udi-dir}/build/tests/libuditest</LD_LIBRARY_PATH>
+                        <LD_LIBRARY_PATH>${udidb.test.udi-dir}/libudi-c/target/debug:${udidb.test.udi-dir}/libudirt/build/src</LD_LIBRARY_PATH>
                     </environmentVariables>
+                    <useFile>false</useFile>
                 </configuration>
             </plugin>
         </plugins>

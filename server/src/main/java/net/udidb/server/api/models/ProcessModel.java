@@ -10,6 +10,8 @@
 package net.udidb.server.api.models;
 
 import net.libudi.api.UdiProcess;
+import net.libudi.api.exceptions.UdiException;
+import net.udidb.engine.ops.OperationException;
 
 /**
  * @author mcnulty
@@ -24,10 +26,14 @@ public final class ProcessModel
     {
     }
 
-    public ProcessModel(UdiProcess udiProcess)
+    public ProcessModel(UdiProcess udiProcess) throws OperationException
     {
-        this.pid = Integer.toString(udiProcess.getPid());
-        this.running = udiProcess.isRunning();
+        try {
+            this.pid = Integer.toString(udiProcess.getPid());
+            this.running = udiProcess.isRunning();
+        } catch (UdiException e) {
+            throw new OperationException(e);
+        }
     }
 
     public String getPid()

@@ -28,31 +28,17 @@ import net.udidb.server.api.models.OperationModel;
 import net.udidb.server.api.models.ProcessModel;
 import net.udidb.server.api.models.UdiEventModel;
 
-/**
- * @author mcnulty
- */
 public class CreateDebuggeeTest extends BaseServerTest
 {
     public CreateDebuggeeTest()
     {
-        super("basic");
+        super("basic-debug-noopt-dynamic");
     }
 
     @Test
-    public void createDebuggee() throws Exception
+    public void testCreateDebuggee() throws Exception
     {
-        DebuggeeConfigModel configModel = new DebuggeeConfigModel();
-        configModel.setExecPath(getBinaryPath().toString());
-
-        DebuggeeContextModel contextModel = given()
-                .contentType("application/json")
-                .body(configModel)
-                .when()
-                .post(getUri("/debuggeeContexts"))
-                .as(DebuggeeContextModel.class);
-
-        assertFalse(StringUtils.isEmpty(contextModel.getId()));
-        assertEquals(configModel.getExecPath(), contextModel.getExecPath());
+        DebuggeeContextModel contextModel = createDebuggee();
 
         ProcessModel processModel = given()
                 .when()
@@ -62,32 +48,12 @@ public class CreateDebuggeeTest extends BaseServerTest
 
         continueContext(contextModel);
 
-        // Wait for the exit event
-        UdiEventModel event = waitForEvent();
-        assertNotNull(event);
-        assertEquals(contextModel.getId(), event.getContextId());
-        assertEquals(processModel.getPid(), event.getPid());
-        assertEquals(EventType.PROCESS_EXIT, event.getEventType());
-        assertEquals(event.getEventData(), ImmutableMap.of("exitCode", 0));
+        waitForExit(contextModel, 0);
 
         continueContext(contextModel);
 
-        event = waitForEvent();
+        UdiEventModel event = waitForEvent();
         assertNotNull(event);
         assertEquals(EventType.PROCESS_CLEANUP, event.getEventType());
-    }
-
-    private void continueContext(DebuggeeContextModel contextModel)
-    {
-        OperationModel continueOp = new OperationModel();
-        continueOp.setName("continue");
-
-        given()
-                .contentType("application/json")
-                .body(continueOp)
-                .when()
-                .post(getUri(String.format("/debuggeeContexts/%s/process/operation", contextModel.getId())))
-                .then()
-                .body("name", equalTo("continue"));
     }
 }

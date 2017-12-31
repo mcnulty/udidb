@@ -21,12 +21,11 @@ import net.libudi.api.event.UdiEventProcessCleanup;
 import net.libudi.api.event.UdiEventProcessExit;
 import net.libudi.api.event.UdiEventThreadCreate;
 import net.libudi.api.event.UdiEventVisitor;
+import net.libudi.api.exceptions.UdiException;
 import net.udidb.engine.events.DbEventData;
 
 /**
  * The event visitor for the CLI
- *
- * @author mcnulty
  */
 public class CliEventVisitor implements UdiEventVisitor {
 
@@ -80,14 +79,22 @@ public class CliEventVisitor implements UdiEventVisitor {
     @Override
     public void visit(UdiEventThreadCreate threadCreateEvent) {
         if (displayEvent(threadCreateEvent)) {
-            out.println(String.format("Thread created id = 0x%x", threadCreateEvent.getNewThread().getTid()));
+            try {
+                out.println(String.format("Thread created id = 0x%x", threadCreateEvent.getNewThread().getTid()));
+            } catch (UdiException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
     @Override
     public void visit(UdiEventProcessCleanup processCleanup) {
         if (displayEvent(processCleanup)) {
-            out.println(String.format("Process %d terminated", processCleanup.getProcess().getPid()));
+            try {
+                out.println(String.format("Process %d terminated", processCleanup.getProcess().getPid()));
+            } catch (UdiException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 

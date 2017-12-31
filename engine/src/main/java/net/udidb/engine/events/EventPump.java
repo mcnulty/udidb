@@ -24,7 +24,6 @@ import net.libudi.api.exceptions.UdiException;
 import net.udidb.engine.context.DebuggeeContext;
 import net.udidb.engine.context.DebuggeeContextManager;
 import net.udidb.engine.context.DebuggeeContextObserver;
-import net.udidb.engine.ops.OperationException;
 
 /**
  * A component that uses a dedicated thread to wait for events on all available processes.
@@ -88,44 +87,18 @@ public class EventPump extends Thread implements DebuggeeContextObserver
             }
 
             if (events.size() > 0) {
-                events.stream().forEach(event -> event.setUserData(new DbEventData()));
-                eventSink.accept(events);
-
-                for (UdiEvent event : events) {
-                    try {
-                        handleTermination(event);
-                    }catch (OperationException e) {
-                        logger.warn("Failed to handle event {}",
-                                event.getEventType(),
-                                e);
+                events.forEach(event -> {
+                    switch (event.getEventType()) {
+                        case PROCESS_CLEANUP:
+                            debuggeeContextManager.deleteContext(event.getProcess());
+                            break;
+                        default:
+                            break;
                     }
-                }
+                    event.setUserData(new DbEventData());
+                });
+                eventSink.accept(events);
             }
-        }
-    }
-
-    private void handleTermination(UdiEvent udiEvent) throws OperationException
-    {
-        boolean termination = false;
-        switch (udiEvent.getEventType()) {
-            case PROCESS_CLEANUP:
-                termination = true;
-                break;
-            default:
-                break;
-        }
-
-        if (termination) {
-            DebuggeeContext debuggeeContext = debuggeeContextManager.deleteContext(udiEvent.getProcess());
-
-            try {
-                udiEvent.getProcess().close();
-            } catch (Exception e) {
-                throw new OperationException("Failed to cleanup terminated process", e);
-            }
-            logger.debug("Debuggee[{}] terminated after event {}",
-                    debuggeeContext.getId(),
-                    udiEvent.getEventType());
         }
     }
 

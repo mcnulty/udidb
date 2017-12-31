@@ -194,13 +194,18 @@ public final class UdidbServer
 
     public void stop() throws Exception
     {
+        CompletableFuture<Void> stopComplete = new CompletableFuture<>();
         httpServer.close(result -> {
             if (result.succeeded()) {
                 logger.info("Server stopped");
+                stopComplete.complete(null);
             }else{
                 logger.error("Failed to stop server", result.cause());
+                stopComplete.completeExceptionally(result.cause());
             }
         });
+
+        stopComplete.get();
     }
 
     private static void initializeLogging()

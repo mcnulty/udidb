@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015, Dan McNulty
+ * Copyright (c) 2011-2017, Dan McNulty
  * All rights reserved.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -9,6 +9,7 @@
 
 package net.udidb.server.test;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.CompletableFuture;
@@ -16,23 +17,33 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.junit.AfterClass;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.sourcecrumbs.file.tests.NativeFileTestsInfo;
+import com.google.common.collect.ImmutableMap;
+import com.jayway.restassured.response.ValidatableResponse;
+
+import net.libudi.api.event.EventType;
+import net.libudi.nativefiletests.NativeFileTestsInfo;
+import net.udidb.server.api.models.DebuggeeConfigModel;
+import net.udidb.server.api.models.DebuggeeContextModel;
+import net.udidb.server.api.models.OperationModel;
+import net.udidb.server.api.models.ProcessModel;
 import net.udidb.server.api.models.UdiEventModel;
-import net.udidb.server.driver.UdidbServer;
 import net.udidb.server.test.events.JettyWampConnectorProvider;
-import rx.Observable;
 import ws.wamp.jawampa.WampClient;
-import ws.wamp.jawampa.WampClient.State;
 import ws.wamp.jawampa.WampClientBuilder;
 
+import static com.jayway.restassured.RestAssured.given;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+
 /**
- * @author mcnulty
+ * Base class for a server test
  */
 public abstract class BaseServerTest
 {
@@ -40,9 +51,18 @@ public abstract class BaseServerTest
 
     private static final Path basePath = Paths.get(System.getProperty("native.file.tests.basePath"));
     private static final long EVENT_TIMEOUT_SECONDS = Long.getLong("udidb.server.tests.eventTimeout", 5);
-    private static final UdidbServer udidbServer = new UdidbServer(new String[]{});
 
     private static NativeFileTestsInfo fileTestsInfo = null;
+
+    static {
+        if (fileTestsInfo == null) {
+            try {
+                fileTestsInfo = new NativeFileTestsInfo(basePath);
+            } catch (IOException e) {
+                throw new AssertionError(e);
+            }
+        }
+    }
 
     private final Path binaryPath;
     private final String baseUri;
@@ -66,20 +86,6 @@ public abstract class BaseServerTest
     public String getUri(String uri)
     {
         return baseUri + uri;
-    }
-
-    @BeforeClass
-    public static void startServer() throws Exception
-    {
-        fileTestsInfo = new NativeFileTestsInfo(basePath);
-
-        udidbServer.start();
-    }
-
-    @AfterClass
-    public static void stopServer() throws Exception
-    {
-        udidbServer.stop();
     }
 
     @Before
@@ -120,5 +126,52 @@ public abstract class BaseServerTest
     protected UdiEventModel waitForEvent() throws InterruptedException
     {
         return eventQueue.poll(EVENT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+    }
+
+    protected DebuggeeContextModel createDebuggee()
+    {
+        DebuggeeConfigModel configModel = new DebuggeeConfigModel();
+        configModel.setExecPath(getBinaryPath().toString());
+
+        DebuggeeContextModel contextModel = given()
+                .contentType("application/json")
+                .body(configModel)
+                .when()
+                .post(getUri("/debuggeeContexts"))
+                .as(DebuggeeContextModel.class);
+
+        assertFalse(StringUtils.isEmpty(contextModel.getId()));
+        assertEquals(configModel.getExecPath(), contextModel.getExecPath());
+
+        return contextModel;
+    }
+
+    protected ValidatableResponse continueContext(DebuggeeContextModel contextModel)
+    {
+        OperationModel continueOp = new OperationModel();
+        continueOp.setName("continue");
+
+        return submitOperation(contextModel, continueOp).body("name", equalTo("continue"));
+    }
+
+    protected void waitForExit(DebuggeeContextModel contextModel,
+                               int exitCode) throws InterruptedException
+    {
+        // Wait for the exit event
+        UdiEventModel event = waitForEvent();
+        assertNotNull(event);
+        assertEquals(contextModel.getId(), event.getContextId());
+        assertEquals(EventType.PROCESS_EXIT, event.getEventType());
+        assertEquals(event.getEventData(), ImmutableMap.of("exitCode", exitCode));
+    }
+
+    protected ValidatableResponse submitOperation(DebuggeeContextModel contextModel, OperationModel operationModel)
+    {
+        return given()
+                .contentType("application/json")
+                .body(operationModel)
+                .when()
+                .post(getUri(String.format("/debuggeeContexts/%s/process/operation", contextModel.getId())))
+                .then();
     }
 }

@@ -20,8 +20,10 @@ import net.libudi.api.event.UdiEventProcessCleanup;
 import net.libudi.api.event.UdiEventProcessExit;
 import net.libudi.api.event.UdiEventThreadCreate;
 import net.libudi.api.event.UdiEventVisitor;
+import net.libudi.api.exceptions.UdiException;
 import net.udidb.engine.context.DebuggeeContext;
 import net.udidb.engine.events.DbEventData;
+import net.udidb.engine.ops.OperationException;
 
 /**
  * @author mcnulty
@@ -44,11 +46,15 @@ public class UdiEventModel
     {
     }
 
-    public UdiEventModel(UdiEvent udiEvent)
+    public UdiEventModel(UdiEvent udiEvent) throws OperationException
     {
-        pid = Integer.toString(udiEvent.getProcess().getPid());
+        try {
+            pid = Integer.toString(udiEvent.getProcess().getPid());
 
-        tid = Long.toHexString(udiEvent.getThread() != null ? udiEvent.getThread().getTid() : 0L);
+            tid = Long.toHexString(udiEvent.getThread() != null ? udiEvent.getThread().getTid() : 0L);
+        } catch (UdiException e) {
+            throw new OperationException(e);
+        }
 
         eventType = udiEvent.getEventType();
 
@@ -91,7 +97,11 @@ public class UdiEventModel
             @Override
             public void visit(UdiEventThreadCreate threadCreateEvent)
             {
-                eventData.put("newThreadId", threadCreateEvent.getNewThread().getTid());
+                try {
+                    eventData.put("newThreadId", threadCreateEvent.getNewThread().getTid());
+                } catch (UdiException e) {
+                    throw new RuntimeException("Failed to determine new thread id", e);
+                }
             }
 
             @Override
