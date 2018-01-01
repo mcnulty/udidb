@@ -24,8 +24,9 @@
     <properties>
         <jetty.version>9.2.15.v20160210</jetty.version>
         <vertx.version>3.5.0</vertx.version>
-        <udidb.test.native-file-tests>${project.parent.basedir}/../udi/libudi/native-file-tests</udidb.test.native-file-tests>
-        <udidb.test.udi-dir>${project.parent.basedir}/../udi</udidb.test.udi-dir>
+        <native.file.tests.basePath>${project.parent.basedir}/../udi/libudi/native-file-tests</native.file.tests.basePath>
+        <udi.native.lib.searchPath>${project.parent.basedir}/../udi/libudi-c/target/debug</udi.native.lib.searchPath>
+        <udi.native.rtlib.path>${project.parent.basedir}/../udi/libudirt/build/src/libudirt.so</udi.native.rtlib.path>
     </properties>
 
     <dependencies>
@@ -134,11 +135,12 @@
                         <include>**/ServerTestSuite.java</include>
                     </includes>
                     <systemPropertyVariables>
-                        <native.file.tests.basePath>${udidb.test.native-file-tests}</native.file.tests.basePath>
+                        <native.file.tests.basePath>${native.file.tests.basePath}</native.file.tests.basePath>
+                        <udi.native.lib.searchPath>${udi.native.lib.searchPath}</udi.native.lib.searchPath>
+                        <udi.native.rtlib.path>${udi.native.rtlib.path}</udi.native.rtlib.path>
                     </systemPropertyVariables>
                     <environmentVariables>
                         <UDI_DEBUG>1</UDI_DEBUG>
-                        <LD_LIBRARY_PATH>${udidb.test.udi-dir}/libudi-c/target/debug:${udidb.test.udi-dir}/libudirt/build/src</LD_LIBRARY_PATH>
                     </environmentVariables>
                     <useFile>false</useFile>
                 </configuration>

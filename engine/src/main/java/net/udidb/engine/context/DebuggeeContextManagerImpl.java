@@ -10,6 +10,7 @@
 package net.udidb.engine.context;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -40,6 +41,8 @@ public class DebuggeeContextManagerImpl implements DebuggeeContextManager
 
     private Path rootDir = Files.createTempDir().toPath();
 
+    private Path rtLibPath = null;
+
     // This must be null as a value of null has the environment inherited from the
     // creating process
     private Map<String, String> env = null;
@@ -53,6 +56,11 @@ public class DebuggeeContextManagerImpl implements DebuggeeContextManager
     @Inject
     DebuggeeContextManagerImpl(UdiProcessManager udiProcessManager) {
         this.udiProcessManager = udiProcessManager;
+
+        String rtLibPathProperty = System.getProperty("udi.native.rtlib.path");
+        if (rtLibPathProperty != null) {
+            rtLibPath = Paths.get(rtLibPathProperty);
+        }
     }
 
     public Path getRootDir()
@@ -92,6 +100,7 @@ public class DebuggeeContextManagerImpl implements DebuggeeContextManager
         context.setExecPath(execPath);
         context.setArgs(args);
         context.setExecutable(executable);
+        context.setRtLibPath(rtLibPath);
 
         UdiProcess process = udiProcessManager.createProcess(context.getExecPath(),
                 context.getArgs(),

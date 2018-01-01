@@ -34,6 +34,8 @@ public class DebuggeeContextImpl implements DebuggeeContext
 {
     private Path rootDir;
 
+    private Path rtLibPath;
+
     private Map<String, String> env;
 
     private Path execPath;
@@ -68,6 +70,16 @@ public class DebuggeeContextImpl implements DebuggeeContext
 
     public void setRootDir(Path rootDir) {
         this.rootDir = rootDir;
+    }
+
+    public Path getRtLibPath()
+    {
+        return rtLibPath;
+    }
+
+    public void setRtLibPath(Path rtLibPath)
+    {
+        this.rtLibPath = rtLibPath;
     }
 
     @Override
@@ -139,6 +151,7 @@ public class DebuggeeContextImpl implements DebuggeeContext
     public UdiProcessConfig createProcessConfig() {
         UdiProcessConfig config = new UdiProcessConfig();
         config.setRootDir(rootDir);
+        config.setRtLibPath(rtLibPath);
 
         return config;
     }
